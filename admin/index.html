@@ -16,9 +16,12 @@
     .small{width:120px;}
     .list-item{padding:10px;border-bottom:1px solid #eee}
     .danger{background:#ff6b6b}
+    .back-btn{position: fixed;top: 20px;left: 20px;background: #4CAF50;color: white;padding: 10px 16px;border: none;border-radius: 50px;cursor: pointer;font-size: 14px;box-shadow: 0 2px 6px rgba(0,0,0,0.2)}
   </style>
 </head>
 <body>
+  <button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
+
   <div class="card">
     <div class="top">
       <h2>Painel Admin</h2>
@@ -140,7 +143,6 @@
       e.preventDefault();
       const fd = new FormData(musicForm);
       const json = Object.fromEntries(fd.entries());
-      // Se campo posicao for vazio, delete para usar append automático
       if (!json.posicao) delete json.posicao;
       const res = await fetch("/api/musicas", {
         method: "POST",
@@ -180,9 +182,7 @@
       }).join("");
     }
 
-    // Funções globais para editar/deletar (injetadas no escopo global)
     window.editar = async (id) => {
-      // Carrega a música e pré-preenche o form
       const res = await fetch("/api/admin/musicas");
       if (!res.ok) return alert("Erro");
       const rows = await res.json();
@@ -210,4 +210,3 @@
   </script>
 </body>
 </html>
-
