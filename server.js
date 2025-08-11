@@ -97,7 +97,7 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
     // garantir usuário admin (se não existir)
     const adminRes = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
     if (adminRes.rows.length === 0) {
-      const hash = await bcrypt.hash("1234", 10);
+      const hash = await bcrypt.hash("F1003J", 10);
       await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", ["admin", hash]);
       console.log("Usuário admin criado -> usuário: admin / senha: 1234 (altere depois)");
     }
