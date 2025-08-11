@@ -16,14 +16,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // -------------------- Config DB (Postgres) --------------------
-if (!process.env.postgresql://postgresql_calendar_1b25_user:JEgRWRlSPeR7U6Kfh18zbtuIE6fccCx5@dpg-d2chi8ogjchc7384s6r0-a/postgresql_calendar_1b25) {
+if (!process.env.DATABASE_URL) {
   console.error("ERRO: defina a variável de ambiente DATABASE_URL");
   process.exit(1);
 }
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // necessário em alguns hosts (Render) para SSL
   ssl: { rejectUnauthorized: false }
 });
 
