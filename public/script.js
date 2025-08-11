@@ -261,4 +261,3 @@ gotoBtn?.addEventListener("click", () => {
 carregarMusicas();
 
 
-document.body.appendChild(adminBtn);
