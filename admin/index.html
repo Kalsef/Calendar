@@ -5,181 +5,27 @@
   <title>Painel Admin - Calendário</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
-    /* Reset e fontes */
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-    }
-    button, input, textarea {
-      font-family: inherit;
-    }
-
-    /* Container */
-    .container {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 1.5rem;
-      background: #fff;
-      border-radius: 0.75rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    h2, h3, h4 {
-      margin: 0.5rem 0;
-    }
-
-    /* Inputs e botões */
-    input, textarea, select {
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      margin-top: 0.25rem;
-      margin-bottom: 0.75rem;
-      font-size: 1rem;
-    }
-
-    button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    button.primary {
-      background-color: #4f46e5;
-      color: white;
-    }
-    button.primary:hover {
-      background-color: #4338ca;
-    }
-
-    button.warning {
-      background-color: #f59e0b;
-      color: white;
-    }
-    button.warning:hover {
-      background-color: #d97706;
-    }
-
-    button.danger {
-      background-color: #ef4444;
-      color: white;
-    }
-    button.danger:hover {
-      background-color: #b91c1c;
-    }
-
-    button.cancel {
-      background-color: #9ca3af;
-      color: white;
-    }
-
-    /* Grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-    }
-
-    /* Lista */
-    .list-item {
-      border-bottom: 1px solid #e5e7eb;
-      padding: 0.75rem 0;
-    }
-    .list-item audio {
-      width: 100%;
-      margin-top: 0.5rem;
-    }
-
-    /* Botão voltar */
-    .back-btn {
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      background: linear-gradient(135deg, #6366f1, #818cf8);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.5);
-      border: none;
-      cursor: pointer;
-      z-index: 1000;
-      transition: all 0.2s;
-    }
-    .back-btn:hover {
-      transform: scale(1.05);
-    }
-
-    /* Calendar */
-    #calendarContainer {
-      margin: 1rem 0;
-    }
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 0.25rem;
-    }
-    .day {
-      background: #e5e7eb;
-      padding: 0.5rem;
-      text-align: center;
-      border-radius: 0.25rem;
-      cursor: pointer;
-      position: relative;
-    }
-    .day.today {
-      border: 2px solid #4f46e5;
-    }
-    .day.event {
-      background-color: #ffd700;
-    }
-    .day.selected {
-      border: 2px solid #f59e0b;
-    }
-
-    /* Tabs */
-    #tabsContainer {
-      margin: 1rem 0;
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    #tabsContainer button {
-      background: #e5e7eb;
-      color: #111827;
-      padding: 0.25rem 0.75rem;
-    }
-    #tabsContainer button.active {
-      background: #4f46e5;
-      color: white;
-    }
-
-    /* Player */
-    #playerContainer {
-      margin-top: 1rem;
-    }
-    #lyrics {
-      white-space: pre-wrap;
-      margin-top: 0.5rem;
-      background: #f9fafb;
-      padding: 0.5rem;
-      border-radius: 0.25rem;
-    }
-
-    /* Mobile */
-    @media(max-width: 640px){
-      .grid { grid-template-columns: 1fr; }
-    }
+    body { margin: 0; font-family: 'Inter', sans-serif; background: #f3f4f6; color: #111827; }
+    button, input, textarea { font-family: inherit; }
+    .container { max-width: 900px; margin: 2rem auto; padding: 1.5rem; background: #fff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h2,h3,h4{ margin:0.5rem 0; }
+    input, textarea, select { width:100%; padding:0.5rem 0.75rem; border:1px solid #d1d5db; border-radius:0.5rem; margin-top:0.25rem; margin-bottom:0.75rem; font-size:1rem; }
+    button { padding:0.5rem 1rem; border:none; border-radius:0.5rem; cursor:pointer; font-weight:500; transition: all 0.2s; }
+    button.primary { background-color:#4f46e5; color:white; } button.primary:hover{ background-color:#4338ca; }
+    button.warning { background-color:#f59e0b; color:white; } button.warning:hover{ background-color:#d97706; }
+    button.danger { background-color:#ef4444; color:white; } button.danger:hover{ background-color:#b91c1c; }
+    button.cancel { background-color:#9ca3af; color:white; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; }
+    .list-item { border-bottom:1px solid #e5e7eb; padding:0.75rem 0; }
+    .list-item audio { width:100%; margin-top:0.5rem; }
+    .back-btn { position:fixed; top:1rem; left:1rem; background: linear-gradient(135deg,#6366f1,#818cf8); color:white; padding:0.5rem 1rem; border-radius:0.5rem; box-shadow:0 4px 12px rgba(99,102,241,0.5); border:none; cursor:pointer; z-index:1000; transition: all 0.2s; }
+    .back-btn:hover { transform: scale(1.05); }
+    progress { width:100%; height:0.75rem; border-radius:0.375rem; overflow:hidden; margin-top:0.25rem; margin-bottom:0.5rem; }
+    @media(max-width:640px){ .grid{grid-template-columns:1fr;} }
   </style>
 </head>
 <body>
   <button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
-
   <div class="container">
     <div id="loginArea">
       <h3>Login</h3>
@@ -234,23 +80,10 @@
       <hr style="margin:1rem 0"/>
       <h4>Últimos acessos</h4>
       <div id="listaLogs"></div>
-
-      <hr style="margin:1rem 0"/>
-      <h3>Calendário de Músicas</h3>
-      <div id="calendarContainer">
-        <div id="calendar" class="calendar"></div>
-      </div>
-      <div id="tabsContainer"></div>
-      <div id="playerContainer">
-        <h4 id="songTitle">Selecione um dia</h4>
-        <audio id="audioPlay" controls src="" style="width:100%; display:none;"></audio>
-        <div id="lyrics"></div>
-      </div>
     </div>
   </div>
 
   <script>
-    // ---- LOGIN / ADMIN ----
     const loginForm = document.getElementById("loginForm");
     const musicForm = document.getElementById("musicForm");
     const loginArea = document.getElementById("loginArea");
@@ -260,91 +93,74 @@
     const audioFile = document.getElementById("audioFile");
     const uploadBtn = document.getElementById("uploadBtn");
     const uploadProgress = document.getElementById("uploadProgress");
-    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const audioUrlInput = document.getElementById("audioUrl");
     const previewBtn = document.getElementById("previewBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
 
-    let musicas = [];
+    // Dados em memória
+    let musicas = [
+      { id:1, data:"2025-08-13", posicao:"1", titulo:"Bom Dia", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", capa:"", letra:"Bom dia galera" },
+      { id:2, data:"2025-08-13", posicao:"2", titulo:"Dedicação Especial", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", capa:"", letra:"Para você que merece" }
+    ];
     let logs = [];
 
-    loginForm.addEventListener("submit", e=>{
-      e.preventDefault();
-      const u = loginForm.username.value;
-      const p = loginForm.password.value;
-      if(u==="admin" && p==="admin123"){ // Simples
-        loginArea.style.display="none";
-        adminArea.style.display="block";
-        logoutBtn.style.display="inline-block";
-        renderMusicas();
-        renderLogs();
-        renderCalendar();
-      } else {
-        alert("Usuário ou senha inválidos");
-      }
-    });
+    function addLog(){
+      const now = new Date().toLocaleString();
+      logs.unshift({ ip:"IP: Desconhecido", userAgent: navigator.userAgent, hora: now });
+      renderLogs();
+    }
 
-    logoutBtn.addEventListener("click", ()=>{
-      loginArea.style.display="block";
-      adminArea.style.display="none";
-    });
+    function renderLogs(){
+      const container = document.getElementById("listaLogs");
+      container.innerHTML="";
+      logs.forEach(l=>{
+        const div = document.createElement("div");
+        div.style.fontFamily="monospace";
+        div.style.marginBottom="0.25rem";
+        div.textContent = `${l.ip} | ${l.userAgent} | ${l.hora}`;
+        container.appendChild(div);
+      });
+    }
 
-    function renderMusicas(){
-      if(!musicas.length){
-        listaMusicas.innerHTML="<p>Nenhuma música cadastrada.</p>";
-        return;
-      }
+    function carregarLista(){
       listaMusicas.innerHTML="";
-      musicas.forEach((m,i)=>{
-        const div=document.createElement("div");
+      musicas.forEach(m=>{
+        const div = document.createElement("div");
         div.className="list-item";
-        div.innerHTML = `<b>${m.data}</b> - ${m.titulo} 
-          <button onclick="editMusica(${i})">Editar</button>
-          <button onclick="deleteMusica(${i})" class="danger">Excluir</button>
-          <audio controls src="${m.audio}"></audio>`;
+        div.innerHTML=`
+          <strong>${m.data} - ${m.titulo}</strong>
+          ${m.posicao?`<span> | Posição: ${m.posicao}</span>`:""}
+          <div>
+            <audio controls src="${m.audio}"></audio>
+            <div style="margin-top:0.25rem;">
+              <button class="primary" onclick="editar(${m.id})">Editar</button>
+              <button class="danger" onclick="deletar(${m.id})">Deletar</button>
+            </div>
+          </div>
+        `;
         listaMusicas.appendChild(div);
       });
     }
 
-    function renderLogs(){
-      const logContainer = document.getElementById("listaLogs");
-      if(!logs.length){
-        logContainer.innerHTML="<p>Nenhum acesso recente.</p>";
-        return;
-      }
-      logContainer.innerHTML = logs.map(l=>`<div>${l}</div>`).join("");
-    }
-
-    musicForm.addEventListener("submit", e=>{
+    // Login simples (fake)
+    loginForm.onsubmit = (e)=>{
       e.preventDefault();
-      const formData = new FormData(musicForm);
-      const id = formData.get("id");
-      const novaMusica = {
-        id: Date.now(),
-        data: formData.get("data"),
-        posicao: formData.get("posicao"),
-        titulo: formData.get("titulo"),
-        audio: formData.get("audio"),
-        capa: formData.get("capa"),
-        letra: formData.get("letra")
-      };
-      if(id){
-        const idx = musicas.findIndex(m=>m.id==id);
-        musicas[idx] = novaMusica;
-      } else {
-        musicas.push(novaMusica);
-      }
-      musicForm.reset();
-      cancelEditBtn.style.display="none";
-      renderMusicas();
-      renderCalendar();
-    });
+      loginArea.style.display="none";
+      adminArea.style.display="block";
+      logoutBtn.style.display="inline-block";
+      carregarLista();
+      addLog();
+    };
 
-    cancelEditBtn.addEventListener("click", ()=>{
-      musicForm.reset();
-      cancelEditBtn.style.display="none";
-    });
+    logoutBtn.onclick = ()=>{
+      loginArea.style.display="block";
+      adminArea.style.display="none";
+    };
 
-    function editMusica(idx){
-      const m = musicas[idx];
+    function editar(id){
+      const m = musicas.find(m=>m.id===id);
+      if(!m) return;
       musicForm.id.value = m.id;
       musicForm.data.value = m.data;
       musicForm.posicao.value = m.posicao;
@@ -355,113 +171,61 @@
       cancelEditBtn.style.display="inline-block";
     }
 
-    function deleteMusica(idx){
-      if(confirm("Deseja realmente excluir esta música?")){
-        musicas.splice(idx,1);
-        renderMusicas();
-        renderCalendar();
-      }
+    cancelEditBtn.onclick = ()=>{
+      musicForm.reset();
+      cancelEditBtn.style.display="none";
+      musicForm.id.value = "";
+    };
+
+    function deletar(id){
+      if(!confirm("Deseja realmente deletar?")) return;
+      musicas = musicas.filter(m=>m.id!==id);
+      carregarLista();
     }
 
-    uploadBtn.addEventListener("click", ()=>{
+    musicForm.onsubmit = (e)=>{
+      e.preventDefault();
+      const id = musicForm.id.value;
+      const nova = {
+        id: id ? parseInt(id) : Date.now(),
+        data: musicForm.data.value,
+        posicao: musicForm.posicao.value,
+        titulo: musicForm.titulo.value,
+        audio: musicForm.audio.value,
+        capa: musicForm.capa.value,
+        letra: musicForm.letra.value
+      };
+      if(id){
+        musicas = musicas.map(m=>m.id===nova.id ? nova : m);
+      } else {
+        musicas.push(nova);
+      }
+      musicForm.reset();
+      cancelEditBtn.style.display="none";
+      carregarLista();
+    };
+
+    // Preview
+    previewBtn.onclick = ()=>{
+      const url = musicForm.audio.value;
+      if(!url) return alert("Informe o URL da música");
+      const win = window.open("", "_blank", "width=400,height=200");
+      win.document.write(`<audio controls autoplay src="${url}" style="width:100%;"></audio>`);
+    };
+
+    // Fake upload
+    uploadBtn.onclick = ()=>{
       const file = audioFile.files[0];
-      if(!file){ alert("Selecione um arquivo"); return;}
+      if(!file) return alert("Selecione um arquivo");
       uploadProgress.style.display="block";
-      let reader = new FileReader();
-      reader.onprogress = e=>{
-        if(e.lengthComputable){
-          uploadProgress.value = (e.loaded/e.total)*100;
-        }
-      };
-      reader.onloadend = e=>{
-        musicForm.audio.value = reader.result;
-        uploadProgress.style.display="none";
-      };
-      reader.readAsDataURL(file);
-    });
+      let progress = 0;
+      const interval = setInterval(()=>{
+        progress += Math.random()*10;
+        if(progress>=100){ progress=100; clearInterval(interval); audioUrlInput.value = URL.createObjectURL(file); }
+        uploadProgress.value = progress;
+      }, 200);
+    };
 
-    previewBtn.addEventListener("click", ()=>{
-      const src = musicForm.audio.value;
-      if(!src){ alert("Insira o áudio"); return;}
-      const audioEl = document.getElementById("audioPlay");
-      audioEl.src = src;
-      audioEl.style.display="block";
-      audioEl.play();
-    });
-
-    // ---- CALENDÁRIO ----
-    const calendarEl = document.getElementById("calendar");
-    const tabsContainer = document.getElementById("tabsContainer");
-    const songTitle = document.getElementById("songTitle");
-    const audioPlay = document.getElementById("audioPlay");
-    const lyricsEl = document.getElementById("lyrics");
-
-    function renderCalendar(){
-      calendarEl.innerHTML="";
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const firstDay = new Date(year, month, 1).getDay(); // 0-dom
-      const daysInMonth = new Date(year, month+1,0).getDate();
-
-      // preenche dias vazios
-      for(let i=0;i<firstDay;i++){
-        const d = document.createElement("div");
-        calendarEl.appendChild(d);
-      }
-
-      for(let d=1; d<=daysInMonth; d++){
-        const dayEl = document.createElement("div");
-        dayEl.className="day";
-        dayEl.textContent = d;
-        const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-        const musicsOfDay = musicas.filter(m=>m.data===dateStr);
-        if(musicsOfDay.length) dayEl.classList.add("event");
-        if(d===today.getDate()) dayEl.classList.add("today");
-        dayEl.addEventListener("click", ()=>{
-          selectDay(dateStr, musicsOfDay, dayEl);
-        });
-        calendarEl.appendChild(dayEl);
-      }
-    }
-
-    function selectDay(dateStr, musics, dayEl){
-      // desmarca anterior
-      document.querySelectorAll(".day.selected").forEach(d=>d.classList.remove("selected"));
-      dayEl.classList.add("selected");
-
-      tabsContainer.innerHTML="";
-      if(!musics.length){
-        tabsContainer.innerHTML="<p>Nenhuma música para este dia.</p>";
-        songTitle.textContent = "Nenhuma música selecionada";
-        audioPlay.style.display="none";
-        lyricsEl.textContent="";
-        return;
-      }
-      musics.forEach((m,i)=>{
-        const btn = document.createElement("button");
-        btn.textContent = m.posicao ? `Pos ${m.posicao}` : `Música ${i+1}`;
-        if(i===0) btn.classList.add("active");
-        btn.addEventListener("click", ()=>{
-          document.querySelectorAll("#tabsContainer button").forEach(b=>b.classList.remove("active"));
-          btn.classList.add("active");
-          playMusic(m);
-        });
-        tabsContainer.appendChild(btn);
-      });
-      playMusic(musics[0]);
-    }
-
-    function playMusic(m){
-      songTitle.textContent = m.titulo;
-      audioPlay.src = m.audio;
-      audioPlay.style.display="block";
-      audioPlay.play();
-      lyricsEl.textContent = m.letra || "";
-    }
-
-    // Inicial
-    renderCalendar();
   </script>
 </body>
 </html>
