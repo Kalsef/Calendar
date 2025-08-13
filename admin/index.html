@@ -1,355 +1,226 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8"/>
-  <title>Painel Admin - Calendário</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel Admin</title>
   <style>
+    /* Estilo geral */
     body {
-      font-family: Arial, Helvetica, sans-serif;
-      padding: 20px;
-      background: #f4f6fb;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
       margin: 0;
+      padding: 0;
     }
-    .card {
-      background: #fff;
-      padding: 18px;
-      border-radius: 8px;
+    .container {
       max-width: 900px;
-      margin: 20px auto;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      margin: auto;
+      padding: 20px;
     }
-    input, textarea, select {
-      width: 100%;
-      padding: 8px;
-      margin: 6px 0;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    button {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: none;
-      background: #4b6cff;
-      color: #fff;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background 0.3s ease;
-    }
-    button:hover {
-      background: #3a54d6;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .top {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
+    h2 {
+      margin-top: 0;
     }
     .list-item {
+      background: white;
+      margin-bottom: 10px;
       padding: 10px;
-      border-bottom: 1px solid #eee;
-      font-size: 16px;
-    }
-    .danger {
-      background: #ff6b6b;
-    }
-    .back-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: linear-gradient(135deg, #5a4dff, #7a69ff);
-      color: #e0e0ff;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(90, 77, 255, 0.6);
-      z-index: 1000;
-      transition: box-shadow 0.3s ease, transform 0.15s ease;
-    }
-    .back-btn:hover {
-      background: linear-gradient(135deg, #7a69ff, #5a4dff);
-      box-shadow: 0 6px 20px rgba(122, 105, 255, 0.8);
-      transform: scale(1.05);
-    }
-    /* Barra de progresso */
-    progress {
-      height: 14px;
       border-radius: 6px;
-      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    /* Mobile */
-    @media (max-width: 600px) {
-      .grid { grid-template-columns: 1fr; }
-      button { font-size: 14px; }
+
+    /* IP estilizado */
+    .log-ip {
+      font-family: monospace;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: text;
+      transition: background 0.2s ease;
+    }
+    .log-ip.ipv4 {
+      background: #e9f0ff;
+      color: #1a237e;
+    }
+    .log-ip.ipv6 {
+      background: #eafaea;
+      color: #1b5e20;
+    }
+    .log-ip:hover {
+      background: #d0d8ff;
+    }
+    .log-ip svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
     }
   </style>
 </head>
 <body>
-  <button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
+<div class="container">
+  <h2>Gerenciar Áudios</h2>
 
-  <div class="card">
-    <div class="top">
-      <h2>Painel Admin</h2>
-      <div><button id="logoutBtn" style="display:none">Sair</button></div>
-    </div>
-
-    <div id="loginArea">
-      <h3>Login</h3>
-      <form id="loginForm">
-        <input name="username" placeholder="Usuário" required/>
-        <input name="password" placeholder="Senha" type="password" required/>
-        <button type="submit">Entrar</button>
-      </form>
-    </div>
-
-    <div id="adminArea" style="display:none">
-      <h3>Adicionar / Editar Música</h3>
-      <form id="musicForm">
-        <input type="hidden" name="id" />
-        <div class="grid">
-          <div>
-            <label>Data</label>
-            <input type="date" name="data" required />
-          </div>
-          <div>
-            <label>Posição</label>
-            <input name="posicao" placeholder="1, 2, ..." />
-          </div>
-        </div>
-        <input name="titulo" placeholder="Título da música"/>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="audioUrl" name="audio" placeholder="URL do arquivo .mp3" />
-          <div style="display:flex;flex-direction:column;gap:6px;width:150px">
-            <input id="audioFile" type="file" accept="audio/*" />
-            <button id="uploadBtn" type="button">Fazer upload</button>
-            <progress id="uploadProgress" value="0" max="100" style="width:100%;display:none"></progress>
-          </div>
-        </div>
-        <input name="capa" placeholder="URL da capa (opcional)"/>
-        <textarea name="letra" rows="6" placeholder="Letra (opcional)"></textarea>
-        <div style="display:flex;gap:8px">
-          <button type="submit" id="saveBtn">Salvar</button>
-          <button id="cancelEditBtn" type="button" style="display:none;background:#999;color:white">Cancelar edição</button>
-          <button id="previewBtn" type="button">Preview</button>
-        </div>
-      </form>
-
-      <hr/>
-      <h4>Músicas existentes</h4>
-      <div id="listaMusicas"></div>
-      <hr/>
-      <h4>Últimos acessos</h4>
-      <div id="listaLogs"></div>
-    </div>
+  <div style="margin-bottom:20px;">
+    <input id="audioFile" type="file" accept="audio/*" />
+    <button id="uploadBtn" type="button">Fazer upload</button>
+    <progress id="uploadProgress" value="0" max="100" style="width:150px;display:none"></progress>
+    <br/><br/>
+    <input id="audioUrlInput" type="text" placeholder="URL do áudio" style="width:300px"/>
   </div>
 
-  <script>
-    const loginForm = document.getElementById("loginForm");
-    const musicForm = document.getElementById("musicForm");
-    const loginArea = document.getElementById("loginArea");
-    const adminArea = document.getElementById("adminArea");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const listaMusicas = document.getElementById("listaMusicas");
-    const audioFile = document.getElementById("audioFile");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const uploadProgress = document.getElementById("uploadProgress");
-    const audioUrlInput = document.getElementById("audioUrl");
-    const previewBtn = document.getElementById("previewBtn");
-    const saveBtn = document.getElementById("saveBtn");
-    const cancelEditBtn = document.getElementById("cancelEditBtn");
+  <h2>Logs de Acesso</h2>
+  <div id="listaLogs"></div>
+</div>
 
-    // Login
-    loginForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(loginForm);
-      const body = { username: fd.get("username"), password: fd.get("password") };
-      const res = await fetch("/api/login", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      if (res.ok) {
-        loginArea.style.display = "none";
-        adminArea.style.display = "block";
-        logoutBtn.style.display = "inline-block";
-        carregarLista();
-        carregarLogs();
-      } else {
-        alert((await res.json())?.error || "Erro no login");
+<script>
+  const uploadBtn = document.getElementById("uploadBtn");
+  const uploadProgress = document.getElementById("uploadProgress");
+  const audioFile = document.getElementById("audioFile");
+  const audioUrlInput = document.getElementById("audioUrlInput");
+  const listaLogs = document.getElementById("listaLogs");
+
+  // ===== UPLOAD DE ÁUDIO COM PROGRESSO =====
+  uploadBtn.onclick = () => {
+    if (!audioFile.files || audioFile.files.length === 0) {
+      alert("Selecione um arquivo primeiro");
+      return;
+    }
+
+    const file = audioFile.files[0];
+    const fd = new FormData();
+    fd.append("audio", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload", true);
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "Enviando...";
+    uploadProgress.style.display = "inline-block";
+    uploadProgress.value = 0;
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        uploadProgress.value = percent;
+        uploadBtn.textContent = `Enviando... ${percent}%`;
       }
     };
 
-    // Logout
-    logoutBtn.onclick = async () => {
-      await fetch("/api/logout", { method: "POST" });
-      loginArea.style.display = "block";
-      adminArea.style.display = "none";
-      logoutBtn.style.display = "none";
-    };
+    xhr.onload = () => {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "Fazer upload";
+      uploadProgress.style.display = "none";
 
-    // Upload com barra de progresso
-    uploadBtn.onclick = () => {
-      if (!audioFile.files.length) return alert("Selecione um arquivo primeiro");
-      const file = audioFile.files[0];
-      const fd = new FormData();
-      fd.append("audio", file);
-
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/upload", true);
-      uploadBtn.disabled = true;
-      uploadBtn.textContent = "Enviando...";
-      uploadProgress.style.display = "block";
-      uploadProgress.value = 0;
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
-          uploadProgress.value = percent;
-          uploadBtn.textContent = `Enviando... ${percent}%`;
+      try {
+        const res = JSON.parse(xhr.responseText);
+        if (xhr.status === 200) {
+          audioUrlInput.value = res.url;
+          alert("Upload feito! URL preenchida no campo de áudio.");
+        } else {
+          alert(res?.error || "Erro no upload");
         }
-      };
-
-      xhr.onload = () => {
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = "Fazer upload";
-        uploadProgress.style.display = "none";
-        try {
-          const res = JSON.parse(xhr.responseText);
-          if (xhr.status === 200) {
-            audioUrlInput.value = res.url;
-            alert("Upload feito! URL preenchida.");
-          } else {
-            alert(res?.error || "Erro no upload");
-          }
-        } catch {
-          alert("Erro no upload");
-        }
-      };
-
-      xhr.onerror = () => {
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = "Fazer upload";
-        uploadProgress.style.display = "none";
-        alert("Erro na conexão durante o upload.");
-      };
-
-      xhr.send(fd);
-    };
-
-    // Salvar ou atualizar música
-    musicForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(musicForm);
-      const json = Object.fromEntries(fd.entries());
-      if (!json.posicao) delete json.posicao;
-
-      const url = json.id ? `/api/musicas/${json.id}` : "/api/musicas";
-      const method = json.id ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method, headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(json)
-      });
-
-      if (res.ok) {
-        alert(json.id ? "Música atualizada!" : "Música salva!");
-        resetForm();
-        carregarLista();
-      } else {
-        alert((await res.json())?.error || "Erro ao salvar");
+      } catch {
+        alert("Erro no upload");
       }
     };
 
-    // Preview
-    previewBtn.onclick = () => {
-      const url = audioUrlInput.value.trim();
-      if (!url) return alert("Preencha a URL do áudio.");
-      window.open(url, "_blank");
+    xhr.onerror = () => {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "Fazer upload";
+      uploadProgress.style.display = "none";
+      alert("Erro na conexão durante o upload.");
     };
 
-    // Cancelar edição
-    cancelEditBtn.onclick = resetForm;
+    xhr.send(fd);
+  };
 
-    function resetForm() {
-      musicForm.reset();
-      musicForm.id.value = "";
-      saveBtn.textContent = "Salvar";
-      saveBtn.style.background = "";
-      cancelEditBtn.style.display = "none";
+  // ===== FUNÇÕES PARA LOGS =====
+  function getIPClass(ip) {
+    return ip.includes(":") ? "ipv6" : "ipv4";
+  }
+
+  async function copiarIP(ip) {
+    try {
+      await navigator.clipboard.writeText(ip);
+      alert("IP copiado: " + ip);
+    } catch {
+      alert("Não foi possível copiar.");
     }
+  }
 
-    // Listar músicas
-    async function carregarLista() {
-      const res = await fetch("/api/admin/musicas");
-      if (!res.ok) return;
-      const rows = await res.json();
-      listaMusicas.innerHTML = rows.map(r => `
-        <div class="list-item">
-          <strong>${r.data} — Pos ${r.posicao}</strong>
-          <div>${r.titulo || "(sem título)"}</div>
-          ${r.audio ? `<audio controls src="${r.audio}" style="width:100%;margin-top:6px"></audio>` : ""}
-          <div style="margin-top:6px">
-            <button onclick="editar(${r.id})">Editar</button>
-            <button onclick="deletar(${r.id})" class="danger">Deletar</button>
-          </div>
-        </div>`).join("");
-    }
-
-    // Editar música
-    window.editar = async (id) => {
-      const res = await fetch("/api/admin/musicas");
-      if (!res.ok) return alert("Erro");
-      const m = (await res.json()).find(x => x.id === id);
-      if (!m) return alert("Não encontrado");
-
-      musicForm.id.value = m.id;
-      musicForm.data.value = m.data;
-      musicForm.posicao.value = m.posicao;
-      musicForm.titulo.value = m.titulo || "";
-      musicForm.audio.value = m.audio || "";
-      musicForm.capa.value = m.capa || "";
-      musicForm.letra.value = m.letra || "";
-      saveBtn.textContent = "Atualizar";
-      saveBtn.style.background = "#ffa500";
-      cancelEditBtn.style.display = "inline-block";
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    // Deletar música
-    window.deletar = async (id) => {
-      if (!confirm("Deseja deletar esta música?")) return;
-      const res = await fetch(`/api/musicas/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        alert("Deletado");
-        carregarLista();
-      } else {
-        alert("Erro ao deletar");
+  function agruparPorIP(logs) {
+    const mapa = {};
+    logs.forEach(log => {
+      if (!mapa[log.ip]) {
+        mapa[log.ip] = [];
       }
-    };
+      mapa[log.ip].push(log);
+    });
+    return mapa;
+  }
 
-    // Logs
-    async function carregarLogs() {
-      const res = await fetch("/api/admin/logs");
-      if (!res.ok) return;
-      const rows = await res.json();
-      listaLogs.innerHTML = rows.map(log => `
+  function ordenarPorData(a, b) {
+    return new Date(a.accessed_at) - new Date(b.accessed_at);
+  }
+
+  function agruparPorDia(acessos) {
+    const porDia = {};
+    acessos.forEach(a => {
+      const dataStr = new Date(a.accessed_at).toLocaleDateString("pt-BR");
+      if (!porDia[dataStr]) {
+        porDia[dataStr] = [];
+      }
+      porDia[dataStr].push(a);
+    });
+    return porDia;
+  }
+
+  async function carregarLogs() {
+    const res = await fetch("/api/admin/logs");
+    if (!res.ok) return;
+    const rows = await res.json();
+
+    const agrupado = agruparPorIP(rows);
+
+    listaLogs.innerHTML = Object.entries(agrupado).map(([ip, acessos]) => {
+      acessos.sort(ordenarPorData);
+      const ipClass = getIPClass(ip);
+      const total = acessos.length;
+
+      const dias = agruparPorDia(acessos);
+      const diasHTML = Object.entries(dias).map(([dataDia, registros]) => {
+        const horarios = registros
+          .map(a => new Date(a.accessed_at).toLocaleTimeString("pt-BR"))
+          .join("<br/>");
+        return `<strong>${dataDia}</strong><br/>${horarios}`;
+      }).join("<br/><br/>");
+
+      return `
         <div class="list-item">
-          <strong>${new Date(log.accessed_at).toLocaleString("pt-BR")}</strong><br/>
-          <div style="font-family:monospace;background:#e9f0ff;padding:4px 8px;border-radius:6px">
-            ${log.ip}
+          <div class="log-ip ${ipClass}" onclick="toggleHoras('${ip.replace(/:/g,'-')}')" title="Clique para ver horários">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+            </svg>
+            ${ip} — ${total} acesso${total>1?'s':''}
           </div>
-          <div><strong>UA:</strong> ${log.user_agent}</div>
-        </div>`).join("");
-    }
-  </script>
+          <div id="horas-${ip.replace(/:/g,'-')}" style="display:none;margin-top:6px;padding-left:24px;font-family:monospace">
+            ${diasHTML}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function toggleHoras(id) {
+    const el = document.getElementById("horas-" + id);
+    if (!el) return;
+    el.style.display = el.style.display === "none" ? "block" : "none";
+  }
+
+  carregarLogs();
+</script>
 </body>
 </html>
