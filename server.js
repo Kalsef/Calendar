@@ -66,6 +66,22 @@ const upload = multer({
 // -------------------- Middlewares --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(async (req, res, next) => {
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+
+  try {
+    await pool.query(
+      'INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)',
+      [ip, userAgent]
+    );
+  } catch (err) {
+    console.error('Erro ao registrar acesso:', err);
+  }
+
+  next();
+});
+
 
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
@@ -91,6 +107,12 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         letra TEXT,
         capa TEXT,
         UNIQUE(data, posicao)
+      );
+      CREATE TABLE IF NOT EXISTS access_logs (
+        id SERIAL PRIMARY KEY,
+        ip VARCHAR(45),
+        user_agent TEXT,
+        accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -186,6 +208,19 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
     res.status(500).json({ error: "Erro" });
   }
 });
+// GET admin: listar últimos 100 logs de acesso
+app.get("/api/admin/logs", auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM access_logs ORDER BY accessed_at DESC LIMIT 100"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar logs:", err);
+    res.status(500).json({ error: "Erro ao buscar logs" });
+  }
+});
+
 
 // POST adicionar/editar música (admin)
 app.post("/api/musicas", auth, async (req, res) => {
