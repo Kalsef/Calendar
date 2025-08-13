@@ -1,31 +1,139 @@
-<!DOCTYPE html>
+simplesmente mantenha as atualizaçoes de forma que funcione igual isso aqui aplique aqui e mande completo <!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="utf-8"/>
   <title>Painel Admin - Calendário</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
-    body { margin: 0; font-family: 'Inter', sans-serif; background: #f3f4f6; color: #111827; }
-    button, input, textarea { font-family: inherit; }
-    .container { max-width: 900px; margin: 2rem auto; padding: 1.5rem; background: #fff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    h2,h3,h4{ margin:0.5rem 0; }
-    input, textarea, select { width:100%; padding:0.5rem 0.75rem; border:1px solid #d1d5db; border-radius:0.5rem; margin-top:0.25rem; margin-bottom:0.75rem; font-size:1rem; }
-    button { padding:0.5rem 1rem; border:none; border-radius:0.5rem; cursor:pointer; font-weight:500; transition: all 0.2s; }
-    button.primary { background-color:#4f46e5; color:white; } button.primary:hover{ background-color:#4338ca; }
-    button.warning { background-color:#f59e0b; color:white; } button.warning:hover{ background-color:#d97706; }
-    button.danger { background-color:#ef4444; color:white; } button.danger:hover{ background-color:#b91c1c; }
-    button.cancel { background-color:#9ca3af; color:white; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; }
-    .list-item { border-bottom:1px solid #e5e7eb; padding:0.75rem 0; }
-    .list-item audio { width:100%; margin-top:0.5rem; }
-    .back-btn { position:fixed; top:1rem; left:1rem; background: linear-gradient(135deg,#6366f1,#818cf8); color:white; padding:0.5rem 1rem; border-radius:0.5rem; box-shadow:0 4px 12px rgba(99,102,241,0.5); border:none; cursor:pointer; z-index:1000; transition: all 0.2s; }
-    .back-btn:hover { transform: scale(1.05); }
-    progress { width:100%; height:0.75rem; border-radius:0.375rem; overflow:hidden; margin-top:0.25rem; margin-bottom:0.5rem; }
-    @media(max-width:640px){ .grid{grid-template-columns:1fr;} }
+    /* Reset e fontes */
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    button, input, textarea {
+      font-family: inherit;
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      background: #fff;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h2, h3, h4 {
+      margin: 0.5rem 0;
+    }
+
+    /* Inputs e botões */
+    input, textarea, select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      margin-top: 0.25rem;
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    button.primary {
+      background-color: #4f46e5;
+      color: white;
+    }
+    button.primary:hover {
+      background-color: #4338ca;
+    }
+
+    button.warning {
+      background-color: #f59e0b;
+      color: white;
+    }
+    button.warning:hover {
+      background-color: #d97706;
+    }
+
+    button.danger {
+      background-color: #ef4444;
+      color: white;
+    }
+    button.danger:hover {
+      background-color: #b91c1c;
+    }
+
+    button.cancel {
+      background-color: #9ca3af;
+      color: white;
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    /* Lista */
+    .list-item {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.75rem 0;
+    }
+    .list-item audio {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    /* Botão voltar */
+    .back-btn {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.5);
+      border: none;
+      cursor: pointer;
+      z-index: 1000;
+      transition: all 0.2s;
+    }
+    .back-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Progress */
+    progress {
+      width: 100%;
+      height: 0.75rem;
+      border-radius: 0.375rem;
+      overflow: hidden;
+      margin-top: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Mobile */
+    @media(max-width: 640px){
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
+
   <div class="container">
     <div id="loginArea">
       <h3>Login</h3>
@@ -98,134 +206,178 @@
     const saveBtn = document.getElementById("saveBtn");
     const cancelEditBtn = document.getElementById("cancelEditBtn");
 
-    // Dados em memória
-    let musicas = [
-      { id:1, data:"2025-08-13", posicao:"1", titulo:"Bom Dia", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", capa:"", letra:"Bom dia galera" },
-      { id:2, data:"2025-08-13", posicao:"2", titulo:"Dedicação Especial", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", capa:"", letra:"Para você que merece" }
-    ];
-    let logs = [];
-
-    function addLog(){
-      const now = new Date().toLocaleString();
-      logs.unshift({ ip:"IP: Desconhecido", userAgent: navigator.userAgent, hora: now });
-      renderLogs();
-    }
-
-    function renderLogs(){
-      const container = document.getElementById("listaLogs");
-      container.innerHTML="";
-      logs.forEach(l=>{
-        const div = document.createElement("div");
-        div.style.fontFamily="monospace";
-        div.style.marginBottom="0.25rem";
-        div.textContent = `${l.ip} | ${l.userAgent} | ${l.hora}`;
-        container.appendChild(div);
-      });
-    }
-
-    function carregarLista(){
-      listaMusicas.innerHTML="";
-      musicas.forEach(m=>{
-        const div = document.createElement("div");
-        div.className="list-item";
-        div.innerHTML=`
-          <strong>${m.data} - ${m.titulo}</strong>
-          ${m.posicao?`<span> | Posição: ${m.posicao}</span>`:""}
-          <div>
-            <audio controls src="${m.audio}"></audio>
-            <div style="margin-top:0.25rem;">
-              <button class="primary" onclick="editar(${m.id})">Editar</button>
-              <button class="danger" onclick="deletar(${m.id})">Deletar</button>
-            </div>
-          </div>
-        `;
-        listaMusicas.appendChild(div);
-      });
-    }
-
-    // Login simples (fake)
-    loginForm.onsubmit = (e)=>{
+    // Login
+    loginForm.onsubmit = async (e) => {
       e.preventDefault();
-      loginArea.style.display="none";
-      adminArea.style.display="block";
-      logoutBtn.style.display="inline-block";
-      carregarLista();
-      addLog();
+      const fd = new FormData(loginForm);
+      const body = { username: fd.get("username"), password: fd.get("password") };
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if(res.ok){
+        loginArea.style.display="none";
+        adminArea.style.display="block";
+        logoutBtn.style.display="inline-block";
+        carregarLista();
+        carregarLogs();
+      } else {
+        alert((await res.json())?.error || "Erro no login");
+      }
     };
 
-    logoutBtn.onclick = ()=>{
+    // Logout
+    logoutBtn.onclick = async () => {
+      await fetch("/api/logout", { method:"POST" });
       loginArea.style.display="block";
       adminArea.style.display="none";
+      logoutBtn.style.display="none";
     };
 
-    function editar(id){
-      const m = musicas.find(m=>m.id===id);
-      if(!m) return;
-      musicForm.id.value = m.id;
-      musicForm.data.value = m.data;
-      musicForm.posicao.value = m.posicao;
-      musicForm.titulo.value = m.titulo;
-      musicForm.audio.value = m.audio;
-      musicForm.capa.value = m.capa;
-      musicForm.letra.value = m.letra;
-      cancelEditBtn.style.display="inline-block";
-    }
+    // Upload
+    uploadBtn.onclick = () => {
+      if(!audioFile.files.length) return alert("Selecione um arquivo primeiro");
+      const file = audioFile.files[0];
+      const fd = new FormData();
+      fd.append("audio", file);
 
-    cancelEditBtn.onclick = ()=>{
-      musicForm.reset();
-      cancelEditBtn.style.display="none";
-      musicForm.id.value = "";
-    };
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST","/api/upload",true);
+      uploadBtn.disabled = true;
+      uploadBtn.textContent="Enviando...";
+      uploadProgress.style.display="block";
+      uploadProgress.value=0;
 
-    function deletar(id){
-      if(!confirm("Deseja realmente deletar?")) return;
-      musicas = musicas.filter(m=>m.id!==id);
-      carregarLista();
-    }
-
-    musicForm.onsubmit = (e)=>{
-      e.preventDefault();
-      const id = musicForm.id.value;
-      const nova = {
-        id: id ? parseInt(id) : Date.now(),
-        data: musicForm.data.value,
-        posicao: musicForm.posicao.value,
-        titulo: musicForm.titulo.value,
-        audio: musicForm.audio.value,
-        capa: musicForm.capa.value,
-        letra: musicForm.letra.value
+      xhr.upload.onprogress = (e) => {
+        if(e.lengthComputable){
+          const percent = Math.round((e.loaded/e.total)*100);
+          uploadProgress.value = percent;
+          uploadBtn.textContent = `Enviando... ${percent}%`;
+        }
       };
-      if(id){
-        musicas = musicas.map(m=>m.id===nova.id ? nova : m);
-      } else {
-        musicas.push(nova);
-      }
-      musicForm.reset();
-      cancelEditBtn.style.display="none";
-      carregarLista();
+
+      xhr.onload = () => {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent="Upload";
+        uploadProgress.style.display="none";
+        try{
+          const res = JSON.parse(xhr.responseText);
+          if(xhr.status===200){
+            audioUrlInput.value=res.url;
+            alert("Upload feito! URL preenchida.");
+          } else alert(res?.error||"Erro no upload");
+        } catch{
+          alert("Erro no upload");
+        }
+      };
+      xhr.onerror = () => {
+        uploadBtn.disabled=false;
+        uploadBtn.textContent="Upload";
+        uploadProgress.style.display="none";
+        alert("Erro na conexão durante o upload.");
+      };
+      xhr.send(fd);
+    };
+
+    // Salvar/Atualizar música
+    musicForm.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(musicForm);
+      const json = Object.fromEntries(fd.entries());
+      if(!json.posicao) delete json.posicao;
+
+      const url = json.id ? `/api/musicas/${json.id}` : "/api/musicas";
+      const method = json.id ? "PUT" : "POST";
+
+      const res = await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(json)});
+      if(res.ok){
+        alert("Música salva!");
+        musicForm.reset();
+        saveBtn.textContent="Salvar";
+        cancelEditBtn.style.display="none";
+        carregarLista();
+      } else alert((await res.json())?.error||"Erro ao salvar");
     };
 
     // Preview
     previewBtn.onclick = ()=>{
-      const url = musicForm.audio.value;
-      if(!url) return alert("Informe o URL da música");
-      const win = window.open("", "_blank", "width=400,height=200");
-      win.document.write(`<audio controls autoplay src="${url}" style="width:100%;"></audio>`);
+      const url = audioUrlInput.value;
+      if(url) window.open(url,"_blank");
+      else alert("Nenhum áudio selecionado.");
     };
 
-    // Fake upload
-    uploadBtn.onclick = ()=>{
-      const file = audioFile.files[0];
-      if(!file) return alert("Selecione um arquivo");
-      uploadProgress.style.display="block";
-      let progress = 0;
-      const interval = setInterval(()=>{
-        progress += Math.random()*10;
-        if(progress>=100){ progress=100; clearInterval(interval); audioUrlInput.value = URL.createObjectURL(file); }
-        uploadProgress.value = progress;
-      }, 200);
+    // Cancelar edição
+    cancelEditBtn.onclick = () => {
+      musicForm.reset();
+      saveBtn.textContent="Salvar";
+      cancelEditBtn.style.display="none";
     };
 
+    // Carregar lista de músicas
+    async function carregarLista(){
+      listaMusicas.innerHTML="Carregando...";
+      const res = await fetch("/api/admin/musicas");
+      if(res.ok){
+        const musics = await res.json();
+        listaMusicas.innerHTML="";
+        musics.forEach(m=>{
+          const div = document.createElement("div");
+          div.className="list-item";
+          div.innerHTML=`
+            <strong>${m.data} - ${m.titulo}</strong>
+            ${m.posicao?`<span> | Posição: ${m.posicao}</span>`:""}
+            <div>
+              <audio controls src="${m.audio}"></audio>
+              <div style="margin-top:0.25rem;">
+                <button class="primary" onclick="editar(${m.id})">Editar</button>
+                <button class="danger" onclick="deletar(${m.id})">Deletar</button>
+              </div>
+            </div>
+          `;
+          listaMusicas.appendChild(div);
+        });
+      } else listaMusicas.innerHTML="Erro ao carregar músicas";
+    }
+
+    // Editar música
+    window.editar = (id)=>{
+      fetch(`/api/admin/musicas/${id}`).then(r=>r.json()).then(m=>{
+        Object.keys(m).forEach(k=>{
+          if(musicForm[k]) musicForm[k].value=m[k];
+        });
+        saveBtn.textContent="Atualizar";
+        cancelEditBtn.style.display="inline-block";
+        window.scrollTo({top:0,behavior:"smooth"});
+      }).catch(()=>alert("Erro ao carregar música"));
+    };
+
+    // Deletar música
+    window.deletar = (id)=>{
+      if(confirm("Deseja deletar essa música?")){
+        fetch(`/api/musicas/${id}`,{method:"DELETE"}).then(r=>{
+          if(r.ok) carregarLista();
+          else alert("Erro ao deletar");
+        });
+      }
+    };
+
+    // Carregar logs
+    async function carregarLogs(){
+      const res = await fetch("/api/admin/logs");
+      if(res.ok){
+        const logs = await res.json();
+        const container = document.getElementById("listaLogs");
+        container.innerHTML="";
+        logs.forEach(l=>{
+          const div = document.createElement("div");
+          div.style.fontFamily="monospace";
+          div.style.marginBottom="0.25rem";
+          div.textContent = `${l.ip} | ${l.userAgent}`;
+          container.appendChild(div);
+        });
+      }
+    }
   </script>
 </body>
 </html>
