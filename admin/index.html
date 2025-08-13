@@ -115,14 +115,60 @@
       transform: scale(1.05);
     }
 
-    /* Progress */
-    progress {
-      width: 100%;
-      height: 0.75rem;
-      border-radius: 0.375rem;
-      overflow: hidden;
-      margin-top: 0.25rem;
-      margin-bottom: 0.5rem;
+    /* Calendar */
+    #calendarContainer {
+      margin: 1rem 0;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+    }
+    .day {
+      background: #e5e7eb;
+      padding: 0.5rem;
+      text-align: center;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      position: relative;
+    }
+    .day.today {
+      border: 2px solid #4f46e5;
+    }
+    .day.event {
+      background-color: #ffd700;
+    }
+    .day.selected {
+      border: 2px solid #f59e0b;
+    }
+
+    /* Tabs */
+    #tabsContainer {
+      margin: 1rem 0;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    #tabsContainer button {
+      background: #e5e7eb;
+      color: #111827;
+      padding: 0.25rem 0.75rem;
+    }
+    #tabsContainer button.active {
+      background: #4f46e5;
+      color: white;
+    }
+
+    /* Player */
+    #playerContainer {
+      margin-top: 1rem;
+    }
+    #lyrics {
+      white-space: pre-wrap;
+      margin-top: 0.5rem;
+      background: #f9fafb;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
     }
 
     /* Mobile */
@@ -188,10 +234,23 @@
       <hr style="margin:1rem 0"/>
       <h4>Últimos acessos</h4>
       <div id="listaLogs"></div>
+
+      <hr style="margin:1rem 0"/>
+      <h3>Calendário de Músicas</h3>
+      <div id="calendarContainer">
+        <div id="calendar" class="calendar"></div>
+      </div>
+      <div id="tabsContainer"></div>
+      <div id="playerContainer">
+        <h4 id="songTitle">Selecione um dia</h4>
+        <audio id="audioPlay" controls src="" style="width:100%; display:none;"></audio>
+        <div id="lyrics"></div>
+      </div>
     </div>
   </div>
 
   <script>
+    // ---- LOGIN / ADMIN ----
     const loginForm = document.getElementById("loginForm");
     const musicForm = document.getElementById("musicForm");
     const loginArea = document.getElementById("loginArea");
@@ -201,183 +260,208 @@
     const audioFile = document.getElementById("audioFile");
     const uploadBtn = document.getElementById("uploadBtn");
     const uploadProgress = document.getElementById("uploadProgress");
-    const audioUrlInput = document.getElementById("audioUrl");
-    const previewBtn = document.getElementById("previewBtn");
-    const saveBtn = document.getElementById("saveBtn");
     const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const previewBtn = document.getElementById("previewBtn");
 
-    // Login
-    loginForm.onsubmit = async (e) => {
+    let musicas = [];
+    let logs = [];
+
+    loginForm.addEventListener("submit", e=>{
       e.preventDefault();
-      const fd = new FormData(loginForm);
-      const body = { username: fd.get("username"), password: fd.get("password") };
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      if(res.ok){
+      const u = loginForm.username.value;
+      const p = loginForm.password.value;
+      if(u==="admin" && p==="admin123"){ // Simples
         loginArea.style.display="none";
         adminArea.style.display="block";
         logoutBtn.style.display="inline-block";
-        carregarLista();
-        carregarLogs();
+        renderMusicas();
+        renderLogs();
+        renderCalendar();
       } else {
-        alert((await res.json())?.error || "Erro no login");
+        alert("Usuário ou senha inválidos");
       }
-    };
+    });
 
-    // Logout
-    logoutBtn.onclick = async () => {
-      await fetch("/api/logout", { method:"POST" });
+    logoutBtn.addEventListener("click", ()=>{
       loginArea.style.display="block";
       adminArea.style.display="none";
-      logoutBtn.style.display="none";
-    };
+    });
 
-    // Upload
-    uploadBtn.onclick = () => {
-      if(!audioFile.files.length) return alert("Selecione um arquivo primeiro");
-      const file = audioFile.files[0];
-      const fd = new FormData();
-      fd.append("audio", file);
+    function renderMusicas(){
+      if(!musicas.length){
+        listaMusicas.innerHTML="<p>Nenhuma música cadastrada.</p>";
+        return;
+      }
+      listaMusicas.innerHTML="";
+      musicas.forEach((m,i)=>{
+        const div=document.createElement("div");
+        div.className="list-item";
+        div.innerHTML = `<b>${m.data}</b> - ${m.titulo} 
+          <button onclick="editMusica(${i})">Editar</button>
+          <button onclick="deleteMusica(${i})" class="danger">Excluir</button>
+          <audio controls src="${m.audio}"></audio>`;
+        listaMusicas.appendChild(div);
+      });
+    }
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST","/api/upload",true);
-      uploadBtn.disabled = true;
-      uploadBtn.textContent="Enviando...";
-      uploadProgress.style.display="block";
-      uploadProgress.value=0;
+    function renderLogs(){
+      const logContainer = document.getElementById("listaLogs");
+      if(!logs.length){
+        logContainer.innerHTML="<p>Nenhum acesso recente.</p>";
+        return;
+      }
+      logContainer.innerHTML = logs.map(l=>`<div>${l}</div>`).join("");
+    }
 
-      xhr.upload.onprogress = (e) => {
-        if(e.lengthComputable){
-          const percent = Math.round((e.loaded/e.total)*100);
-          uploadProgress.value = percent;
-          uploadBtn.textContent = `Enviando... ${percent}%`;
-        }
-      };
-
-      xhr.onload = () => {
-        uploadBtn.disabled = false;
-        uploadBtn.textContent="Upload";
-        uploadProgress.style.display="none";
-        try{
-          const res = JSON.parse(xhr.responseText);
-          if(xhr.status===200){
-            audioUrlInput.value=res.url;
-            alert("Upload feito! URL preenchida.");
-          } else alert(res?.error||"Erro no upload");
-        } catch{
-          alert("Erro no upload");
-        }
-      };
-      xhr.onerror = () => {
-        uploadBtn.disabled=false;
-        uploadBtn.textContent="Upload";
-        uploadProgress.style.display="none";
-        alert("Erro na conexão durante o upload.");
-      };
-      xhr.send(fd);
-    };
-
-    // Salvar/Atualizar música
-    musicForm.onsubmit = async (e)=>{
+    musicForm.addEventListener("submit", e=>{
       e.preventDefault();
-      const fd = new FormData(musicForm);
-      const json = Object.fromEntries(fd.entries());
-      if(!json.posicao) delete json.posicao;
-
-      const url = json.id ? `/api/musicas/${json.id}` : "/api/musicas";
-      const method = json.id ? "PUT" : "POST";
-
-      const res = await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(json)});
-      if(res.ok){
-        alert("Música salva!");
-        musicForm.reset();
-        saveBtn.textContent="Salvar";
-        cancelEditBtn.style.display="none";
-        carregarLista();
-      } else alert((await res.json())?.error||"Erro ao salvar");
-    };
-
-    // Preview
-    previewBtn.onclick = ()=>{
-      const url = audioUrlInput.value;
-      if(url) window.open(url,"_blank");
-      else alert("Nenhum áudio selecionado.");
-    };
-
-    // Cancelar edição
-    cancelEditBtn.onclick = () => {
+      const formData = new FormData(musicForm);
+      const id = formData.get("id");
+      const novaMusica = {
+        id: Date.now(),
+        data: formData.get("data"),
+        posicao: formData.get("posicao"),
+        titulo: formData.get("titulo"),
+        audio: formData.get("audio"),
+        capa: formData.get("capa"),
+        letra: formData.get("letra")
+      };
+      if(id){
+        const idx = musicas.findIndex(m=>m.id==id);
+        musicas[idx] = novaMusica;
+      } else {
+        musicas.push(novaMusica);
+      }
       musicForm.reset();
-      saveBtn.textContent="Salvar";
       cancelEditBtn.style.display="none";
-    };
+      renderMusicas();
+      renderCalendar();
+    });
 
-    // Carregar lista de músicas
-    async function carregarLista(){
-      listaMusicas.innerHTML="Carregando...";
-      const res = await fetch("/api/admin/musicas");
-      if(res.ok){
-        const musics = await res.json();
-        listaMusicas.innerHTML="";
-        musics.forEach(m=>{
-          const div = document.createElement("div");
-          div.className="list-item";
-          div.innerHTML=`
-            <strong>${m.data} - ${m.titulo}</strong>
-            ${m.posicao?`<span> | Posição: ${m.posicao}</span>`:""}
-            <div>
-              <audio controls src="${m.audio}"></audio>
-              <div style="margin-top:0.25rem;">
-                <button class="primary" onclick="editar(${m.id})">Editar</button>
-                <button class="danger" onclick="deletar(${m.id})">Deletar</button>
-              </div>
-            </div>
-          `;
-          listaMusicas.appendChild(div);
-        });
-      } else listaMusicas.innerHTML="Erro ao carregar músicas";
+    cancelEditBtn.addEventListener("click", ()=>{
+      musicForm.reset();
+      cancelEditBtn.style.display="none";
+    });
+
+    function editMusica(idx){
+      const m = musicas[idx];
+      musicForm.id.value = m.id;
+      musicForm.data.value = m.data;
+      musicForm.posicao.value = m.posicao;
+      musicForm.titulo.value = m.titulo;
+      musicForm.audio.value = m.audio;
+      musicForm.capa.value = m.capa;
+      musicForm.letra.value = m.letra;
+      cancelEditBtn.style.display="inline-block";
     }
 
-    // Editar música
-    window.editar = (id)=>{
-      fetch(`/api/admin/musicas/${id}`).then(r=>r.json()).then(m=>{
-        Object.keys(m).forEach(k=>{
-          if(musicForm[k]) musicForm[k].value=m[k];
-        });
-        saveBtn.textContent="Atualizar";
-        cancelEditBtn.style.display="inline-block";
-        window.scrollTo({top:0,behavior:"smooth"});
-      }).catch(()=>alert("Erro ao carregar música"));
-    };
-
-    // Deletar música
-    window.deletar = (id)=>{
-      if(confirm("Deseja deletar essa música?")){
-        fetch(`/api/musicas/${id}`,{method:"DELETE"}).then(r=>{
-          if(r.ok) carregarLista();
-          else alert("Erro ao deletar");
-        });
-      }
-    };
-
-    // Carregar logs
-    async function carregarLogs(){
-      const res = await fetch("/api/admin/logs");
-      if(res.ok){
-        const logs = await res.json();
-        const container = document.getElementById("listaLogs");
-        container.innerHTML="";
-        logs.forEach(l=>{
-          const div = document.createElement("div");
-          div.style.fontFamily="monospace";
-          div.style.marginBottom="0.25rem";
-          div.textContent = `${l.ip} | ${l.userAgent}`;
-          container.appendChild(div);
-        });
+    function deleteMusica(idx){
+      if(confirm("Deseja realmente excluir esta música?")){
+        musicas.splice(idx,1);
+        renderMusicas();
+        renderCalendar();
       }
     }
+
+    uploadBtn.addEventListener("click", ()=>{
+      const file = audioFile.files[0];
+      if(!file){ alert("Selecione um arquivo"); return;}
+      uploadProgress.style.display="block";
+      let reader = new FileReader();
+      reader.onprogress = e=>{
+        if(e.lengthComputable){
+          uploadProgress.value = (e.loaded/e.total)*100;
+        }
+      };
+      reader.onloadend = e=>{
+        musicForm.audio.value = reader.result;
+        uploadProgress.style.display="none";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    previewBtn.addEventListener("click", ()=>{
+      const src = musicForm.audio.value;
+      if(!src){ alert("Insira o áudio"); return;}
+      const audioEl = document.getElementById("audioPlay");
+      audioEl.src = src;
+      audioEl.style.display="block";
+      audioEl.play();
+    });
+
+    // ---- CALENDÁRIO ----
+    const calendarEl = document.getElementById("calendar");
+    const tabsContainer = document.getElementById("tabsContainer");
+    const songTitle = document.getElementById("songTitle");
+    const audioPlay = document.getElementById("audioPlay");
+    const lyricsEl = document.getElementById("lyrics");
+
+    function renderCalendar(){
+      calendarEl.innerHTML="";
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const firstDay = new Date(year, month, 1).getDay(); // 0-dom
+      const daysInMonth = new Date(year, month+1,0).getDate();
+
+      // preenche dias vazios
+      for(let i=0;i<firstDay;i++){
+        const d = document.createElement("div");
+        calendarEl.appendChild(d);
+      }
+
+      for(let d=1; d<=daysInMonth; d++){
+        const dayEl = document.createElement("div");
+        dayEl.className="day";
+        dayEl.textContent = d;
+        const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const musicsOfDay = musicas.filter(m=>m.data===dateStr);
+        if(musicsOfDay.length) dayEl.classList.add("event");
+        if(d===today.getDate()) dayEl.classList.add("today");
+        dayEl.addEventListener("click", ()=>{
+          selectDay(dateStr, musicsOfDay, dayEl);
+        });
+        calendarEl.appendChild(dayEl);
+      }
+    }
+
+    function selectDay(dateStr, musics, dayEl){
+      // desmarca anterior
+      document.querySelectorAll(".day.selected").forEach(d=>d.classList.remove("selected"));
+      dayEl.classList.add("selected");
+
+      tabsContainer.innerHTML="";
+      if(!musics.length){
+        tabsContainer.innerHTML="<p>Nenhuma música para este dia.</p>";
+        songTitle.textContent = "Nenhuma música selecionada";
+        audioPlay.style.display="none";
+        lyricsEl.textContent="";
+        return;
+      }
+      musics.forEach((m,i)=>{
+        const btn = document.createElement("button");
+        btn.textContent = m.posicao ? `Pos ${m.posicao}` : `Música ${i+1}`;
+        if(i===0) btn.classList.add("active");
+        btn.addEventListener("click", ()=>{
+          document.querySelectorAll("#tabsContainer button").forEach(b=>b.classList.remove("active"));
+          btn.classList.add("active");
+          playMusic(m);
+        });
+        tabsContainer.appendChild(btn);
+      });
+      playMusic(musics[0]);
+    }
+
+    function playMusic(m){
+      songTitle.textContent = m.titulo;
+      audioPlay.src = m.audio;
+      audioPlay.style.display="block";
+      audioPlay.play();
+      lyricsEl.textContent = m.letra || "";
+    }
+
+    // Inicial
+    renderCalendar();
   </script>
 </body>
 </html>
