@@ -1,374 +1,429 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8"/>
-  <title>Painel Admin - Músicas</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <style>
-    /* Reset e fontes */
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-    }
-    button, input, textarea {
-      font-family: inherit;
-    }
+<meta charset="utf-8"/>
+<title>Painel Admin - Músicas</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+/* Reset e fontes */
+body {
+margin: 0;
+font-family: 'Inter', sans-serif;
+background: #f3f4f6;
+color: #111827;
+}
+button, input, textarea {
+font-family: inherit;
+}
 
-    /* Container */
-    .container {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 1.5rem;
-      background: #fff;
-      border-radius: 0.75rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
+/* Container */
+.container {
+max-width: 900px;
+margin: 2rem auto;
+padding: 1.5rem;
+background: #fff;
+border-radius: 0.75rem;
+box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
-    h2, h3, h4 {
-      margin: 0.5rem 0;
-    }
+h2, h3, h4 {
+margin: 0.5rem 0;
+}
 
-    /* Inputs e botões */
-    input, textarea, select {
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      margin-top: 0.25rem;
-      margin-bottom: 0.75rem;
-      font-size: 1rem;
-    }
+/* Inputs e botões */
+input, textarea, select {
+width: 100%;
+padding: 0.5rem 0.75rem;
+border: 1px solid #d1d5db;
+border-radius: 0.5rem;
+margin-top: 0.25rem;
+margin-bottom: 0.75rem;
+font-size: 1rem;
+}
 
-    button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
+button {
+padding: 0.5rem 1rem;
+border: none;
+border-radius: 0.5rem;
+cursor: pointer;
+font-weight: 500;
+transition: all 0.2s;
+}
 
-    button.primary {
-      background-color: #4f46e5;
-      color: white;
-    }
-    button.primary:hover {
-      background-color: #4338ca;
-    }
+button.primary {
+background-color: #4f46e5;
+color: white;
+}
+button.primary:hover {
+background-color: #4338ca;
+}
 
-    button.warning {
-      background-color: #f59e0b;
-      color: white;
-    }
-    button.warning:hover {
-      background-color: #d97706;
-    }
+button.warning {
+background-color: #f59e0b;
+color: white;
+}
+button.warning:hover {
+background-color: #d97706;
+}
 
-    button.danger {
-      background-color: #ef4444;
-      color: white;
-    }
-    button.danger:hover {
-      background-color: #b91c1c;
-    }
+button.danger {
+background-color: #ef4444;
+color: white;
+}
+button.danger:hover {
+background-color: #b91c1c;
+}
 
-    button.cancel {
-      background-color: #9ca3af;
-      color: white;
-    }
+button.cancel {
+background-color: #9ca3af;
+color: white;
+}
 
-    /* Grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-    }
+/* Grid */
+.grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 1rem;
+}
 
-    /* Lista */
-    .list-item {
-      border-bottom: 1px solid #e5e7eb;
-      padding: 0.75rem 0;
-    }
-    .list-item audio {
-      width: 100%;
-      margin-top: 0.5rem;
-    }
+/* Lista */
+.list-item {
+border-bottom: 1px solid #e5e7eb;
+padding: 0.75rem 0;
+}
+.list-item audio {
+width: 100%;
+margin-top: 0.5rem;
+}
 
-    /* Botão voltar */
-    .back-btn {
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      background: linear-gradient(135deg, #6366f1, #818cf8);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.5);
-      border: none;
-      cursor: pointer;
-      z-index: 1000;
-      transition: all 0.2s;
-    }
-    .back-btn:hover {
-      transform: scale(1.05);
-    }
+/* Botão voltar */
+.back-btn {
+position: fixed;
+top: 1rem;
+left: 1rem;
+background: linear-gradient(135deg, #6366f1, #818cf8);
+color: white;
+padding: 0.5rem 1rem;
+border-radius: 0.5rem;
+box-shadow: 0 4px 12px rgba(99,102,241,0.5);
+border: none;
+cursor: pointer;
+z-index: 1000;
+transition: all 0.2s;
+}
+.back-btn:hover {
+transform: scale(1.05);
+}
 
-    /* Progress */
-    progress {
-      width: 100%;
-      height: 0.75rem;
-      border-radius: 0.375rem;
-      overflow: hidden;
-      margin-top: 0.25rem;
-      margin-bottom: 0.5rem;
-    }
+/* Progress */
+progress {
+width: 100%;
+height: 0.75rem;
+border-radius: 0.375rem;
+overflow: hidden;
+margin-top: 0.25rem;
+margin-bottom: 0.5rem;
+}
 
-    /* Mobile */
-    @media(max-width: 640px){
-      .grid { grid-template-columns: 1fr; }
-    }
-  </style>
+/* Mobile */
+@media(max-width: 640px){
+.grid { grid-template-columns: 1fr; }
+}
+</style>
 </head>
 <body>
-  <button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
+<button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
 
-  <div class="container">
-    <div id="loginArea">
-      <h3>Login</h3>
-      <form id="loginForm">
-        <input name="username" placeholder="Usuário" required/>
-        <input name="password" type="password" placeholder="Senha" required/>
-        <button type="submit" class="primary">Entrar</button>
-      </form>
-    </div>
+<div class="container">
+<div id="loginArea">
+<h3>Login</h3>
+<form id="loginForm">
+<input name="username" placeholder="Usuário" required/>
+<input name="password" type="password" placeholder="Senha" required/>
+<button type="submit" class="primary">Entrar</button>
+</form>
+</div>
 
-    <div id="adminArea" style="display:none">
-      <div class="top" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-        <h2>Painel Admin</h2>
-        <button id="logoutBtn" class="primary" style="display:none">Sair</button>
-      </div>
+<div id="adminArea" style="display:none">
+<div class="top" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+<h2>Painel Admin</h2>
+<button id="logoutBtn" class="primary" style="display:none">Sair</button>
+</div>
 
-      <h3>Adicionar / Editar Música</h3>
-      <form id="musicForm">
-        <input type="hidden" name="id" />
-        <div class="grid">
-          <div>
-            <label>Data</label>
-            <input type="date" name="data" required />
-          </div>
-          <div>
-            <label>Posição</label>
-            <input name="posicao" placeholder="1, 2, ..." />
-          </div>
-        </div>
-        <input name="titulo" placeholder="Título da música"/>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-          <input id="audioUrl" name="audio" placeholder="URL do arquivo .mp3" style="flex:1"/>
-          <div style="display:flex; flex-direction:column; gap:0.5rem; width:150px;">
-            <input id="audioFile" type="file" accept="audio/*" />
-            <button id="uploadBtn" type="button" class="primary">Upload</button>
-            <progress id="uploadProgress" value="0" max="100" style="display:none;"></progress>
-          </div>
-        </div>
-        <input name="capa" placeholder="URL da capa (opcional)"/>
-        <textarea name="letra" rows="6" placeholder="Letra (opcional)"></textarea>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-          <button type="submit" id="saveBtn" class="primary">Salvar</button>
-          <button id="cancelEditBtn" type="button" class="cancel" style="display:none;">Cancelar</button>
-          <button id="previewBtn" type="button" class="warning">Preview</button>
-        </div>
-      </form>
+<h3>Adicionar / Editar Música</h3>
+<form id="musicForm">
+<input type="hidden" name="id" />
+<div class="grid">
+<div>
+<label>Data</label>
+<input type="date" name="data" required />
+</div>
+<div>
+<label>Posição</label>
+<input name="posicao" placeholder="1, 2, ..." />
+</div>
+</div>
+<input name="titulo" placeholder="Título da música"/>
+<div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+<input id="audioUrl" name="audio" placeholder="URL do arquivo .mp3" style="flex:1"/>
+<div style="display:flex; flex-direction:column; gap:0.5rem; width:150px;">
+<input id="audioFile" type="file" accept="audio/*" />
+<button id="uploadBtn" type="button" class="primary">Upload</button>
+<progress id="uploadProgress" value="0" max="100" style="display:none;"></progress>
+</div>
+</div>
+<input name="capa" placeholder="URL da capa (opcional)"/>
+<textarea name="letra" rows="6" placeholder="Letra (opcional)"></textarea>
+<div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+<button type="submit" id="saveBtn" class="primary">Salvar</button>
+<button id="cancelEditBtn" type="button" class="cancel" style="display:none;">Cancelar</button>
+<button id="previewBtn" type="button" class="warning">Preview</button>
+</div>
+</form>
 
-      <hr style="margin:1rem 0"/>
-      <h4>Músicas existentes</h4>
+<hr style="margin:1rem 0"/>
+<h4>Músicas existentes</h4>
+      <div id="listaMusicas" style="max-height:400px; overflow-y:auto;"></div>
       <div id="listaMusicas"></div>
 
-      <hr style="margin:1rem 0"/>
-      <h4>Últimos acessos</h4>
-      <div id="listaLogs"></div>
-    </div>
-  </div>
+<hr style="margin:1rem 0"/>
+<h4>Últimos acessos</h4>
+<div id="listaLogs"></div>
+</div>
+</div>
 
-  <script>
-    const loginForm = document.getElementById("loginForm");
-    const musicForm = document.getElementById("musicForm");
-    const loginArea = document.getElementById("loginArea");
-    const adminArea = document.getElementById("adminArea");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const listaMusicas = document.getElementById("listaMusicas");
-    const audioFile = document.getElementById("audioFile");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const uploadProgress = document.getElementById("uploadProgress");
-    const audioUrlInput = document.getElementById("audioUrl");
-    const previewBtn = document.getElementById("previewBtn");
-    const saveBtn = document.getElementById("saveBtn");
-    const cancelEditBtn = document.getElementById("cancelEditBtn");
+<script>
+const loginForm = document.getElementById("loginForm");
+const musicForm = document.getElementById("musicForm");
+const loginArea = document.getElementById("loginArea");
+const adminArea = document.getElementById("adminArea");
+const logoutBtn = document.getElementById("logoutBtn");
+const listaMusicas = document.getElementById("listaMusicas");
+const audioFile = document.getElementById("audioFile");
+const uploadBtn = document.getElementById("uploadBtn");
+const uploadProgress = document.getElementById("uploadProgress");
+const audioUrlInput = document.getElementById("audioUrl");
+const previewBtn = document.getElementById("previewBtn");
+const saveBtn = document.getElementById("saveBtn");
+const cancelEditBtn = document.getElementById("cancelEditBtn");
     const listaLogs = document.getElementById("listaLogs");
 
-    loginForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(loginForm);
-      const body = { username: fd.get("username"), password: fd.get("password") };
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      if(res.ok){
-        loginArea.style.display="none";
-        adminArea.style.display="block";
-        logoutBtn.style.display="inline-block";
-        carregarLista();
-        carregarLogs();
-      } else {
-        alert((await res.json())?.error || "Erro no login");
-      }
-    };
+// Login
+loginForm.onsubmit = async (e) => {
+e.preventDefault();
+const fd = new FormData(loginForm);
+const body = { username: fd.get("username"), password: fd.get("password") };
+const res = await fetch("/api/login", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify(body)
+});
+if(res.ok){
+loginArea.style.display="none";
+adminArea.style.display="block";
+logoutBtn.style.display="inline-block";
+carregarLista();
+carregarLogs();
+} else {
+alert((await res.json())?.error || "Erro no login");
+}
+};
 
-    logoutBtn.onclick = async () => {
-      await fetch("/api/logout", { method:"POST" });
-      loginArea.style.display="block";
-      adminArea.style.display="none";
-      logoutBtn.style.display="none";
-    };
+// Logout
+logoutBtn.onclick = async () => {
+await fetch("/api/logout", { method:"POST" });
+loginArea.style.display="block";
+adminArea.style.display="none";
+logoutBtn.style.display="none";
+};
 
-    uploadBtn.onclick = () => {
-      if(!audioFile.files.length) return alert("Selecione um arquivo primeiro");
-      const file = audioFile.files[0];
-      const fd = new FormData();
-      fd.append("audio", file);
+// Upload
+uploadBtn.onclick = () => {
+if(!audioFile.files.length) return alert("Selecione um arquivo primeiro");
+const file = audioFile.files[0];
+const fd = new FormData();
+fd.append("audio", file);
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST","/api/upload",true);
-      uploadBtn.disabled = true;
-      uploadBtn.textContent="Enviando...";
-      uploadProgress.style.display="block";
-      uploadProgress.value=0;
+const xhr = new XMLHttpRequest();
+xhr.open("POST","/api/upload",true);
+uploadBtn.disabled = true;
+uploadBtn.textContent="Enviando...";
+uploadProgress.style.display="block";
+uploadProgress.value=0;
 
-      xhr.upload.onprogress = (e) => {
-        if(e.lengthComputable){
-          const percent = Math.round((e.loaded/e.total)*100);
-          uploadProgress.value = percent;
-          uploadBtn.textContent = `Enviando... ${percent}%`;
-        }
-      };
+xhr.upload.onprogress = (e) => {
+if(e.lengthComputable){
+const percent = Math.round((e.loaded/e.total)*100);
+uploadProgress.value = percent;
+uploadBtn.textContent = `Enviando... ${percent}%`;
+}
+};
 
-      xhr.onload = () => {
-        uploadBtn.disabled = false;
-        uploadBtn.textContent="Upload";
-        uploadProgress.style.display="none";
-        try{
-          const res = JSON.parse(xhr.responseText);
-          if(xhr.status===200){
-            audioUrlInput.value=res.url;
-            alert("Upload feito! URL preenchida.");
-          } else alert(res?.error||"Erro no upload");
-        } catch{
-          alert("Erro no upload");
-        }
-      };
-      xhr.onerror = () => {
-        uploadBtn.disabled=false;
-        uploadBtn.textContent="Upload";
-        uploadProgress.style.display="none";
-        alert("Erro na conexão durante o upload.");
-      };
-      xhr.send(fd);
-    };
+xhr.onload = () => {
+uploadBtn.disabled = false;
+uploadBtn.textContent="Upload";
+uploadProgress.style.display="none";
+try{
+const res = JSON.parse(xhr.responseText);
+if(xhr.status===200){
+audioUrlInput.value=res.url;
+alert("Upload feito! URL preenchida.");
+} else alert(res?.error||"Erro no upload");
+} catch{
+alert("Erro no upload");
+}
+};
+xhr.onerror = () => {
+uploadBtn.disabled=false;
+uploadBtn.textContent="Upload";
+uploadProgress.style.display="none";
+alert("Erro na conexão durante o upload.");
+};
+xhr.send(fd);
+};
 
-    musicForm.onsubmit = async (e)=>{
-      e.preventDefault();
-      const fd = new FormData(musicForm);
-      const json = Object.fromEntries(fd.entries());
-      if(!json.posicao) delete json.posicao;
+// Salvar/Atualizar música
+musicForm.onsubmit = async (e)=>{
+e.preventDefault();
+const fd = new FormData(musicForm);
+const json = Object.fromEntries(fd.entries());
+if(!json.posicao) delete json.posicao;
 
-      const url = json.id ? `/api/musicas/${json.id}` : "/api/musicas";
-      const method = json.id ? "PUT" : "POST";
+const url = json.id ? `/api/musicas/${json.id}` : "/api/musicas";
+const method = json.id ? "PUT" : "POST";
 
-      const res = await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(json)});
-      if(res.ok){
-        alert("Música salva!");
-        musicForm.reset();
-        saveBtn.textContent="Salvar";
-        cancelEditBtn.style.display="none";
-        carregarLista();
-      } else alert((await res.json())?.error||"Erro ao salvar");
-    };
+const res = await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(json)});
+if(res.ok){
+alert("Música salva!");
+musicForm.reset();
+saveBtn.textContent="Salvar";
+cancelEditBtn.style.display="none";
+carregarLista();
+} else alert((await res.json())?.error||"Erro ao salvar");
+};
 
+// Preview
+    previewBtn.onclick = ()=>{
     previewBtn.onclick = () => {
-      const url = audioUrlInput.value;
+const url = audioUrlInput.value;
+      if(url) window.open(url,"_blank");
+      else alert("Nenhum áudio selecionado.");
       if(!url) return alert("Coloque a URL de áudio");
       const audio = new Audio(url);
       audio.play();
-    };
+};
 
-    cancelEditBtn.onclick = () => {
-      musicForm.reset();
-      saveBtn.textContent="Salvar";
-      cancelEditBtn.style.display="none";
-    };
+// Cancelar edição
+cancelEditBtn.onclick = () => {
+musicForm.reset();
+saveBtn.textContent="Salvar";
+cancelEditBtn.style.display="none";
+};
 
-    async function carregarLista(){
+// Carregar lista de músicas
+async function carregarLista(){
+      listaMusicas.innerHTML="Carregando...";
+      const res = await fetch("/api/admin/musicas");
       const res = await fetch("/api/musicas");
-      if(res.ok){
-        const musics = await res.json();
-        listaMusicas.innerHTML="";
+if(res.ok){
+const musics = await res.json();
+listaMusicas.innerHTML="";
         if(musics.length===0){
           listaMusicas.textContent="Nenhuma música cadastrada.";
           return;
         }
-        musics.forEach(m=>{
-          const div = document.createElement("div");
-          div.className="list-item";
-          div.innerHTML=`<strong>${m.titulo}</strong> | Data: ${m.data} | Posição: ${m.posicao||"-"}
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem;">
-            <button class="primary" onclick="editar(${m.id})">Editar</button>
-            <button class="danger" onclick="deletar(${m.id})">Excluir</button>
-            <audio controls src="${m.audio}"></audio>
-          </div>`;
-          listaMusicas.appendChild(div);
+musics.forEach(m=>{
+const div = document.createElement("div");
+div.className="list-item";
+          div.innerHTML=`
+            <strong>${m.data} - ${m.titulo}</strong>
+            ${m.posicao?`<span> | Posição: ${m.posicao}</span>`:""}
+            <div>
+              <audio controls src="${m.audio}"></audio>
+              <div style="margin-top:0.25rem;">
+                <button class="primary" onclick="editar(${m.id})">Editar</button>
+                <button class="danger" onclick="deletar(${m.id})">Deletar</button>
+              </div>
+            </div>
+          div.innerHTML = `
+            <strong>${m.posicao ? m.posicao+". " : ""}${m.titulo}</strong> <br/>
+            ${m.data ? new Date(m.data).toLocaleDateString() : ""} 
+            ${m.audio ? `<audio controls src="${m.audio}"></audio>` : ""}
+            <br/>
+            <button class="primary" onclick="editar('${m.id}')">Editar</button>
+            <button class="danger" onclick="excluir('${m.id}')">Excluir</button>
+         `;
+listaMusicas.appendChild(div);
+});
+      } else listaMusicas.innerHTML="Erro ao carregar músicas";
+      } else listaMusicas.textContent="Erro ao carregar músicas";
+}
+
+    // Editar música
+    window.editar = (id)=>{
+      fetch(`/api/admin/musicas/${id}`).then(r=>r.json()).then(m=>{
+        Object.keys(m).forEach(k=>{
+          if(musicForm[k]) musicForm[k].value=m[k];
+        });
+    window.editar = async (id) => {
+      const res = await fetch(`/api/musicas/${id}`);
+      if(res.ok){
+        const m = await res.json();
+        for(const k in m) if(musicForm.elements[k]) musicForm.elements[k].value=m[k];
+saveBtn.textContent="Atualizar";
+cancelEditBtn.style.display="inline-block";
+        window.scrollTo({top:0,behavior:"smooth"});
+      }).catch(()=>alert("Erro ao carregar música"));
+      } else alert("Erro ao buscar música");
+};
+
+    // Deletar música
+    window.deletar = (id)=>{
+      if(confirm("Deseja deletar essa música?")){
+        fetch(`/api/musicas/${id}`,{method:"DELETE"}).then(r=>{
+          if(r.ok) carregarLista();
+          else alert("Erro ao deletar");
         });
       }
-    }
+    window.excluir = async (id) => {
+      if(!confirm("Deseja realmente excluir?")) return;
+      const res = await fetch(`/api/musicas/${id}`, { method:"DELETE" });
+      if(res.ok) carregarLista();
+      else alert("Erro ao excluir");
+};
 
-    window.editar = (id) => {
-      fetch(`/api/musicas/${id}`).then(r=>r.json()).then(m=>{
-        Object.keys(m).forEach(k=>{
-          if(musicForm[k]) musicForm[k].value = m[k];
-        });
-        saveBtn.textContent="Atualizar";
-        cancelEditBtn.style.display="inline-block";
-        window.scrollTo({top:0, behavior:"smooth"});
-      });
-    };
-
-    window.deletar = async (id) => {
-      if(!confirm("Confirma exclusão?")) return;
-      const res = await fetch(`/api/musicas/${id}`,{method:"DELETE"});
-      if(res.ok){
-        alert("Música removida!");
-        carregarLista();
-      } else alert((await res.json())?.error||"Erro ao deletar");
-    };
-
-    async function carregarLogs(){
-      const res = await fetch("/api/admin/logs");
-      if(res.ok){
-        const logs = await res.json();
+// Carregar logs
+async function carregarLogs(){
+const res = await fetch("/api/admin/logs");
+      listaLogs.innerHTML="Carregando...";
+if(res.ok){
+const logs = await res.json();
+        const container = document.getElementById("listaLogs");
+        container.innerHTML="";
         listaLogs.innerHTML="";
         if(logs.length===0){
-          listaLogs.textContent="Sem registros.";
+          listaLogs.textContent="Nenhum acesso registrado.";
           return;
         }
-        logs.forEach(l=>{
-          const div = document.createElement("div");
-          div.textContent=`${l.user} - ${l.action} - ${l.timestamp}`;
+logs.forEach(l=>{
+const div = document.createElement("div");
+div.style.fontFamily="monospace";
+div.style.marginBottom="0.25rem";
+          div.textContent=`[${l.data}] ${l.user} - ${l.acao}`;
+          container.appendChild(div);
+          const data = l.data ? new Date(l.data) : null;
+          const dataStr = data ? `${String(data.getDate()).padStart(2,'0')}/${String(data.getMonth()+1).padStart(2,'0')}/${data.getFullYear()} ${String(data.getHours()).padStart(2,'0')}:${String(data.getMinutes()).padStart(2,'0')}:${String(data.getSeconds()).padStart(2,'0')}` : "Data desconhecida";
+          const user = l.user || "Desconhecido";
+          const acao = l.acao || "-";
+          div.textContent = `[${dataStr}] ${user} - ${acao}`;
           listaLogs.appendChild(div);
-        });
+});
       }
-    }
-  </script>
+      } else listaLogs.textContent="Erro ao carregar logs";
+}
+
+    // Atualizar logs a cada 30s
+    setInterval(carregarLogs, 30000);
+</script>
 </body>
 </html>
