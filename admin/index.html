@@ -11,7 +11,6 @@
       background: #f4f6fb;
       margin: 0;
     }
-
     .card {
       background: #fff;
       padding: 18px;
@@ -20,7 +19,6 @@
       margin: 20px auto;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
-
     input, textarea, select {
       width: 100%;
       padding: 8px;
@@ -30,7 +28,6 @@
       font-size: 16px;
       box-sizing: border-box;
     }
-
     button {
       padding: 10px 14px;
       border-radius: 8px;
@@ -41,17 +38,14 @@
       font-size: 16px;
       transition: background 0.3s ease;
     }
-
     button:hover {
       background: #3a54d6;
     }
-
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-
     .top {
       display: flex;
       gap: 12px;
@@ -59,26 +53,21 @@
       justify-content: space-between;
       flex-wrap: wrap;
     }
-
     .row {
       display: flex;
       gap: 8px;
     }
-
     .small {
       width: 120px;
     }
-
     .list-item {
       padding: 10px;
       border-bottom: 1px solid #eee;
       font-size: 16px;
     }
-
     .danger {
       background: #ff6b6b;
     }
-
     .back-btn {
       position: fixed;
       top: 20px;
@@ -95,79 +84,118 @@
       transition: box-shadow 0.3s ease, transform 0.15s ease;
       user-select: none;
     }
-
     .back-btn:hover {
       background: linear-gradient(135deg, #7a69ff, #5a4dff);
       box-shadow: 0 6px 20px rgba(122, 105, 255, 0.8);
       transform: scale(1.05);
     }
-
     .back-btn:focus {
       outline: 2px solid #a29bff;
       outline-offset: 3px;
       box-shadow: 0 0 10px #a29bff;
     }
-
     /* Mobile Responsivo */
     @media (max-width: 600px) {
       body {
         padding: 12px 10px;
       }
-
       .card {
         padding: 14px 12px;
         margin: 12px 8px;
         max-width: 100%;
       }
-
       .grid {
         grid-template-columns: 1fr;
       }
-
       input, textarea, select {
         font-size: 14px;
       }
-
       button {
         font-size: 14px;
         padding: 10px 12px;
       }
-
       .top {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
       }
-
       .list-item {
         padding: 8px 6px;
         font-size: 14px;
       }
-
       .back-btn {
         top: 12px;
         left: 12px;
         padding: 8px 12px;
         font-size: 13px;
       }
-
       #musicForm > div[style*="display:flex"][style*="gap:8px"] {
         flex-direction: column;
       }
-
       #musicForm > div[style*="display:flex"][style*="gap:6px"] {
         flex-direction: row;
         gap: 6px;
       }
-
       #musicForm > div[style*="display:flex"][style*="gap:8px"]:last-child {
         flex-wrap: wrap;
       }
-
       #musicForm > div[style*="display:flex"][style*="gap:8px"]:last-child > button {
         flex: 1 1 100%;
         margin-bottom: 8px;
       }
+    }
+
+    /* Logs estilos */
+    #listaLogs {
+      max-width: 900px;
+      margin-top: 24px;
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 0 14px #00000011;
+    }
+    .log-item {
+      border-bottom: 1px solid #eee;
+      padding: 12px 0;
+      font-size: 15px;
+      color: #444;
+    }
+    .log-item:last-child {
+      border-bottom: none;
+    }
+    .log-ip {
+      font-weight: 600;
+      color: #2a2a2a;
+    }
+    .log-date {
+      color: #666;
+      font-size: 13px;
+    }
+    .log-useragent {
+      font-style: italic;
+      color: #555;
+    }
+    .pagination {
+      text-align: center;
+      margin-top: 14px;
+    }
+    .pagination button {
+      background: #4b6cff;
+      color: white;
+      border: none;
+      margin: 0 5px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+    .pagination button:disabled {
+      background: #aab8ff88;
+      cursor: default;
+    }
+    .pagination button:hover:not(:disabled) {
+      background: #3a54d6;
     }
   </style>
 </head>
@@ -225,239 +253,350 @@
       <hr/>
       <h4>Músicas existentes</h4>
       <div id="listaMusicas"></div>
+
       <hr/>
       <h4>Últimos acessos</h4>
-      <div id="listaLogs"></div>
+      <div id="listaLogs">Carregando logs...</div>
+      <div class="pagination" id="paginacao"></div>
     </div>
   </div>
 
   <script>
+    // Elementos
     const loginForm = document.getElementById("loginForm");
-    const musicForm = document.getElementById("musicForm");
     const loginArea = document.getElementById("loginArea");
     const adminArea = document.getElementById("adminArea");
     const logoutBtn = document.getElementById("logoutBtn");
+
+    const musicForm = document.getElementById("musicForm");
     const listaMusicas = document.getElementById("listaMusicas");
-    const audioFile = document.getElementById("audioFile");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const audioUrlInput = document.getElementById("audioUrl");
     const previewBtn = document.getElementById("previewBtn");
+    const audioUrlInput = document.getElementById("audioUrl");
+    const audioFileInput = document.getElementById("audioFile");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    // Logs
     const listaLogs = document.getElementById("listaLogs");
+    const paginacaoDiv = document.getElementById("paginacao");
 
-    // Formatação data/hora legível
-    function formatarDataHora(isoString) {
-      const data = new Date(isoString);
-      return data.toLocaleString('pt-BR', {
-        dateStyle: 'short',
-        timeStyle: 'medium',
-      });
-    }
-
-    // Limpa IP, pega só o primeiro (no caso de IPs múltiplos)
-    function limparIP(ipString) {
-      return ipString ? ipString.split(',')[0].trim() : '';
-    }
-
-    // Resume user agent para navegador + sistema operacional básico
-    function resumirUserAgent(ua) {
-      const navegadores = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'MSIE', 'Trident'];
-      let navegadorEncontrado = navegadores.find(nav => ua.includes(nav)) || 'Desconhecido';
-
-      let so = 'Desconhecido';
-      if (ua.includes('Windows NT 10')) so = 'Windows 10';
-      else if (ua.includes('Windows NT 6.1')) so = 'Windows 7';
-      else if (ua.includes('Macintosh')) so = 'Mac OS';
-      else if (ua.includes('Linux')) so = 'Linux';
-      else if (ua.includes('Android')) so = 'Android';
-      else if (ua.includes('iPhone')) so = 'iOS';
-
-      return `${navegadorEncontrado} / ${so}`;
-    }
-
-    // Busca localização do IP via API pública ip-api.com
-    async function buscarLocalizacao(ip) {
-      try {
-        const res = await fetch(`https://ip-api.com/json/${ip}?lang=pt`);
-        if (!res.ok) return '';
-        const data = await res.json();
-        if (data.status === 'success') {
-          return `${data.city || ''}, ${data.regionName || ''}, ${data.country || ''}`.replace(/^(, )+|(, )+$/g, '');
-        }
-      } catch {
-        return '';
-      }
-      return '';
-    }
-
-    // Paginação dos logs
+    // Estado global
+    let musics = [];
+    let logs = [];
     let paginaAtual = 1;
-    const logsPorPagina = 20;
-    let logsCache = [];
+    const logsPorPagina = 10;
 
-    async function carregarLogs(pagina = 1) {
-      const res = await fetch("/api/admin/logs");
-      if (!res.ok) return;
-      logsCache = await res.json();
-
-      paginaAtual = pagina;
-      mostrarPaginaLogs(paginaAtual);
-    }
-
-    async function mostrarPaginaLogs(pagina) {
-      const start = (pagina - 1) * logsPorPagina;
-      const end = start + logsPorPagina;
-      const logsPagina = logsCache.slice(start, end);
-
-      const lista = await Promise.all(logsPagina.map(async log => {
-        const ipLimpo = limparIP(log.ip);
-        const localizacao = await buscarLocalizacao(ipLimpo);
-        return `
-          <div class="list-item">
-            <strong>${formatarDataHora(log.accessed_at)}</strong><br/>
-            IP: ${ipLimpo} ${localizacao ? ` — ${localizacao}` : ''}<br/>
-            Navegador/SO: ${resumirUserAgent(log.user_agent)}
-          </div>
-        `;
-      }));
-
-      listaLogs.innerHTML = lista.join('') + paginacaoHTML();
-    }
-
-    function paginacaoHTML() {
-      const totalPaginas = Math.ceil(logsCache.length / logsPorPagina);
-      if (totalPaginas <= 1) return '';
-
-      let html = `<div style="margin-top:12px; display:flex; justify-content:center; gap:10px;">`;
-
-      if (paginaAtual > 1) {
-        html += `<button onclick="mostrarPaginaLogs(${paginaAtual - 1})">⬅ Anterior</button>`;
-      } else {
-        html += `<button disabled style="opacity:0.4;cursor:default;">⬅ Anterior</button>`;
-      }
-
-      html += `<span style="padding:0 8px; line-height:32px;">Página ${paginaAtual} de ${totalPaginas}</span>`;
-
-      if (paginaAtual < totalPaginas) {
-        html += `<button onclick="mostrarPaginaLogs(${paginaAtual + 1})">Próximo ➡</button>`;
-      } else {
-        html += `<button disabled style="opacity:0.4;cursor:default;">Próximo ➡</button>`;
-      }
-
-      html += `</div>`;
-      return html;
-    }
-
-    // Login
+    // Login simples (na API /api/admin/login)
     loginForm.onsubmit = async (e) => {
       e.preventDefault();
-      const fd = new FormData(loginForm);
-      const body = { username: fd.get("username"), password: fd.get("password") };
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      if (res.ok) {
+      const data = new FormData(loginForm);
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          body: data
+        });
+        if (!res.ok) throw new Error("Login falhou");
+        alert("Login bem-sucedido!");
         loginArea.style.display = "none";
         adminArea.style.display = "block";
         logoutBtn.style.display = "inline-block";
-        carregarLista();
-        carregarLogs(1);
-      } else {
-        const json = await res.json();
-        alert(json?.error || "Erro no login");
+        carregarMusicas();
+        carregarLogs();
+      } catch (err) {
+        alert("Erro no login: " + err.message);
       }
     };
 
-    // Logout
     logoutBtn.onclick = async () => {
-      await fetch("/api/logout");
-      location.reload();
+      try {
+        const res = await fetch('/api/admin/logout', { method: 'POST' });
+        if (!res.ok) throw new Error("Logout falhou");
+        alert("Você saiu");
+        loginArea.style.display = "block";
+        adminArea.style.display = "none";
+        logoutBtn.style.display = "none";
+        musics = [];
+        logs = [];
+        listaMusicas.innerHTML = "";
+        listaLogs.innerHTML = "";
+        paginacaoDiv.innerHTML = "";
+      } catch {
+        alert("Erro no logout");
+      }
     };
 
-    // Carregar lista de músicas
-    async function carregarLista() {
-      const res = await fetch("/api/admin");
-      if (!res.ok) return;
-      const dados = await res.json();
-
-      listaMusicas.innerHTML = dados
-        .map((m, i) => {
-          const capa = m.capa ? `<img src="${m.capa}" style="max-height:40px; vertical-align:middle; margin-right:8px; border-radius:4px;"/>` : '';
-          const letra = m.letra ? `<pre style="white-space: pre-wrap; font-size:14px; margin-top:6px;">${m.letra}</pre>` : '';
-          return `<div class="list-item" style="border-radius:8px; border: 1px solid #ddd; margin-bottom:8px; padding:8px;">
-            <strong>${i + 1}. ${capa}${m.titulo}</strong>
-            ${letra}
-            <br/>
-            <audio controls style="width:100%; max-width:300px;">
-              <source src="${m.audio}" type="audio/mpeg"/>
-              Seu navegador não suporta áudio.
-            </audio>
-          </div>`;
-        })
-        .join("");
+    // Carregar músicas do backend
+    async function carregarMusicas() {
+      listaMusicas.innerHTML = "Carregando músicas...";
+      try {
+        const res = await fetch('/api/admin/music');
+        if (!res.ok) throw new Error("Falha ao carregar músicas");
+        musics = await res.json();
+        mostrarMusicas();
+      } catch (err) {
+        listaMusicas.innerHTML = "Erro: " + err.message;
+      }
     }
 
-    // Upload do arquivo de áudio
-    uploadBtn.onclick = async () => {
-      if (!audioFile.files.length) {
-        alert("Selecione um arquivo para upload!");
+    // Mostrar músicas na lista
+    function mostrarMusicas() {
+      if (musics.length === 0) {
+        listaMusicas.innerHTML = "<p>Nenhuma música cadastrada.</p>";
         return;
       }
-      const file = audioFile.files[0];
-      const formData = new FormData();
-      formData.append("audio", file);
+      const html = musics.map((m, i) => `
+        <div class="list-item" style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="flex:1;">
+            <strong>${m.data || ''} — ${m.titulo || 'Sem título'}</strong><br/>
+            <small>${m.audio ? `<a href="${m.audio}" target="_blank">Áudio</a>` : "Sem áudio"}</small>
+          </div>
+          <div style="flex-shrink:0;">
+            <button onclick="editarMusica(${i})" title="Editar">✏️</button>
+            <button onclick="deletarMusica(${i})" class="danger" title="Excluir">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+      listaMusicas.innerHTML = html;
+    }
 
-      uploadBtn.disabled = true;
-      uploadBtn.textContent = "Enviando...";
+    // Editar música
+    window.editarMusica = (index) => {
+      const m = musics[index];
+      musicForm.data.value = m.data || "";
+      musicForm.posicao.value = index + 1;
+      musicForm.titulo.value = m.titulo || "";
+      musicForm.audio.value = m.audio || "";
+      musicForm.capa.value = m.capa || "";
+      musicForm.letra.value = m.letra || "";
+      window.scrollTo({top:0, behavior:"smooth"});
+    };
+
+    // Deletar música
+    window.deletarMusica = async (index) => {
+      if (!confirm("Confirma excluir essa música?")) return;
       try {
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const res = await fetch(`/api/admin/music/${index}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Falha ao deletar música");
+        alert("Música deletada");
+        carregarMusicas();
+      } catch (err) {
+        alert("Erro ao deletar: " + err.message);
+      }
+    };
+
+    // Upload de áudio para o servidor (se disponível)
+    uploadBtn.onclick = async () => {
+      if (!audioFileInput.files.length) {
+        alert("Selecione um arquivo de áudio para upload");
+        return;
+      }
+      const arquivo = audioFileInput.files[0];
+      const form = new FormData();
+      form.append("audio", arquivo);
+      try {
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = "Enviando...";
+        const res = await fetch("/api/admin/upload", { method: "POST", body: form });
         if (!res.ok) throw new Error("Upload falhou");
         const json = await res.json();
-        audioUrlInput.value = json.url;
-        alert("Upload realizado com sucesso!");
-      } catch {
-        alert("Falha ao enviar arquivo!");
+        audioUrlInput.value = json.url || "";
+        alert("Upload concluído!");
+      } catch (err) {
+        alert("Erro no upload: " + err.message);
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "Fazer upload";
       }
-      uploadBtn.disabled = false;
-      uploadBtn.textContent = "Fazer upload";
     };
 
-    // Salvar música (adicionar/editar)
+    // Salvar música (adicionar ou atualizar)
     musicForm.onsubmit = async (e) => {
       e.preventDefault();
-      const fd = new FormData(musicForm);
-      const body = {
-        data: fd.get("data"),
-        posicao: fd.get("posicao"),
-        titulo: fd.get("titulo"),
-        audio: fd.get("audio"),
-        capa: fd.get("capa"),
-        letra: fd.get("letra"),
+      const formData = new FormData(musicForm);
+      const dataEnviar = {
+        data: formData.get("data"),
+        titulo: formData.get("titulo"),
+        audio: formData.get("audio"),
+        capa: formData.get("capa"),
+        letra: formData.get("letra")
       };
-      const res = await fetch("/api/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
+      const posicaoStr = formData.get("posicao");
+      let url = "/api/admin/music";
+      let method = "POST";
+
+      // Se posição preenchida, vai ser PUT para atualizar a música na posição (index)
+      if (posicaoStr) {
+        const pos = parseInt(posicaoStr);
+        if (!isNaN(pos) && pos > 0 && pos <= musics.length) {
+          url = `/api/admin/music/${pos - 1}`;
+          method = "PUT";
+        }
+      }
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dataEnviar)
+        });
+        if (!res.ok) throw new Error("Falha ao salvar música");
         alert("Música salva com sucesso!");
-        carregarLista();
         musicForm.reset();
-      } else {
-        alert("Erro ao salvar música.");
+        carregarMusicas();
+      } catch (err) {
+        alert("Erro ao salvar: " + err.message);
       }
     };
 
-    // Preview música
+    // Preview da música no player externo (abre em nova aba)
     previewBtn.onclick = () => {
       const url = audioUrlInput.value.trim();
       if (!url) {
-        alert("Coloque a URL do arquivo de áudio para preview.");
+        alert("Informe a URL do áudio para preview.");
         return;
       }
       window.open(url, "_blank");
     };
+
+    // --- LOGS ---
+
+    // Função para formatar data legível
+    function formatarDataHora(isoStr) {
+      const dt = new Date(isoStr);
+      return dt.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "medium" });
+    }
+
+    // Simplifica user agent para navegador e SO básicos
+    function resumirUserAgent(ua) {
+      let navegador = "Desconhecido";
+      if (/Chrome/.test(ua)) navegador = "Chrome";
+      else if (/Firefox/.test(ua)) navegador = "Firefox";
+      else if (/Safari/.test(ua) && !/Chrome/.test(ua)) navegador = "Safari";
+      else if (/Edge/.test(ua)) navegador = "Edge";
+      else if (/Opera/.test(ua)) navegador = "Opera";
+      else if (/MSIE|Trident/.test(ua)) navegador = "Internet Explorer";
+
+      let so = "Desconhecido";
+      if (/Windows NT 10/.test(ua)) so = "Windows 10";
+      else if (/Windows NT 6\.1/.test(ua)) so = "Windows 7";
+      else if (/Macintosh/.test(ua)) so = "Mac OS";
+      else if (/Linux/.test(ua)) so = "Linux";
+      else if (/Android/.test(ua)) so = "Android";
+      else if (/iPhone/.test(ua)) so = "iOS";
+
+      return navegador + " / " + so;
+    }
+
+    // Pega o primeiro IP (se vier com múltiplos)
+    function limparIP(ipString) {
+      return ipString ? ipString.split(",")[0].trim() : "";
+    }
+
+    // Busca localização da IP via ip-api.com, retorna string ou vazio
+    async function buscarLocalizacao(ip) {
+      if (!ip) return "";
+      try {
+        const resp = await fetch(`https://ip-api.com/json/${ip}?lang=pt`);
+        if (!resp.ok) return "";
+        const json = await resp.json();
+        if (json.status === "success") {
+          let local = [json.city, json.regionName, json.country].filter(Boolean).join(", ");
+          return local;
+        }
+      } catch {
+        return "";
+      }
+      return "";
+    }
+
+    // Exibe logs da página atual
+    async function mostrarPagina(pagina) {
+      listaLogs.innerHTML = "Carregando...";
+
+      paginaAtual = pagina;
+      const start = (pagina - 1) * logsPorPagina;
+      const end = start + logsPorPagina;
+      const logsPagina = logs.slice(start, end);
+
+      // Para cada log, pega localização e monta HTML
+      const itemsHTML = await Promise.all(
+        logsPagina.map(async (log) => {
+          const ipLimpo = limparIP(log.ip);
+          const localizacao = await buscarLocalizacao(ipLimpo);
+          const dataFormatada = formatarDataHora(log.accessed_at);
+          const uaResumido = resumirUserAgent(log.user_agent);
+
+          return `
+            <div class="log-item">
+              <div class="log-date">${dataFormatada}</div>
+              <div class="log-ip">IP: ${ipLimpo}${localizacao ? " — " + localizacao : ""}</div>
+              <div class="log-useragent">${uaResumido}</div>
+            </div>
+          `;
+        })
+      );
+
+      listaLogs.innerHTML = itemsHTML.join("") || "Nenhum log encontrado.";
+      montarPaginacao();
+    }
+
+    // Monta botões de paginação
+    function montarPaginacao() {
+      const totalPaginas = Math.ceil(logs.length / logsPorPagina);
+      if (totalPaginas <= 1) {
+        paginacaoDiv.innerHTML = "";
+        return;
+      }
+      let html = "";
+
+      html += `<button ${paginaAtual === 1 ? "disabled" : ""} onclick="mostrarPagina(${paginaAtual - 1})">⬅ Anterior</button>`;
+      html += `<span style="margin: 0 10px; font-weight: bold;">Página ${paginaAtual} de ${totalPaginas}</span>`;
+      html += `<button ${paginaAtual === totalPaginas ? "disabled" : ""} onclick="mostrarPagina(${paginaAtual + 1})">Próximo ➡</button>`;
+
+      paginacaoDiv.innerHTML = html;
+    }
+
+    // Carrega logs da API
+    async function carregarLogs() {
+      listaLogs.innerHTML = "Carregando logs...";
+      try {
+        const res = await fetch("/api/admin/logs");
+        if (!res.ok) throw new Error("Erro ao carregar logs");
+        logs = await res.json();
+        mostrarPagina(1);
+      } catch (e) {
+        listaLogs.innerHTML = "Falha ao carregar logs: " + e.message;
+        paginacaoDiv.innerHTML = "";
+      }
+    }
+
+    // Inicializa - verifica se já está logado para mostrar o painel direto
+    async function init() {
+      try {
+        const res = await fetch("/api/admin/auth-status");
+        if (res.ok) {
+          loginArea.style.display = "none";
+          adminArea.style.display = "block";
+          logoutBtn.style.display = "inline-block";
+          carregarMusicas();
+          carregarLogs();
+        } else {
+          loginArea.style.display = "block";
+          adminArea.style.display = "none";
+          logoutBtn.style.display = "none";
+        }
+      } catch {
+        loginArea.style.display = "block";
+        adminArea.style.display = "none";
+        logoutBtn.style.display = "none";
+      }
+    }
+
+    init();
+
+    // Expor funções para acesso global para edição/deletar logs
+    window.editarMusica = window.editarMusica;
+    window.deletarMusica = window.deletarMusica;
+    window.mostrarPagina = mostrarPagina;
   </script>
 </body>
 </html>
