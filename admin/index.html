@@ -1,104 +1,323 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<title>Painel Admin - Música</title>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style>
-  body { font-family: Arial, Helvetica, sans-serif; padding: 20px; background: #f4f6fb; margin:0; }
-  .card { background: #fff; padding: 18px; border-radius: 8px; max-width: 900px; margin: 20px auto; box-shadow: 0 4px 16px rgba(0,0,0,0.08);}
-  input, textarea { width: 100%; padding: 8px; margin: 6px 0; border: 1px solid #ddd; border-radius: 6px; font-size:16px; box-sizing:border-box; }
-  button { padding: 10px 14px; border-radius: 8px; border:none; background:#4b6cff; color:#fff; cursor:pointer; font-size:16px; transition: background 0.3s ease;}
-  button:hover { background:#3a54d6; }
-  .list-item { padding: 10px; border-bottom:1px solid #eee; font-size:16px;}
-  .back-btn { position: fixed; top:20px; left:20px; background:linear-gradient(135deg,#5a4dff,#7a69ff); color:#e0e0ff; padding:10px 16px; border:none; border-radius:12px; cursor:pointer; font-size:14px; box-shadow:0 4px 12px rgba(90,77,255,0.6); z-index:1000; }
-  .log-ip { font-family: monospace; background: #e9f0ff; color:#1a237e; padding:6px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; font-weight:600; cursor:pointer; user-select:text;}
-  .log-ip svg { width:16px; height:16px; fill:#3f51b5; flex-shrink:0; }
-  .log-times { margin-top:4px; padding-left:20px; font-size:14px; display:none; color:#333; }
-</style>
+  <meta charset="UTF-8">
+  <title>Painel Admin - Músicas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f8;
+      color: #333;
+    }
+    h1, h2 {
+      color: #444;
+    }
+    form {
+      margin-bottom: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    input, textarea, button {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .list-item {
+      background: #fff;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    /* Estilo IP */
+    .log-ip {
+      font-family: monospace;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: text;
+      transition: background 0.2s ease;
+    }
+    .log-ip.ipv4 {
+      background: #e9f0ff;
+      color: #1a237e;
+    }
+    .log-ip.ipv6 {
+      background: #eafaea;
+      color: #1b5e20;
+    }
+    .log-ip:hover {
+      background: #d0d8ff;
+    }
+    .log-ip svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    progress {
+      height: 16px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    audio {
+      margin-top: 5px;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-<button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
 
-<div class="card">
-  <h2>Painel Admin</h2>
+  <h1>Painel Administrativo</h1>
 
-  <div id="musicSection">
-    <h3>Músicas existentes</h3>
-    <div id="listaMusicas"></div>
+  <div id="loginArea">
+    <form id="loginForm">
+      <h2>Login</h2>
+      <input type="text" id="usuario" placeholder="Usuário" required />
+      <input type="password" id="senha" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+    </form>
   </div>
 
-  <hr/>
+  <div id="adminArea" style="display:none;">
+    <button onclick="logout()">Sair</button>
 
-  <div id="logSection">
-    <h3>Últimos acessos</h3>
+    <h2 id="formTitle">Cadastrar Música</h2>
+    <form id="musicaForm">
+      <input type="hidden" id="musicaId" />
+      <input type="date" id="data" required />
+      <input type="number" id="posicao" placeholder="Posição (opcional)" />
+      <input type="text" id="titulo" placeholder="Título" required />
+
+      <input type="text" id="audioUrlInput" placeholder="URL do áudio" />
+      <div style="display:flex;flex-direction:column;gap:6px;width:150px">
+        <input id="audioFile" type="file" accept="audio/*" />
+        <button id="uploadBtn" type="button">Fazer upload</button>
+        <progress id="uploadProgress" value="0" max="100" style="width:100%;display:none"></progress>
+      </div>
+
+      <input type="text" id="capa" placeholder="URL da capa" />
+      <textarea id="letra" placeholder="Letra"></textarea>
+      <button type="submit" id="salvarBtn">Salvar</button>
+    </form>
+
+    <h2>Lista de Músicas</h2>
+    <div id="listaMusicas"></div>
+
+    <h2>Logs de Acesso</h2>
     <div id="listaLogs"></div>
   </div>
-</div>
 
-<script>
-  // --- DADOS SIMULADOS ---
-  const musicas = [
-    {data:"2025-08-12", titulo:"Música 1"},
-    {data:"2025-08-13", titulo:"Música 2"},
-    {data:"2025-08-13", titulo:"Música 3"},
-  ];
+  <script>
+    const loginForm = document.getElementById("loginForm");
+    const musicaForm = document.getElementById("musicaForm");
+    const listaMusicas = document.getElementById("listaMusicas");
+    const listaLogs = document.getElementById("listaLogs");
+    const audioUrlInput = document.getElementById("audioUrlInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const uploadProgress = document.getElementById("uploadProgress");
 
-  const logs = [
-    {ip:"192.168.0.1", hora:"08:15"},
-    {ip:"192.168.0.1", hora:"09:30"},
-    {ip:"10.0.0.2", hora:"10:00"},
-    {ip:"192.168.0.1", hora:"11:45"},
-    {ip:"10.0.0.2", hora:"12:05"},
-  ];
+    // Login
+    loginForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario: usuario.value, senha: senha.value })
+      });
+      if (res.ok) {
+        loginArea.style.display = "none";
+        adminArea.style.display = "block";
+        carregarMusicas();
+        carregarLogs();
+      } else {
+        alert("Login inválido");
+      }
+    };
 
-  // --- FUNÇÃO PARA LISTAR MÚSICAS ---
-  function loadMusicas() {
-    const lista = document.getElementById("listaMusicas");
-    lista.innerHTML = "";
-    musicas.forEach((m, idx) => {
-      const div = document.createElement("div");
-      div.className = "list-item";
-      div.textContent = `${idx+1} - ${m.data} - ${m.titulo}`;
-      lista.appendChild(div);
-    });
-  }
+    function logout() {
+      fetch("/api/logout", { method: "POST" });
+      location.reload();
+    }
 
-  // --- FUNÇÃO PARA LISTAR LOGS AGRUPADOS ---
-  function loadLogs() {
-    const lista = document.getElementById("listaLogs");
-    lista.innerHTML = "";
+    // Upload com progresso
+    uploadBtn.onclick = () => {
+      if (!audioFile.files || audioFile.files.length === 0) {
+        alert("Selecione um arquivo primeiro");
+        return;
+      }
+      const file = audioFile.files[0];
+      const fd = new FormData();
+      fd.append("audio", file);
 
-    const grouped = {};
-    logs.forEach(l => {
-      if(!grouped[l.ip]) grouped[l.ip] = [];
-      grouped[l.ip].push(l.hora);
-    });
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/upload", true);
 
-    Object.keys(grouped).forEach(ip => {
-      const div = document.createElement("div");
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = "Enviando...";
+      uploadProgress.style.display = "block";
+      uploadProgress.value = 0;
 
-      const ipSpan = document.createElement("span");
-      ipSpan.className = "log-ip";
-      ipSpan.innerHTML = `${ip} <svg viewBox="0 0 24 24"><path d="M12 16l-6-6h12z"/></svg>`;
-
-      const timesDiv = document.createElement("div");
-      timesDiv.className = "log-times";
-      timesDiv.textContent = grouped[ip].join(", ");
-
-      ipSpan.onclick = () => {
-        timesDiv.style.display = timesDiv.style.display === "block" ? "none" : "block";
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          uploadProgress.value = percent;
+          uploadBtn.textContent = `Enviando... ${percent}%`;
+        }
       };
 
-      div.appendChild(ipSpan);
-      div.appendChild(timesDiv);
-      lista.appendChild(div);
-    });
-  }
+      xhr.onload = () => {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "Fazer upload";
+        uploadProgress.style.display = "none";
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (xhr.status === 200) {
+            audioUrlInput.value = res.url;
+            alert("Upload feito! URL preenchida.");
+          } else {
+            alert(res?.error || "Erro no upload");
+          }
+        } catch {
+          alert("Erro no upload");
+        }
+      };
 
-  // --- CHAMADAS INICIAIS ---
-  loadMusicas();
-  loadLogs();
-</script>
+      xhr.onerror = () => {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "Fazer upload";
+        uploadProgress.style.display = "none";
+        alert("Erro na conexão durante o upload.");
+      };
+
+      xhr.send(fd);
+    };
+
+    // Salvar/editar música
+    musicaForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const id = musicaId.value;
+      const payload = {
+        data: data.value,
+        posicao: posicao.value,
+        titulo: titulo.value,
+        audio: audioUrlInput.value,
+        capa: capa.value,
+        letra: letra.value
+      };
+      const url = id ? `/api/musicas/${id}` : "/api/musicas";
+      const method = id ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        musicaForm.reset();
+        musicaId.value = "";
+        formTitle.textContent = "Cadastrar Música";
+        salvarBtn.textContent = "Salvar";
+        carregarMusicas();
+      } else {
+        alert("Erro ao salvar música");
+      }
+    };
+
+    async function carregarMusicas() {
+      const res = await fetch("/api/admin/musicas");
+      if (!res.ok) return;
+      const data = await res.json();
+      listaMusicas.innerHTML = data.map(r => `
+        <div class="list-item">
+          <strong>${r.data}</strong> - ${r.titulo}<br/>
+          <audio controls src="${r.audio}"></audio><br/>
+          <button onclick='editarMusica(${JSON.stringify(r)})'>Editar</button>
+          <button onclick='deletarMusica(${r.id})'>Excluir</button>
+        </div>
+      `).join("");
+    }
+
+    function editarMusica(r) {
+      musicaId.value = r.id;
+      data.value = r.data;
+      posicao.value = r.posicao || "";
+      titulo.value = r.titulo;
+      audioUrlInput.value = r.audio;
+      capa.value = r.capa || "";
+      letra.value = r.letra || "";
+      formTitle.textContent = "Editar Música";
+      salvarBtn.textContent = "Atualizar";
+    }
+
+    async function deletarMusica(id) {
+      if (!confirm("Excluir música?")) return;
+      const res = await fetch(`/api/musicas/${id}`, { method: "DELETE" });
+      if (res.ok) carregarMusicas();
+    }
+
+    // Funções IP e logs
+    function getIPClass(ip) {
+      return ip.includes(":") ? "ipv6" : "ipv4";
+    }
+
+    async function copiarIP(ip) {
+      try {
+        await navigator.clipboard.writeText(ip);
+        alert("IP copiado: " + ip);
+      } catch {
+        alert("Não foi possível copiar.");
+      }
+    }
+
+    function agruparPorIP(logs) {
+      const mapa = {};
+      logs.forEach(log => {
+        if (!mapa[log.ip]) {
+          mapa[log.ip] = [];
+        }
+        mapa[log.ip].push(log);
+      });
+      return mapa;
+    }
+
+    async function carregarLogs() {
+      const res = await fetch("/api/admin/logs");
+      if (!res.ok) return;
+      const rows = await res.json();
+
+      const agrupado = agruparPorIP(rows);
+
+      listaLogs.innerHTML = Object.entries(agrupado).map(([ip, acessos]) => {
+        const ipClass = getIPClass(ip);
+        const total = acessos.length;
+        return `
+          <div class="list-item">
+            <div class="log-ip ${ipClass}" onclick="toggleHoras('${ip.replace(/:/g,'-')}')" title="Clique para ver horários">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+              </svg>
+              ${ip} — ${total} acesso${total>1?'s':''}
+            </div>
+            <div id="horas-${ip.replace(/:/g,'-')}" style="display:none;margin-top:6px;padding-left:24px;font-family:monospace">
+              ${acessos.map(a => new Date(a.accessed_at).toLocaleTimeString("pt-BR")).join("<br/>")}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function toggleHoras(id) {
+      const el = document.getElementById("horas-" + id);
+      if (!el) return;
+      el.style.display = el.style.display === "none" ? "block" : "none";
+    }
+  </script>
 </body>
 </html>
