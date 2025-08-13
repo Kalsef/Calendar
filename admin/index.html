@@ -225,6 +225,9 @@
       <hr/>
       <h4>Músicas existentes</h4>
       <div id="listaMusicas"></div>
+      <hr/>
+      <h4>Últimos acessos</h4>
+      <div id="listaLogs"></div>
     </div>
   </div>
 
@@ -359,6 +362,19 @@
         alert("Erro ao deletar");
       }
     };
+    async function carregarLogs() {
+   const res = await fetch("/api/admin/logs");
+   if (!res.ok) return;
+   const rows = await res.json();
+   listaLogs.innerHTML = rows.map(log => {
+    return `<div class="list-item">
+      <strong>${log.accessed_at}</strong><br/>
+      IP: ${log.ip} <br/>
+      UA: ${log.user_agent}
+    </div>`;
+   }).join("");
+   }
+
   </script>
 </body>
 </html>
