@@ -257,6 +257,7 @@
         adminArea.style.display = "block";
         logoutBtn.style.display = "inline-block";
         carregarLista();
+        carregarLogs();
       } else {
         const json = await res.json();
         alert(json?.error || "Erro no login");
