@@ -1,384 +1,104 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8"/>
-  <title>Painel Admin - Calendário</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      padding: 20px;
-      background: #f4f6fb;
-      margin: 0;
-    }
-
-    .card {
-      background: #fff;
-      padding: 18px;
-      border-radius: 8px;
-      max-width: 900px;
-      margin: 20px auto;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    }
-
-    input, textarea, select {
-      width: 100%;
-      padding: 8px;
-      margin: 6px 0;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    button {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: none;
-      background: #4b6cff;
-      color: #fff;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background: #3a54d6;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .top {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .small {
-      width: 120px;
-    }
-
-    .list-item {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-      font-size: 16px;
-    }
-
-    .danger {
-      background: #ff6b6b;
-    }
-
-    .back-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: linear-gradient(135deg, #5a4dff, #7a69ff);
-      color: #e0e0ff;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(90, 77, 255, 0.6);
-      z-index: 1000;
-      transition: box-shadow 0.3s ease, transform 0.15s ease;
-      user-select: none;
-    }
-
-    .back-btn:hover {
-      background: linear-gradient(135deg, #7a69ff, #5a4dff);
-      box-shadow: 0 6px 20px rgba(122, 105, 255, 0.8);
-      transform: scale(1.05);
-    }
-
-    .back-btn:focus {
-      outline: 2px solid #a29bff;
-      outline-offset: 3px;
-      box-shadow: 0 0 10px #a29bff;
-    }
-
-    .log-ip {
-      font-family: monospace;
-      background: #e9f0ff;
-      color: #1a237e;
-      padding: 6px 10px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      user-select: text;
-    }
-
-    .log-ip svg {
-      width: 16px;
-      height: 16px;
-      fill: #3f51b5;
-      flex-shrink: 0;
-    }
-
-    .log-times {
-      margin-top: 4px;
-      padding-left: 20px;
-      font-size: 14px;
-      display: none;
-      color: #333;
-    }
-
-    /* Mobile Responsivo */
-    @media (max-width: 600px) {
-      body {
-        padding: 12px 10px;
-      }
-
-      .card {
-        padding: 14px 12px;
-        margin: 12px 8px;
-        max-width: 100%;
-      }
-
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      input, textarea, select {
-        font-size: 14px;
-      }
-
-      button {
-        font-size: 14px;
-        padding: 10px 12px;
-      }
-
-      .top {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-      }
-
-      .list-item {
-        padding: 8px 6px;
-        font-size: 14px;
-      }
-
-      .back-btn {
-        top: 12px;
-        left: 12px;
-        padding: 8px 12px;
-        font-size: 13px;
-      }
-
-      #musicForm > div[style*="display:flex"][style*="gap:8px"] {
-        flex-direction: column;
-      }
-
-      #musicForm > div[style*="display:flex"][style*="gap:6px"] {
-        flex-direction: row;
-        gap: 6px;
-      }
-
-      #musicForm > div[style*="display:flex"][style*="gap:8px"]:last-child {
-        flex-wrap: wrap;
-      }
-
-      #musicForm > div[style*="display:flex"][style*="gap:8px"]:last-child > button {
-        flex: 1 1 100%;
-        margin-bottom: 8px;
-      }
-    }
-  </style>
+<meta charset="utf-8"/>
+<title>Painel Admin - Música</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; padding: 20px; background: #f4f6fb; margin:0; }
+  .card { background: #fff; padding: 18px; border-radius: 8px; max-width: 900px; margin: 20px auto; box-shadow: 0 4px 16px rgba(0,0,0,0.08);}
+  input, textarea { width: 100%; padding: 8px; margin: 6px 0; border: 1px solid #ddd; border-radius: 6px; font-size:16px; box-sizing:border-box; }
+  button { padding: 10px 14px; border-radius: 8px; border:none; background:#4b6cff; color:#fff; cursor:pointer; font-size:16px; transition: background 0.3s ease;}
+  button:hover { background:#3a54d6; }
+  .list-item { padding: 10px; border-bottom:1px solid #eee; font-size:16px;}
+  .back-btn { position: fixed; top:20px; left:20px; background:linear-gradient(135deg,#5a4dff,#7a69ff); color:#e0e0ff; padding:10px 16px; border:none; border-radius:12px; cursor:pointer; font-size:14px; box-shadow:0 4px 12px rgba(90,77,255,0.6); z-index:1000; }
+  .log-ip { font-family: monospace; background: #e9f0ff; color:#1a237e; padding:6px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; font-weight:600; cursor:pointer; user-select:text;}
+  .log-ip svg { width:16px; height:16px; fill:#3f51b5; flex-shrink:0; }
+  .log-times { margin-top:4px; padding-left:20px; font-size:14px; display:none; color:#333; }
+</style>
 </head>
 <body>
-  <button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
+<button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
 
-  <div class="card">
-    <div class="top">
-      <h2>Painel Admin</h2>
-      <div>
-        <button id="logoutBtn" style="display:none">Sair</button>
-      </div>
-    </div>
+<div class="card">
+  <h2>Painel Admin</h2>
 
-    <div id="loginArea">
-      <h3>Login</h3>
-      <form id="loginForm">
-        <input name="username" placeholder="Usuário (ex: admin)" required/>
-        <input name="password" placeholder="Senha" type="password" required/>
-        <button type="submit">Entrar</button>
-      </form>
-    </div>
-
-    <div id="adminArea" style="display:none">
-      <h3>Adicionar / Editar Música</h3>
-      <form id="musicForm">
-        <div class="grid">
-          <div>
-            <label>Data (AAAA-MM-DD)</label>
-            <input name="data" placeholder="2025-08-06" required/>
-          </div>
-          <div>
-            <label>Posição (opcional — deixar vazio para adicionar ao final)</label>
-            <input name="posicao" placeholder="1, 2, ..." />
-          </div>
-        </div>
-
-        <input name="titulo" placeholder="Título da música"/>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="audioUrl" name="audio" placeholder="URL do arquivo .mp3 (ou faça upload abaixo)" />
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <input id="audioFile" type="file" accept="audio/*" />
-            <button id="uploadBtn" type="button">Fazer upload</button>
-          </div>
-        </div>
-
-        <input name="capa" placeholder="URL da capa (opcional)"/>
-        <textarea name="letra" rows="6" placeholder="Letra (opcional)"></textarea>
-        <div style="display:flex;gap:8px">
-          <button type="submit">Salvar</button>
-          <button id="previewBtn" type="button">Preview (abrir música)</button>
-        </div>
-      </form>
-
-      <hr/>
-      <h4>Músicas existentes</h4>
-      <div id="listaMusicas"></div>
-      <hr/>
-      <h4>Últimos acessos</h4>
-      <div id="listaLogs"></div>
-    </div>
+  <div id="musicSection">
+    <h3>Músicas existentes</h3>
+    <div id="listaMusicas"></div>
   </div>
 
-  <script>
-    const loginForm = document.getElementById("loginForm");
-    const musicForm = document.getElementById("musicForm");
-    const loginArea = document.getElementById("loginArea");
-    const adminArea = document.getElementById("adminArea");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const listaMusicas = document.getElementById("listaMusicas");
-    const listaLogs = document.getElementById("listaLogs");
-    const audioFile = document.getElementById("audioFile");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const audioUrlInput = document.getElementById("audioUrl");
-    const previewBtn = document.getElementById("previewBtn");
+  <hr/>
 
-    loginForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(loginForm);
-      const body = { username: fd.get("username"), password: fd.get("password") };
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      if (res.ok) {
-        loginArea.style.display = "none";
-        adminArea.style.display = "block";
-        logoutBtn.style.display = "inline-block";
-        loadMusicas();
-        loadLogs();
-      } else {
-        alert("Login falhou");
-      }
-    };
+  <div id="logSection">
+    <h3>Últimos acessos</h3>
+    <div id="listaLogs"></div>
+  </div>
+</div>
 
-    logoutBtn.onclick = () => {
-      fetch("/api/logout").then(() => location.reload());
-    };
+<script>
+  // --- DADOS SIMULADOS ---
+  const musicas = [
+    {data:"2025-08-12", titulo:"Música 1"},
+    {data:"2025-08-13", titulo:"Música 2"},
+    {data:"2025-08-13", titulo:"Música 3"},
+  ];
 
-    musicForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(musicForm);
-      const body = {
-        data: fd.get("data"),
-        posicao: fd.get("posicao"),
-        titulo: fd.get("titulo"),
-        audio: fd.get("audio"),
-        capa: fd.get("capa"),
-        letra: fd.get("letra")
+  const logs = [
+    {ip:"192.168.0.1", hora:"08:15"},
+    {ip:"192.168.0.1", hora:"09:30"},
+    {ip:"10.0.0.2", hora:"10:00"},
+    {ip:"192.168.0.1", hora:"11:45"},
+    {ip:"10.0.0.2", hora:"12:05"},
+  ];
+
+  // --- FUNÇÃO PARA LISTAR MÚSICAS ---
+  function loadMusicas() {
+    const lista = document.getElementById("listaMusicas");
+    lista.innerHTML = "";
+    musicas.forEach((m, idx) => {
+      const div = document.createElement("div");
+      div.className = "list-item";
+      div.textContent = `${idx+1} - ${m.data} - ${m.titulo}`;
+      lista.appendChild(div);
+    });
+  }
+
+  // --- FUNÇÃO PARA LISTAR LOGS AGRUPADOS ---
+  function loadLogs() {
+    const lista = document.getElementById("listaLogs");
+    lista.innerHTML = "";
+
+    const grouped = {};
+    logs.forEach(l => {
+      if(!grouped[l.ip]) grouped[l.ip] = [];
+      grouped[l.ip].push(l.hora);
+    });
+
+    Object.keys(grouped).forEach(ip => {
+      const div = document.createElement("div");
+
+      const ipSpan = document.createElement("span");
+      ipSpan.className = "log-ip";
+      ipSpan.innerHTML = `${ip} <svg viewBox="0 0 24 24"><path d="M12 16l-6-6h12z"/></svg>`;
+
+      const timesDiv = document.createElement("div");
+      timesDiv.className = "log-times";
+      timesDiv.textContent = grouped[ip].join(", ");
+
+      ipSpan.onclick = () => {
+        timesDiv.style.display = timesDiv.style.display === "block" ? "none" : "block";
       };
-      const res = await fetch("/api/musicas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      if(res.ok) {
-        alert("Música salva!");
-        musicForm.reset();
-        loadMusicas();
-      } else alert("Erro ao salvar música");
-    };
 
-    uploadBtn.onclick = async () => {
-      if(audioFile.files.length === 0) return alert("Escolha um arquivo");
-      const fd = new FormData();
-      fd.append("file", audioFile.files[0]);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      if(res.ok) {
-        const data = await res.json();
-        audioUrlInput.value = data.url;
-        alert("Upload feito!");
-      } else alert("Falha no upload");
-    };
+      div.appendChild(ipSpan);
+      div.appendChild(timesDiv);
+      lista.appendChild(div);
+    });
+  }
 
-    previewBtn.onclick = () => {
-      const url = audioUrlInput.value;
-      if(url) window.open(url, "_blank");
-    };
-
-    async function loadMusicas() {
-      const res = await fetch("/api/musicas");
-      if(!res.ok) return;
-      const data = await res.json();
-      listaMusicas.innerHTML = "";
-      data.forEach((m, idx) => {
-        const div = document.createElement("div");
-        div.className = "list-item";
-        div.textContent = `${idx+1} - ${m.data} - ${m.titulo}`;
-        listaMusicas.appendChild(div);
-      });
-    }
-
-    async function loadLogs() {
-      const res = await fetch("/api/logs");
-      if(!res.ok) return;
-      const logs = await res.json(); // [{ip:"1.2.3.4", hora:"..."}]
-
-      // Agrupar por IP
-      const grouped = {};
-      logs.forEach(l => {
-        if(!grouped[l.ip]) grouped[l.ip] = [];
-        grouped[l.ip].push(l.hora);
-      });
-
-      listaLogs.innerHTML = "";
-      Object.keys(grouped).forEach(ip => {
-        const div = document.createElement("div");
-        const ipSpan = document.createElement("span");
-        ipSpan.className = "log-ip";
-        ipSpan.innerHTML = `${ip} <svg viewBox="0 0 24 24"><path d="M12 16l-6-6h12z"/></svg>`;
-        const timesDiv = document.createElement("div");
-        timesDiv.className = "log-times";
-        timesDiv.textContent = grouped[ip].join(", ");
-        ipSpan.onclick = () => {
-          timesDiv.style.display = timesDiv.style.display === "block" ? "none" : "block";
-        };
-        div.appendChild(ipSpan);
-        div.appendChild(timesDiv);
-        listaLogs.appendChild(div);
-      });
-    }
-  </script>
+  // --- CHAMADAS INICIAIS ---
+  loadMusicas();
+  loadLogs();
+</script>
 </body>
 </html>
