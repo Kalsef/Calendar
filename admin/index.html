@@ -242,7 +242,112 @@
     const uploadBtn = document.getElementById("uploadBtn");
     const audioUrlInput = document.getElementById("audioUrl");
     const previewBtn = document.getElementById("previewBtn");
+    const listaLogs = document.getElementById("listaLogs");
 
+    // Formatação data/hora legível
+    function formatarDataHora(isoString) {
+      const data = new Date(isoString);
+      return data.toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'medium',
+      });
+    }
+
+    // Limpa IP, pega só o primeiro (no caso de IPs múltiplos)
+    function limparIP(ipString) {
+      return ipString ? ipString.split(',')[0].trim() : '';
+    }
+
+    // Resume user agent para navegador + sistema operacional básico
+    function resumirUserAgent(ua) {
+      const navegadores = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'MSIE', 'Trident'];
+      let navegadorEncontrado = navegadores.find(nav => ua.includes(nav)) || 'Desconhecido';
+
+      let so = 'Desconhecido';
+      if (ua.includes('Windows NT 10')) so = 'Windows 10';
+      else if (ua.includes('Windows NT 6.1')) so = 'Windows 7';
+      else if (ua.includes('Macintosh')) so = 'Mac OS';
+      else if (ua.includes('Linux')) so = 'Linux';
+      else if (ua.includes('Android')) so = 'Android';
+      else if (ua.includes('iPhone')) so = 'iOS';
+
+      return `${navegadorEncontrado} / ${so}`;
+    }
+
+    // Busca localização do IP via API pública ip-api.com
+    async function buscarLocalizacao(ip) {
+      try {
+        const res = await fetch(`https://ip-api.com/json/${ip}?lang=pt`);
+        if (!res.ok) return '';
+        const data = await res.json();
+        if (data.status === 'success') {
+          return `${data.city || ''}, ${data.regionName || ''}, ${data.country || ''}`.replace(/^(, )+|(, )+$/g, '');
+        }
+      } catch {
+        return '';
+      }
+      return '';
+    }
+
+    // Paginação dos logs
+    let paginaAtual = 1;
+    const logsPorPagina = 20;
+    let logsCache = [];
+
+    async function carregarLogs(pagina = 1) {
+      const res = await fetch("/api/admin/logs");
+      if (!res.ok) return;
+      logsCache = await res.json();
+
+      paginaAtual = pagina;
+      mostrarPaginaLogs(paginaAtual);
+    }
+
+    async function mostrarPaginaLogs(pagina) {
+      const start = (pagina - 1) * logsPorPagina;
+      const end = start + logsPorPagina;
+      const logsPagina = logsCache.slice(start, end);
+
+      const lista = await Promise.all(logsPagina.map(async log => {
+        const ipLimpo = limparIP(log.ip);
+        const localizacao = await buscarLocalizacao(ipLimpo);
+        return `
+          <div class="list-item">
+            <strong>${formatarDataHora(log.accessed_at)}</strong><br/>
+            IP: ${ipLimpo} ${localizacao ? ` — ${localizacao}` : ''}<br/>
+            Navegador/SO: ${resumirUserAgent(log.user_agent)}
+          </div>
+        `;
+      }));
+
+      listaLogs.innerHTML = lista.join('') + paginacaoHTML();
+    }
+
+    function paginacaoHTML() {
+      const totalPaginas = Math.ceil(logsCache.length / logsPorPagina);
+      if (totalPaginas <= 1) return '';
+
+      let html = `<div style="margin-top:12px; display:flex; justify-content:center; gap:10px;">`;
+
+      if (paginaAtual > 1) {
+        html += `<button onclick="mostrarPaginaLogs(${paginaAtual - 1})">⬅ Anterior</button>`;
+      } else {
+        html += `<button disabled style="opacity:0.4;cursor:default;">⬅ Anterior</button>`;
+      }
+
+      html += `<span style="padding:0 8px; line-height:32px;">Página ${paginaAtual} de ${totalPaginas}</span>`;
+
+      if (paginaAtual < totalPaginas) {
+        html += `<button onclick="mostrarPaginaLogs(${paginaAtual + 1})">Próximo ➡</button>`;
+      } else {
+        html += `<button disabled style="opacity:0.4;cursor:default;">Próximo ➡</button>`;
+      }
+
+      html += `</div>`;
+      return html;
+    }
+
+    // Login
     loginForm.onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(loginForm);
@@ -257,125 +362,102 @@
         adminArea.style.display = "block";
         logoutBtn.style.display = "inline-block";
         carregarLista();
-        carregarLogs();
+        carregarLogs(1);
       } else {
         const json = await res.json();
         alert(json?.error || "Erro no login");
       }
     };
 
+    // Logout
     logoutBtn.onclick = async () => {
-      await fetch("/api/logout", { method: "POST" });
-      loginArea.style.display = "block";
-      adminArea.style.display = "none";
-      logoutBtn.style.display = "none";
+      await fetch("/api/logout");
+      location.reload();
     };
 
+    // Carregar lista de músicas
+    async function carregarLista() {
+      const res = await fetch("/api/admin");
+      if (!res.ok) return;
+      const dados = await res.json();
+
+      listaMusicas.innerHTML = dados
+        .map((m, i) => {
+          const capa = m.capa ? `<img src="${m.capa}" style="max-height:40px; vertical-align:middle; margin-right:8px; border-radius:4px;"/>` : '';
+          const letra = m.letra ? `<pre style="white-space: pre-wrap; font-size:14px; margin-top:6px;">${m.letra}</pre>` : '';
+          return `<div class="list-item" style="border-radius:8px; border: 1px solid #ddd; margin-bottom:8px; padding:8px;">
+            <strong>${i + 1}. ${capa}${m.titulo}</strong>
+            ${letra}
+            <br/>
+            <audio controls style="width:100%; max-width:300px;">
+              <source src="${m.audio}" type="audio/mpeg"/>
+              Seu navegador não suporta áudio.
+            </audio>
+          </div>`;
+        })
+        .join("");
+    }
+
+    // Upload do arquivo de áudio
     uploadBtn.onclick = async () => {
-      if (!audioFile.files || audioFile.files.length === 0) return alert("Selecione um arquivo primeiro");
-      const fd = new FormData();
-      fd.append("audio", audioFile.files[0]);
+      if (!audioFile.files.length) {
+        alert("Selecione um arquivo para upload!");
+        return;
+      }
+      const file = audioFile.files[0];
+      const formData = new FormData();
+      formData.append("audio", file);
+
       uploadBtn.disabled = true;
       uploadBtn.textContent = "Enviando...";
       try {
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        if (!res.ok) throw new Error("Upload falhou");
         const json = await res.json();
-        if (res.ok) {
-          audioUrlInput.value = json.url;
-          alert("Upload feito! URL preenchida no campo de áudio.");
-        } else {
-          alert(json?.error || "Erro no upload");
-        }
-      } catch (err) {
-        alert("Erro no upload");
-        console.error(err);
-      } finally {
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = "Fazer upload";
+        audioUrlInput.value = json.url;
+        alert("Upload realizado com sucesso!");
+      } catch {
+        alert("Falha ao enviar arquivo!");
       }
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "Fazer upload";
     };
 
+    // Salvar música (adicionar/editar)
     musicForm.onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(musicForm);
-      const json = Object.fromEntries(fd.entries());
-      if (!json.posicao) delete json.posicao;
-      const res = await fetch("/api/musicas", {
+      const body = {
+        data: fd.get("data"),
+        posicao: fd.get("posicao"),
+        titulo: fd.get("titulo"),
+        audio: fd.get("audio"),
+        capa: fd.get("capa"),
+        letra: fd.get("letra"),
+      };
+      const res = await fetch("/api/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(json)
+        body: JSON.stringify(body),
       });
       if (res.ok) {
-        alert("Música salva!");
-        musicForm.reset();
+        alert("Música salva com sucesso!");
         carregarLista();
+        musicForm.reset();
       } else {
-        const j = await res.json();
-        alert(j?.error || "Erro ao salvar");
+        alert("Erro ao salvar música.");
       }
     };
 
+    // Preview música
     previewBtn.onclick = () => {
       const url = audioUrlInput.value.trim();
-      if (!url) return alert("Preencha a URL do áudio primeiro (ou faça upload).");
+      if (!url) {
+        alert("Coloque a URL do arquivo de áudio para preview.");
+        return;
+      }
       window.open(url, "_blank");
     };
-
-    async function carregarLista() {
-      const res = await fetch("/api/admin/musicas");
-      if (!res.ok) return;
-      const rows = await res.json();
-      listaMusicas.innerHTML = rows.map(r => {
-        return `<div class="list-item">
-          <strong>${r.data} — Pos ${r.posicao}</strong>
-          <div>${r.titulo || "(sem título)"}</div>
-          <div style="font-size:12px;color:#666">${r.audio || ""}</div>
-          <div style="margin-top:6px">
-            <button onclick="editar(${r.id})">Editar</button>
-            <button onclick="deletar(${r.id})" class="danger" style="margin-left:8px;background:#ff6b6b">Deletar</button>
-          </div>
-        </div>`;
-      }).join("");
-    }
-
-    window.editar = async (id) => {
-      const res = await fetch("/api/admin/musicas");
-      if (!res.ok) return alert("Erro");
-      const rows = await res.json();
-      const m = rows.find(x => x.id === id);
-      if (!m) return alert("Não encontrado");
-      musicForm.data.value = m.data;
-      musicForm.posicao.value = m.posicao;
-      musicForm.titulo.value = m.titulo || "";
-      musicForm.audio.value = m.audio || "";
-      musicForm.capa.value = m.capa || "";
-      musicForm.letra.value = m.letra || "";
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    window.deletar = async (id) => {
-      if (!confirm("Deseja deletar esta música?")) return;
-      const res = await fetch(`/api/musicas/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        alert("Deletado");
-        carregarLista();
-      } else {
-        alert("Erro ao deletar");
-      }
-    };
-    async function carregarLogs() {
-   const res = await fetch("/api/admin/logs");
-   if (!res.ok) return;
-   const rows = await res.json();
-   listaLogs.innerHTML = rows.map(log => {
-    return `<div class="list-item">
-      <strong>${log.accessed_at}</strong><br/>
-      IP: ${log.ip} <br/>
-      UA: ${log.user_agent}
-    </div>`;
-   }).join("");
-   }
-
   </script>
 </body>
 </html>
