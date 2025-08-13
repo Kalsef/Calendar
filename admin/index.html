@@ -183,7 +183,7 @@
 
       <hr style="margin:1rem 0"/>
       <h4>Músicas existentes</h4>
-      <div id="listaMusicas" style="max-height:400px; overflow-y:auto;"></div>
+      <div id="listaMusicas"></div>
 
       <hr style="margin:1rem 0"/>
       <h4>Últimos acessos</h4>
@@ -205,6 +205,7 @@
     const previewBtn = document.getElementById("previewBtn");
     const saveBtn = document.getElementById("saveBtn");
     const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const listaLogs = document.getElementById("listaLogs");
 
     // Login
     loginForm.onsubmit = async (e) => {
@@ -301,10 +302,11 @@
     };
 
     // Preview
-    previewBtn.onclick = ()=>{
+    previewBtn.onclick = () => {
       const url = audioUrlInput.value;
-      if(url) window.open(url,"_blank");
-      else alert("Nenhum áudio selecionado.");
+      if(!url) return alert("Coloque a URL de áudio");
+      const audio = new Audio(url);
+      audio.play();
     };
 
     // Cancelar edição
@@ -316,68 +318,74 @@
 
     // Carregar lista de músicas
     async function carregarLista(){
-      listaMusicas.innerHTML="Carregando...";
-      const res = await fetch("/api/admin/musicas");
+      const res = await fetch("/api/musicas");
       if(res.ok){
         const musics = await res.json();
         listaMusicas.innerHTML="";
+        if(musics.length===0){
+          listaMusicas.textContent="Nenhuma música cadastrada.";
+          return;
+        }
         musics.forEach(m=>{
           const div = document.createElement("div");
           div.className="list-item";
-          div.innerHTML=`
-            <strong>${m.data} - ${m.titulo}</strong>
-            ${m.posicao?`<span> | Posição: ${m.posicao}</span>`:""}
-            <div>
-              <audio controls src="${m.audio}"></audio>
-              <div style="margin-top:0.25rem;">
-                <button class="primary" onclick="editar(${m.id})">Editar</button>
-                <button class="danger" onclick="deletar(${m.id})">Deletar</button>
-              </div>
-            </div>
+          div.innerHTML = `
+            <strong>${m.posicao ? m.posicao+". " : ""}${m.titulo}</strong> <br/>
+            ${m.data ? new Date(m.data).toLocaleDateString() : ""} 
+            ${m.audio ? `<audio controls src="${m.audio}"></audio>` : ""}
+            <br/>
+            <button class="primary" onclick="editar('${m.id}')">Editar</button>
+            <button class="danger" onclick="excluir('${m.id}')">Excluir</button>
           `;
           listaMusicas.appendChild(div);
         });
-      } else listaMusicas.innerHTML="Erro ao carregar músicas";
+      } else listaMusicas.textContent="Erro ao carregar músicas";
     }
 
-    // Editar música
-    window.editar = (id)=>{
-      fetch(`/api/admin/musicas/${id}`).then(r=>r.json()).then(m=>{
-        Object.keys(m).forEach(k=>{
-          if(musicForm[k]) musicForm[k].value=m[k];
-        });
+    window.editar = async (id) => {
+      const res = await fetch(`/api/musicas/${id}`);
+      if(res.ok){
+        const m = await res.json();
+        for(const k in m) if(musicForm.elements[k]) musicForm.elements[k].value=m[k];
         saveBtn.textContent="Atualizar";
         cancelEditBtn.style.display="inline-block";
-        window.scrollTo({top:0,behavior:"smooth"});
-      }).catch(()=>alert("Erro ao carregar música"));
+      } else alert("Erro ao buscar música");
     };
 
-    // Deletar música
-    window.deletar = (id)=>{
-      if(confirm("Deseja deletar essa música?")){
-        fetch(`/api/musicas/${id}`,{method:"DELETE"}).then(r=>{
-          if(r.ok) carregarLista();
-          else alert("Erro ao deletar");
-        });
-      }
+    window.excluir = async (id) => {
+      if(!confirm("Deseja realmente excluir?")) return;
+      const res = await fetch(`/api/musicas/${id}`, { method:"DELETE" });
+      if(res.ok) carregarLista();
+      else alert("Erro ao excluir");
     };
 
     // Carregar logs
     async function carregarLogs(){
       const res = await fetch("/api/admin/logs");
+      listaLogs.innerHTML="Carregando...";
       if(res.ok){
         const logs = await res.json();
-        const container = document.getElementById("listaLogs");
-        container.innerHTML="";
+        listaLogs.innerHTML="";
+        if(logs.length===0){
+          listaLogs.textContent="Nenhum acesso registrado.";
+          return;
+        }
         logs.forEach(l=>{
           const div = document.createElement("div");
           div.style.fontFamily="monospace";
           div.style.marginBottom="0.25rem";
-          div.textContent=`[${l.data}] ${l.user} - ${l.acao}`;
-          container.appendChild(div);
+          const data = l.data ? new Date(l.data) : null;
+          const dataStr = data ? `${String(data.getDate()).padStart(2,'0')}/${String(data.getMonth()+1).padStart(2,'0')}/${data.getFullYear()} ${String(data.getHours()).padStart(2,'0')}:${String(data.getMinutes()).padStart(2,'0')}:${String(data.getSeconds()).padStart(2,'0')}` : "Data desconhecida";
+          const user = l.user || "Desconhecido";
+          const acao = l.acao || "-";
+          div.textContent = `[${dataStr}] ${user} - ${acao}`;
+          listaLogs.appendChild(div);
         });
-      }
+      } else listaLogs.textContent="Erro ao carregar logs";
     }
+
+    // Atualizar logs a cada 30s
+    setInterval(carregarLogs, 30000);
   </script>
 </body>
 </html>
