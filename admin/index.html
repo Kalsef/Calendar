@@ -18,7 +18,7 @@
 
     /* Container */
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 2rem auto;
       padding: 1.5rem;
       background: #fff;
@@ -86,16 +86,6 @@
       gap: 1rem;
     }
 
-    /* Lista */
-    .list-item {
-      border-bottom: 1px solid #e5e7eb;
-      padding: 0.75rem 0;
-    }
-    .list-item audio {
-      width: 100%;
-      margin-top: 0.5rem;
-    }
-
     /* Botão voltar */
     .back-btn {
       position: fixed;
@@ -125,9 +115,49 @@
       margin-bottom: 0.5rem;
     }
 
+    /* Calendário */
+    #calendarContainer table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 1rem;
+    }
+    #calendarContainer th, #calendarContainer td {
+      border: 1px solid #d1d5db;
+      padding: 0.25rem;
+      vertical-align: top;
+    }
+    #calendarContainer th {
+      background: #e5e7eb;
+      text-align: center;
+    }
+    .calendar-day {
+      min-height: 100px;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+    }
+    .music-card {
+      margin-top: 0.25rem;
+      padding: 0.25rem;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background: #f9fafb;
+    }
+    .music-card strong {
+      display:block;
+      margin-bottom:0.25rem;
+    }
+    .music-card button {
+      margin-top:0.25rem;
+      margin-right:0.25rem;
+    }
+
     /* Mobile */
     @media(max-width: 640px){
       .grid { grid-template-columns: 1fr; }
+      #calendarContainer table, #calendarContainer th, #calendarContainer td {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -135,7 +165,6 @@
   <button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
 
   <div class="container">
-    <!-- Login -->
     <div id="loginArea">
       <h3>Login</h3>
       <form id="loginForm">
@@ -145,14 +174,12 @@
       </form>
     </div>
 
-    <!-- Admin -->
     <div id="adminArea" style="display:none">
       <div class="top" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
         <h2>Painel Admin</h2>
         <button id="logoutBtn" class="primary" style="display:none">Sair</button>
       </div>
 
-      <!-- Form Música -->
       <h3>Adicionar / Editar Música</h3>
       <form id="musicForm">
         <input type="hidden" name="id" />
@@ -186,7 +213,7 @@
 
       <hr style="margin:1rem 0"/>
       <h4>Músicas existentes</h4>
-      <div id="listaMusicas"></div>
+      <div id="calendarContainer"></div>
 
       <hr style="margin:1rem 0"/>
       <h4>Últimos acessos</h4>
@@ -200,7 +227,6 @@
     const loginArea = document.getElementById("loginArea");
     const adminArea = document.getElementById("adminArea");
     const logoutBtn = document.getElementById("logoutBtn");
-    const listaMusicas = document.getElementById("listaMusicas");
     const audioFile = document.getElementById("audioFile");
     const uploadBtn = document.getElementById("uploadBtn");
     const uploadProgress = document.getElementById("uploadProgress");
@@ -224,160 +250,138 @@
         adminArea.style.display="block";
         logoutBtn.style.display="inline-block";
         carregarLista();
-        carregarLogs();
       } else {
-        alert((await res.json())?.error || "Erro no login");
+        alert("Login falhou!");
       }
-    };
+    }
 
-    // Logout
-    logoutBtn.onclick = async () => {
-      await fetch("/api/logout", { method:"POST" });
-      loginArea.style.display="block";
-      adminArea.style.display="none";
-      logoutBtn.style.display="none";
-    };
+    logoutBtn.onclick = () => location.reload();
 
-    // Upload de áudio
-    uploadBtn.onclick = () => {
-      if(!audioFile.files.length) return alert("Selecione um arquivo primeiro");
-      const file = audioFile.files[0];
+    // Upload
+    uploadBtn.onclick = async ()=>{
+      if(!audioFile.files.length) return alert("Selecione um arquivo");
       const fd = new FormData();
-      fd.append("audio", file);
-
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST","/api/upload",true);
-      uploadBtn.disabled = true;
-      uploadBtn.textContent="Enviando...";
+      fd.append("file", audioFile.files[0]);
       uploadProgress.style.display="block";
-      uploadProgress.value=0;
-
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST","/api/upload");
       xhr.upload.onprogress = (e) => {
-        if(e.lengthComputable){
-          const percent = Math.round((e.loaded/e.total)*100);
-          uploadProgress.value = percent;
-          uploadBtn.textContent = `Enviando... ${percent}%`;
-        }
-      };
-
+        uploadProgress.value = (e.loaded/e.total)*100;
+      }
       xhr.onload = () => {
-        uploadBtn.disabled = false;
-        uploadBtn.textContent="Upload";
+        if(xhr.status===200){
+          const data = JSON.parse(xhr.responseText);
+          audioUrlInput.value = data.url;
+        } else alert("Erro no upload");
         uploadProgress.style.display="none";
-        try{
-          const res = JSON.parse(xhr.responseText);
-          if(xhr.status===200){
-            audioUrlInput.value=res.url;
-            alert("Upload feito! URL preenchida.");
-          } else alert(res?.error||"Erro no upload");
-        } catch{
-          alert("Erro no upload");
-        }
-      };
-      xhr.onerror = () => {
-        uploadBtn.disabled=false;
-        uploadBtn.textContent="Upload";
-        uploadProgress.style.display="none";
-        alert("Erro na conexão durante o upload.");
-      };
+      }
       xhr.send(fd);
-    };
-
-    // Salvar/Atualizar música
-    musicForm.onsubmit = async (e)=>{
-      e.preventDefault();
-      const fd = new FormData(musicForm);
-      const json = Object.fromEntries(fd.entries());
-      if(!json.posicao) delete json.posicao;
-
-      const url = json.id ? `/api/musicas/${json.id}` : "/api/musicas";
-      const method = json.id ? "PUT" : "POST";
-
-      const res = await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(json)});
-      if(res.ok){
-        alert("Música salva!");
-        musicForm.reset();
-        saveBtn.textContent="Salvar";
-        cancelEditBtn.style.display="none";
-        carregarLista();
-      } else alert((await res.json())?.error||"Erro ao salvar");
-    };
+    }
 
     // Preview
     previewBtn.onclick = ()=>{
       const url = audioUrlInput.value;
-      if(url) window.open(url,"_blank");
-      else alert("Nenhum áudio selecionado.");
-    };
+      if(!url) return alert("Insira URL de áudio");
+      const win = window.open("", "_blank");
+      win.document.write(`<audio controls autoplay src="${url}" style="width:100%"></audio>`);
+    }
 
-    // Cancelar edição
-    cancelEditBtn.onclick = () => {
-      musicForm.reset();
-      saveBtn.textContent="Salvar";
-      cancelEditBtn.style.display="none";
-    };
-
-    // Carregar lista de músicas
-    async function carregarLista(){
-      listaMusicas.innerHTML="Carregando...";
-      const res = await fetch("/api/admin/musicas");
+    // CRUD
+    musicForm.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(musicForm);
+      const data = {};
+      for(const [k,v] of fd.entries()) data[k]=v;
+      const id = data.id;
+      const method = id ? "PUT" : "POST";
+      const url = id ? `/api/admin/musicas/${id}` : "/api/admin/musicas";
+      const res = await fetch(url,{
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
       if(res.ok){
-        const musics = await res.json();
-        listaMusicas.innerHTML="";
-        musics.forEach(m=>{
-          const div = document.createElement("div");
-          div.className="list-item";
-          div.innerHTML=`
-            <strong>${m.data} - ${m.titulo}</strong>
-            ${m.posicao?`<span> | Posição: ${m.posicao}</span>`:""}
-            <div>
-              <audio controls src="${m.audio}"></audio>
-              <div style="margin-top:0.25rem;">
+        musicForm.reset();
+        cancelEditBtn.style.display="none";
+        carregarLista();
+      } else alert("Erro ao salvar");
+    }
+
+    cancelEditBtn.onclick = ()=>{
+      musicForm.reset();
+      cancelEditBtn.style.display="none";
+    }
+
+    async function editar(id){
+      const res = await fetch(`/api/admin/musicas/${id}`);
+      if(!res.ok) return alert("Erro ao buscar música");
+      const m = await res.json();
+      for(const key in m) if(musicForm[key]) musicForm[key].value = m[key];
+      cancelEditBtn.style.display="inline-block";
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+
+    async function deletar(id){
+      if(!confirm("Deseja realmente deletar?")) return;
+      const res = await fetch(`/api/admin/musicas/${id}`,{method:"DELETE"});
+      if(res.ok) carregarLista();
+      else alert("Erro ao deletar");
+    }
+
+    // Função principal: calendário
+    async function carregarLista(){
+      const res = await fetch("/api/admin/musicas");
+      const container = document.getElementById("calendarContainer");
+      if(!res.ok){
+        container.innerHTML = "Erro ao carregar músicas";
+        return;
+      }
+      const musics = await res.json();
+      const musicByDate = {};
+      musics.forEach(m => {
+        if(!musicByDate[m.data]) musicByDate[m.data]=[];
+        musicByDate[m.data].push(m);
+      });
+
+      const hoje = new Date();
+      const ano = hoje.getFullYear();
+      const mes = hoje.getMonth();
+      const primeiroDia = new Date(ano, mes, 1);
+      const ultimoDia = new Date(ano, mes+1,0);
+      const diasNoMes = ultimoDia.getDate();
+
+      let html = `<table><thead><tr>`;
+      const diasSemana=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+      diasSemana.forEach(d => html+=`<th>${d}</th>`);
+      html += `</tr></thead><tbody><tr>`;
+
+      for(let i=0;i<primeiroDia.getDay();i++) html+=`<td></td>`;
+
+      for(let dia=1; dia<=diasNoMes; dia++){
+        const dateStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+        html += `<td class="calendar-day"><strong>${dia}</strong>`;
+        if(musicByDate[dateStr]){
+          musicByDate[dateStr].forEach(m=>{
+            html+=`<div class="music-card">
+              <strong>${m.titulo}</strong>
+              <audio controls src="${m.audio}" style="width:100%"></audio>
+              <div>
                 <button class="primary" onclick="editar(${m.id})">Editar</button>
                 <button class="danger" onclick="deletar(${m.id})">Deletar</button>
               </div>
-            </div>
-          `;
-          listaMusicas.appendChild(div);
-        });
-      } else listaMusicas.innerHTML="Erro ao carregar músicas";
-    }
-
-    // Editar música
-    window.editar = (id)=>{
-      fetch(`/api/admin/musicas/${id}`).then(r=>r.json()).then(m=>{
-        Object.keys(m).forEach(k=>{
-          if(musicForm[k]) musicForm[k].value=m[k];
-        });
-        saveBtn.textContent="Atualizar";
-        cancelEditBtn.style.display="inline-block";
-        window.scrollTo({top:0,behavior:"smooth"});
-      }).catch(()=>alert("Erro ao carregar música"));
-    };
-
-    // Deletar música
-    window.deletar = (id)=>{
-      if(confirm("Deseja deletar essa música?")){
-        fetch(`/api/musicas/${id}`,{method:"DELETE"}).then(r=>{
-          if(r.ok) carregarLista();
-          else alert("Erro ao deletar");
-        });
+            </div>`;
+          });
+        }
+        html += `</td>`;
+        if((dia+primeiroDia.getDay())%7===0) html+=`</tr><tr>`;
       }
-    };
 
-    // Carregar logs
-    async function carregarLogs(){
-      const res = await fetch("/api/admin/logs");
-      if(res.ok){
-        const logs = await res.json();
-        const container = document.getElementById("listaLogs");
-        container.innerHTML="";
-        logs.forEach(l=>{
-          const div = document.createElement("div");
-          div.textContent=`${l.user} - ${l.action} - ${l.timestamp}`;
-          container.appendChild(div);
-        });
-      }
+      const totalCells = diasNoMes + primeiroDia.getDay();
+      const restante = 7-(totalCells%7);
+      if(restante<7) for(let i=0;i<restante;i++) html+=`<td></td>`;
+
+      html += `</tr></tbody></table>`;
+      container.innerHTML = html;
     }
   </script>
 </body>
