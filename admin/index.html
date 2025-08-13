@@ -1,4 +1,4 @@
-simplesmente mantenha as atualizaçoes de forma que funcione igual isso aqui aplique aqui e mande completo <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="utf-8"/>
@@ -135,6 +135,7 @@ simplesmente mantenha as atualizaçoes de forma que funcione igual isso aqui apl
   <button class="back-btn" onclick="window.location.href='/'">⬅ Voltar</button>
 
   <div class="container">
+    <!-- Login -->
     <div id="loginArea">
       <h3>Login</h3>
       <form id="loginForm">
@@ -144,12 +145,14 @@ simplesmente mantenha as atualizaçoes de forma que funcione igual isso aqui apl
       </form>
     </div>
 
+    <!-- Admin -->
     <div id="adminArea" style="display:none">
       <div class="top" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
         <h2>Painel Admin</h2>
         <button id="logoutBtn" class="primary" style="display:none">Sair</button>
       </div>
 
+      <!-- Form Música -->
       <h3>Adicionar / Editar Música</h3>
       <form id="musicForm">
         <input type="hidden" name="id" />
@@ -235,7 +238,7 @@ simplesmente mantenha as atualizaçoes de forma que funcione igual isso aqui apl
       logoutBtn.style.display="none";
     };
 
-    // Upload
+    // Upload de áudio
     uploadBtn.onclick = () => {
       if(!audioFile.files.length) return alert("Selecione um arquivo primeiro");
       const file = audioFile.files[0];
@@ -371,9 +374,7 @@ simplesmente mantenha as atualizaçoes de forma que funcione igual isso aqui apl
         container.innerHTML="";
         logs.forEach(l=>{
           const div = document.createElement("div");
-          div.style.fontFamily="monospace";
-          div.style.marginBottom="0.25rem";
-          div.textContent = `${l.ip} | ${l.userAgent}`;
+          div.textContent=`${l.user} - ${l.action} - ${l.timestamp}`;
           container.appendChild(div);
         });
       }
