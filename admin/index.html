@@ -108,6 +108,27 @@
       box-shadow: 0 0 10px #a29bff;
     }
 
+    /* Estilo melhorado para a área do IP nos logs */
+    .log-ip {
+      font-family: monospace;
+      background: #e9f0ff;
+      color: #1a237e;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      user-select: text;
+    }
+
+    .log-ip svg {
+      width: 16px;
+      height: 16px;
+      fill: #3f51b5;
+      flex-shrink: 0;
+    }
+
     /* Mobile Responsivo */
     @media (max-width: 600px) {
       body {
@@ -368,12 +389,36 @@
       const res = await fetch("/api/admin/logs");
       if (!res.ok) return;
       const rows = await res.json();
+
+      // Formatar a data para algo legível
+      function formatarDataHora(dt) {
+        const d = new Date(dt);
+        return d.toLocaleString("pt-BR", {
+          day: "2-digit", month: "2-digit", year: "numeric",
+          hour: "2-digit", minute: "2-digit", second: "2-digit"
+        });
+      }
+
+      // Função simples para limpar IP (se quiser manter o original, retire)
+      function limparIP(ip) {
+        return ip.trim();
+      }
+
       listaLogs.innerHTML = rows.map(log => {
-        return `<div class="list-item">
-          <strong>${log.accessed_at}</strong><br/>
-          IP: ${log.ip} <br/>
-          UA: ${log.user_agent}
-        </div>`;
+        const ipLimpo = limparIP(log.ip);
+        const dataFormatada = formatarDataHora(log.accessed_at);
+        return `
+          <div class="list-item">
+            <strong>${dataFormatada}</strong><br/>
+            <div class="log-ip" title="Endereço IP">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+              </svg>
+              ${ipLimpo}
+            </div>
+            <div><strong>UA:</strong> ${log.user_agent}</div>
+          </div>
+        `;
       }).join("");
     }
   </script>
