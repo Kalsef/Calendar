@@ -8,7 +8,6 @@ import multer from "multer";
 import fs from "fs";
 import pkg from "pg";
 import pgSession from "connect-pg-simple";
-import 'dotenv/config';
 
 const { Pool } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -163,7 +162,7 @@ app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-// UPLOAD (admin) - envia arquivo e retorna { url }
+// UPLOAD (admin)
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
@@ -175,7 +174,7 @@ app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   }
 });
 
-// GET public: retornar músicas agrupadas por data (AAAA-MM-DD)
+// GET public: músicas agrupadas
 app.get("/api/musicas", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data, posicao");
@@ -198,7 +197,7 @@ app.get("/api/musicas", async (req, res) => {
   }
 });
 
-// GET admin raw: lista todas (para painel)
+// GET admin: lista todas músicas
 app.get("/api/admin/musicas", auth, async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data DESC, posicao");
@@ -217,8 +216,7 @@ app.get("/api/admin/logs", auth, async (req, res) => {
         ip,
         COUNT(*) AS total_acessos,
         MAX(accessed_at) AS ultimo_acesso,
-        (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent,
-        ARRAY_AGG(DATE(accessed_at) ORDER BY accessed_at ASC) AS dias_acessos
+        (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent
       FROM access_logs
       GROUP BY ip
       ORDER BY ultimo_acesso DESC
@@ -231,7 +229,7 @@ app.get("/api/admin/logs", auth, async (req, res) => {
   }
 });
 
-// POST adicionar/editar música (admin)
+// POST adicionar/editar música
 app.post("/api/musicas", auth, async (req, res) => {
   try {
     const { data, posicao, titulo, audio, letra, capa } = req.body;
@@ -241,11 +239,10 @@ app.post("/api/musicas", auth, async (req, res) => {
       return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
     }
 
-    let p;
-    if (posicao) {
-      p = parseInt(posicao, 10);
-      if (isNaN(p) || p < 1) return res.status(400).json({ error: "posicao inválida" });
-    } else {
+    let p = posicao ? parseInt(posicao, 10) : null;
+    if (p !== null && (isNaN(p) || p < 1)) return res.status(400).json({ error: "Posição inválida" });
+
+    if (p === null) {
       const maxRes = await pool.query("SELECT MAX(posicao) as m FROM musicas WHERE data = $1", [data]);
       p = (maxRes.rows[0] && maxRes.rows[0].m) ? (parseInt(maxRes.rows[0].m, 10) + 1) : 1;
     }
@@ -265,7 +262,7 @@ app.post("/api/musicas", auth, async (req, res) => {
   }
 });
 
-// DELETE música (admin)
+// DELETE música
 app.delete("/api/musicas/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
