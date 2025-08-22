@@ -32,13 +32,13 @@ const pgSessionStore = pgSession(session);
 
 app.use(session({
   store: new pgSessionStore({
-    pool: pool,                // conexão do pg
-    tableName: "session"       // tabela para armazenar sessões
+    pool: pool,
+    tableName: "session"
   }),
   secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 3600 * 1000 } // 1 dia
+  cookie: { maxAge: 24 * 3600 * 1000 }
 }));
 
 // -------------------- Ensure uploads folder --------------------
@@ -64,42 +64,42 @@ const upload = multer({
 });
 
 // -------------------- Middlewares --------------------
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Middleware de logs
 app.use(async (req, res, next) => {
   try {
     if (!pool) return next();
 
-    // Pega o primeiro IP da lista x-forwarded-for
     const ipHeader = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
     let ip = ipHeader.split(',')[0].trim();
 
-    if (!ip) return next(); // ignora se não houver IP
+    if (!ip) return next();
 
-    // Normaliza IPv6 abreviado (::1) para forma completa mínima
+    // Normaliza IPv6 abreviado (::1) para forma mínima
     if (ip.includes('::')) {
-      ip = ip.replace('::', ':0:0:0:0:0:0:'); // simplificação mínima para PostgreSQL
+      ip = ip.replace('::', ':0:0:0:0:0:0:');
     }
 
-    if (ip.length > 45) { // evita quebrar VARCHAR(45)
+    if (ip.length > 45) {
       console.warn('IP muito longo detectado, ignorado:', ip);
       return next();
     }
 
     const userAgent = req.headers['user-agent'] || '';
 
-    // Detecta tipo de dispositivo
     let dispositivo = 'Desktop';
     const ua = userAgent.toLowerCase();
     if (/bot|crawl|spider|uptimerobot/.test(ua)) dispositivo = 'Bot';
     else if (/tablet|ipad/.test(ua)) dispositivo = 'Tablet';
     else if (/mobile|iphone|android|phone/.test(ua)) dispositivo = 'Mobile';
 
-    // Insere no banco
     await pool.query(
       'INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)',
       [ip, userAgent]
     );
 
-    // Pode armazenar dispositivo se quiser criar outra coluna, mas podemos usar no agrupamento
     req.deviceType = dispositivo;
 
   } catch (err) {
@@ -109,13 +109,10 @@ app.use(async (req, res, next) => {
   next();
 });
 
-
-
-
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
-app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
+app.use("/uploads", express.static(uploadsDir));
 
 // -------------------- Inicialização do DB (criar tabelas) --------------------
 (async () => {
@@ -137,6 +134,7 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         capa TEXT,
         UNIQUE(data, posicao)
       );
+
       CREATE TABLE IF NOT EXISTS access_logs (
         id SERIAL PRIMARY KEY,
         ip VARCHAR(45),
@@ -145,7 +143,6 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
       );
     `);
 
-    // garantir usuário admin (se não existir)
     const adminRes = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
     if (adminRes.rows.length === 0) {
       const hash = await bcrypt.hash("F1003J", 10);
@@ -192,7 +189,7 @@ app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-// UPLOAD (admin) - envia arquivo e retorna { url }
+// UPLOAD (admin)
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
@@ -204,7 +201,7 @@ app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   }
 });
 
-// GET public: retornar músicas agrupadas por data (AAAA-MM-DD)
+// GET public: músicas agrupadas por data
 app.get("/api/musicas", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data, posicao");
@@ -227,7 +224,7 @@ app.get("/api/musicas", async (req, res) => {
   }
 });
 
-// GET admin raw: lista todas (para painel)
+// GET admin raw: lista todas músicas
 app.get("/api/admin/musicas", auth, async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data DESC, posicao");
@@ -237,7 +234,8 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
     res.status(500).json({ error: "Erro" });
   }
 });
-// GET admin: listar últimos 100 logs de acesso
+
+// GET admin: logs agrupados por IP e dispositivo
 app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
@@ -262,7 +260,6 @@ app.get("/api/admin/logs/grouped", auth, async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar logs agrupados" });
   }
 });
-
 
 // POST adicionar/editar música (admin)
 app.post("/api/musicas", auth, async (req, res) => {
