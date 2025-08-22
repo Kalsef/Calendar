@@ -238,43 +238,27 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
   }
 });
 // GET admin: listar últimos 100 logs de acesso
-app.get("/api/admin/logs", auth, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      "SELECT * FROM access_logs ORDER BY accessed_at DESC LIMIT 100"
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error("Erro ao buscar logs:", err);
-    res.status(500).json({ error: "Erro ao buscar logs" });
-  }
-});
-
 app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
         ip AS ip_origem,
-        
         CASE
           WHEN lower((ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1]) ~ 'bot|crawl|spider|uptimerobot' THEN 'Bot'
           WHEN lower((ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1]) ~ 'tablet|ipad' THEN 'Tablet'
           WHEN lower((ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1]) ~ 'mobile|iphone|android|phone' THEN 'Mobile'
           ELSE 'Desktop'
         END AS dispositivo,
-        
         COUNT(*) AS total_acessos,
         MAX(accessed_at) AS ultimo_acesso
-        
       FROM access_logs
-      GROUP BY ip, dispositivo
+      GROUP BY ip_origem, dispositivo
       ORDER BY ultimo_acesso DESC
       LIMIT 100;
     `);
-
     res.json(rows);
   } catch (err) {
-    console.error("Erro ao buscar logs agrupados por IP e dispositivo:", err);
+    console.error("Erro ao buscar logs agrupados:", err);
     res.status(500).json({ error: "Erro ao buscar logs agrupados" });
   }
 });
