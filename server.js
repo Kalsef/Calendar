@@ -8,45 +8,42 @@ import multer from "multer";
 import fs from "fs";
 import pkg from "pg";
 import pgSession from "connect-pg-simple";
-import 'dotenv/config';
 
 const { Pool } = pkg;
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// -------------------- Config DB (Postgres) --------------------
-if (!process.env.DATABASE_URL) {
+// -------------------- Variáveis de ambiente --------------------
+const PORT = process.env.PORT || 3000;
+const DATABASE_URL = process.env.DATABASE_URL;
+const SESSION_SECRET = process.env.SESSION_SECRET || "troque_essa_chave_para_producao";
+
+if (!DATABASE_URL) {
   console.error("ERRO: defina a variável de ambiente DATABASE_URL");
   process.exit(1);
 }
 
+// -------------------- Config DB (Postgres) --------------------
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
 // -------------------- Config session store --------------------
 const pgSessionStore = pgSession(session);
-
 app.use(session({
-  store: new pgSessionStore({
-    pool: pool,
-    tableName: "session"
-  }),
-  secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
+  store: new pgSessionStore({ pool, tableName: "session" }),
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 3600 * 1000 } // 1 dia
+  cookie: { maxAge: 24 * 3600 * 1000 }
 }));
 
-// -------------------- Ensure uploads folder --------------------
+// -------------------- Uploads --------------------
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-// -------------------- Multer (upload) --------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -62,14 +59,13 @@ const upload = multer({
       cb(null, true);
     } else cb(new Error("Apenas arquivos de áudio são permitidos"));
   },
-  limits: { fileSize: 50 * 1024 * 1024 } // 50 MB
+  limits: { fileSize: 50 * 1024 * 1024 }
 });
 
 // -------------------- Middlewares --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Capturar IP real
 function getClientIp(req) {
   let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
   if (ip.includes(',')) ip = ip.split(',')[0].trim();
@@ -77,7 +73,6 @@ function getClientIp(req) {
   return ip;
 }
 
-// Middleware de logs
 app.use(async (req, res, next) => {
   const ip = getClientIp(req);
   const ipVersion = ip.includes('.') ? 'IPv4' : 'IPv6';
@@ -91,14 +86,13 @@ app.use(async (req, res, next) => {
   } catch (err) {
     console.error('Erro ao registrar acesso:', err);
   }
-
   next();
 });
 
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
-app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
+app.use("/uploads", express.static(uploadsDir));
 
 // -------------------- Inicialização do DB --------------------
 (async () => {
@@ -109,7 +103,6 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         username TEXT UNIQUE,
         password TEXT
       );
-
       CREATE TABLE IF NOT EXISTS musicas (
         id SERIAL PRIMARY KEY,
         data TEXT NOT NULL,
@@ -120,7 +113,6 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         capa TEXT,
         UNIQUE(data, posicao)
       );
-
       CREATE TABLE IF NOT EXISTS access_logs (
         id SERIAL PRIMARY KEY,
         ip VARCHAR(45),
@@ -130,7 +122,6 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
       );
     `);
 
-    // Criar usuário admin se não existir
     const adminRes = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
     if (adminRes.rows.length === 0) {
       const hash = await bcrypt.hash("F1003J", 10);
@@ -145,24 +136,27 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
   }
 })();
 
-// -------------------- Auth middleware --------------------
+// -------------------- Auth --------------------
 function auth(req, res, next) {
   if (req.session && req.session.userId) return next();
   return res.status(401).json({ error: "Não autorizado" });
 }
 
-// -------------------- Routes --------------------
+// -------------------- Rotas --------------------
 
 // LOGIN
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Dados incompletos" });
+
     const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: "Usuário ou senha inválidos" });
+
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: "Usuário ou senha inválidos" });
+
     req.session.userId = user.id;
     req.session.username = user.username;
     res.json({ success: true });
@@ -177,7 +171,7 @@ app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-// UPLOAD (admin)
+// UPLOAD
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
