@@ -10,6 +10,7 @@ import pkg from "pg";
 import pgSession from "connect-pg-simple";
 
 const { Pool } = pkg;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -31,8 +32,8 @@ const pgSessionStore = pgSession(session);
 
 app.use(session({
   store: new pgSessionStore({
-    pool: pool,
-    tableName: "session"
+    pool: pool,                // conexão do pg
+    tableName: "session"       // tabela para armazenar sessões
   }),
   secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
   resave: false,
@@ -81,6 +82,7 @@ app.use(async (req, res, next) => {
   next();
 });
 
+
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
@@ -106,7 +108,6 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         capa TEXT,
         UNIQUE(data, posicao)
       );
-
       CREATE TABLE IF NOT EXISTS access_logs (
         id SERIAL PRIMARY KEY,
         ip VARCHAR(45),
@@ -120,7 +121,7 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
     if (adminRes.rows.length === 0) {
       const hash = await bcrypt.hash("F1003J", 10);
       await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", ["admin", hash]);
-      console.log("Usuário admin criado -> usuário: admin / senha: F1003J (altere depois)");
+      console.log("Usuário admin criado -> usuário: admin / senha: 1234 (altere depois)");
     }
 
     app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
@@ -162,7 +163,7 @@ app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-// UPLOAD (admin)
+// UPLOAD (admin) - envia arquivo e retorna { url }
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
@@ -174,7 +175,7 @@ app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   }
 });
 
-// GET public: músicas agrupadas
+// GET public: retornar músicas agrupadas por data (AAAA-MM-DD)
 app.get("/api/musicas", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data, posicao");
@@ -197,7 +198,7 @@ app.get("/api/musicas", async (req, res) => {
   }
 });
 
-// GET admin: lista todas músicas
+// GET admin raw: lista todas (para painel)
 app.get("/api/admin/musicas", auth, async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data DESC, posicao");
@@ -207,29 +208,21 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
     res.status(500).json({ error: "Erro" });
   }
 });
-
-// GET admin: logs agrupados por IP
+// GET admin: listar últimos 100 logs de acesso
 app.get("/api/admin/logs", auth, async (req, res) => {
   try {
-    const { rows } = await pool.query(`
-      SELECT 
-        ip,
-        COUNT(*) AS total_acessos,
-        MAX(accessed_at) AS ultimo_acesso,
-        (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent
-      FROM access_logs
-      GROUP BY ip
-      ORDER BY ultimo_acesso DESC
-      LIMIT 100
-    `);
+    const { rows } = await pool.query(
+      "SELECT * FROM access_logs ORDER BY accessed_at DESC LIMIT 100"
+    );
     res.json(rows);
   } catch (err) {
-    console.error("Erro ao buscar logs agrupados:", err);
-    res.status(500).json({ error: "Erro ao buscar logs agrupados" });
+    console.error("Erro ao buscar logs:", err);
+    res.status(500).json({ error: "Erro ao buscar logs" });
   }
 });
 
-// POST adicionar/editar música
+
+// POST adicionar/editar música (admin)
 app.post("/api/musicas", auth, async (req, res) => {
   try {
     const { data, posicao, titulo, audio, letra, capa } = req.body;
@@ -239,10 +232,11 @@ app.post("/api/musicas", auth, async (req, res) => {
       return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
     }
 
-    let p = posicao ? parseInt(posicao, 10) : null;
-    if (p !== null && (isNaN(p) || p < 1)) return res.status(400).json({ error: "Posição inválida" });
-
-    if (p === null) {
+    let p;
+    if (posicao) {
+      p = parseInt(posicao, 10);
+      if (isNaN(p) || p < 1) return res.status(400).json({ error: "posicao inválida" });
+    } else {
       const maxRes = await pool.query("SELECT MAX(posicao) as m FROM musicas WHERE data = $1", [data]);
       p = (maxRes.rows[0] && maxRes.rows[0].m) ? (parseInt(maxRes.rows[0].m, 10) + 1) : 1;
     }
@@ -262,7 +256,7 @@ app.post("/api/musicas", auth, async (req, res) => {
   }
 });
 
-// DELETE música
+// DELETE música (admin)
 app.delete("/api/musicas/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
