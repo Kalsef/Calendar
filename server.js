@@ -64,11 +64,12 @@ const upload = multer({
 });
 
 // -------------------- Middlewares --------------------
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(async (req, res, next) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const userAgent = req.headers['user-agent'];
+  // pega o primeiro IP da lista x-forwarded-for
+  const ipHeader = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+  const ip = ipHeader.split(',')[0].trim();
+
+  const userAgent = req.headers['user-agent'] || '';
 
   try {
     await pool.query(
@@ -81,6 +82,7 @@ app.use(async (req, res, next) => {
 
   next();
 });
+
 
 
 // -------------------- Static --------------------
