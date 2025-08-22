@@ -221,15 +221,12 @@ app.get("/api/admin/logs", auth, async (req, res) => {
   }
 });
 
-// ✅ Endpoint “últimos acessos” normalizado e agrupado
 app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
-        -- Pega o primeiro IP da lista x-forwarded-for
-        split_part(ip, ',', 1) AS ip_origem,
+        ip AS ip_origem,
         
-        -- Detecta o tipo de dispositivo pelo último User-Agent
         CASE
           WHEN lower((ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1]) ~ 'bot|crawl|spider|uptimerobot' THEN 'Bot'
           WHEN lower((ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1]) ~ 'tablet|ipad' THEN 'Tablet'
@@ -241,7 +238,7 @@ app.get("/api/admin/logs/grouped", auth, async (req, res) => {
         MAX(accessed_at) AS ultimo_acesso
         
       FROM access_logs
-      GROUP BY ip_origem, dispositivo
+      GROUP BY ip, dispositivo
       ORDER BY ultimo_acesso DESC
       LIMIT 100;
     `);
