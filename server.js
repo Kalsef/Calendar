@@ -65,23 +65,31 @@ const upload = multer({
 
 // -------------------- Middlewares --------------------
 app.use(async (req, res, next) => {
-  // pega o primeiro IP da lista x-forwarded-for
-  const ipHeader = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-  const ip = ipHeader.split(',')[0].trim();
-
-  const userAgent = req.headers['user-agent'] || '';
-
   try {
+    if (!pool) return next();
+
+    const ipHeader = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+    const ip = ipHeader.split(',')[0].trim();
+    const userAgent = req.headers['user-agent'] || '';
+
+    if (!ip || ip.length > 45) {
+      console.warn('IP inválido detectado, não será registrado:', ip);
+      return next();
+    }
+
+    console.log('Registrando acesso:', { ip, userAgent });
     await pool.query(
       'INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)',
       [ip, userAgent]
     );
+
   } catch (err) {
     console.error('Erro ao registrar acesso:', err);
   }
 
   next();
 });
+
 
 
 
