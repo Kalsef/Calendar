@@ -221,42 +221,33 @@ app.get("/api/admin/logs", auth, async (req, res) => {
   }
 });
 
-// ✅ Endpoint logs agrupados por prefixo de IP (IPv4 e IPv6, primeira entrada de x-forwarded-for)
+// ✅ Endpoint logs agrupados por IP e tipo de dispositivo
 app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
+        split_part(ip, ',', 1) AS ip_origem,
+        
+        -- Detecta se é mobile ou desktop pelo User-Agent
         CASE
-          -- IPv4: pegar os três primeiros octetos do primeiro IP da lista
-          WHEN split_part(ip, ',', 1) ~ '^\\d+\\.\\d+\\.\\d+\\.\\d+$' THEN
-            split_part(split_part(ip, ',', 1), '.', 1) || '.' ||
-            split_part(split_part(ip, ',', 1), '.', 2) || '.' ||
-            split_part(split_part(ip, ',', 1), '.', 3)
-          
-          -- IPv6: pegar os quatro primeiros blocos do primeiro IP da lista
-          WHEN split_part(ip, ',', 1) ~ '^[0-9a-fA-F:]+$' THEN
-            array_to_string(ARRAY_SLICE(string_to_array(split_part(ip, ',', 1), ':'), 1, 4), ':')
-
-          ELSE
-            split_part(ip, ',', 1)  -- qualquer outro caso, usa o primeiro valor
-        END AS ip_prefix,
-
+          WHEN lower((ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1]) ~ 'mobile|iphone|android|ipad|phone' THEN 'Mobile'
+          ELSE 'Desktop'
+        END AS dispositivo,
+        
         COUNT(*) AS total_acessos,
-        MAX(accessed_at) AS ultimo_acesso,
-        (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent
+        MAX(accessed_at) AS ultimo_acesso
       FROM access_logs
-      GROUP BY ip_prefix
+      GROUP BY ip_origem, dispositivo
       ORDER BY ultimo_acesso DESC
       LIMIT 100;
     `);
 
     res.json(rows);
   } catch (err) {
-    console.error("Erro ao buscar logs agrupados por prefixo:", err);
+    console.error("Erro ao buscar logs agrupados por IP e dispositivo:", err);
     res.status(500).json({ error: "Erro ao buscar logs agrupados" });
   }
 });
-
 
 
 // POST adicionar/editar música (admin)
