@@ -221,21 +221,26 @@ app.get("/api/admin/logs", auth, async (req, res) => {
   }
 });
 
-// ✅ Endpoint logs agrupados por prefixo de IP (IPv4 e IPv6)
+// ✅ Endpoint logs agrupados por prefixo de IP (IPv4 e IPv6, primeira entrada de x-forwarded-for)
 app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
         CASE
-          -- IPv4: pegar os três primeiros octetos
-          WHEN ip ~ '^\\d+\\.\\d+\\.\\d+\\.\\d+$' THEN
-            LEFT(ip, LENGTH(ip) - LENGTH(SPLIT_PART(ip, '.', 4)) - 1)
-          -- IPv6: pegar os quatro primeiros blocos
-          WHEN ip ~ '^[0-9a-fA-F:]+$' THEN
-            array_to_string(ARRAY_SLICE(string_to_array(ip, ':'), 1, 4), ':')
+          -- IPv4: pegar os três primeiros octetos do primeiro IP da lista
+          WHEN split_part(ip, ',', 1) ~ '^\\d+\\.\\d+\\.\\d+\\.\\d+$' THEN
+            split_part(split_part(ip, ',', 1), '.', 1) || '.' ||
+            split_part(split_part(ip, ',', 1), '.', 2) || '.' ||
+            split_part(split_part(ip, ',', 1), '.', 3)
+          
+          -- IPv6: pegar os quatro primeiros blocos do primeiro IP da lista
+          WHEN split_part(ip, ',', 1) ~ '^[0-9a-fA-F:]+$' THEN
+            array_to_string(ARRAY_SLICE(string_to_array(split_part(ip, ',', 1), ':'), 1, 4), ':')
+
           ELSE
-            ip
+            split_part(ip, ',', 1)  -- qualquer outro caso, usa o primeiro valor
         END AS ip_prefix,
+
         COUNT(*) AS total_acessos,
         MAX(accessed_at) AS ultimo_acesso,
         (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent
@@ -244,6 +249,14 @@ app.get("/api/admin/logs/grouped", auth, async (req, res) => {
       ORDER BY ultimo_acesso DESC
       LIMIT 100;
     `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar logs agrupados por prefixo:", err);
+    res.status(500).json({ error: "Erro ao buscar logs agrupados" });
+  }
+});
+
 
     res.json(rows);
   } catch (err) {
