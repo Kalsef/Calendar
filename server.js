@@ -9,9 +9,6 @@ import fs from "fs";
 import pkg from "pg";
 import pgSession from "connect-pg-simple";
 import 'dotenv/config';
-// ou, se usar CommonJS:
-// require('dotenv').config();
-
 
 const { Pool } = pkg;
 
@@ -36,8 +33,8 @@ const pgSessionStore = pgSession(session);
 
 app.use(session({
   store: new pgSessionStore({
-    pool: pool,                // conexão do pg
-    tableName: "session"       // tabela para armazenar sessões
+    pool: pool,
+    tableName: "session"
   }),
   secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
   resave: false,
@@ -57,6 +54,7 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}_${safeName}`);
   }
 });
+
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -70,14 +68,25 @@ const upload = multer({
 // -------------------- Middlewares --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Capturar IP real
+function getClientIp(req) {
+  let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+  if (ip.includes(',')) ip = ip.split(',')[0].trim();
+  if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
+  return ip;
+}
+
+// Middleware de logs
 app.use(async (req, res, next) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const userAgent = req.headers['user-agent'];
+  const ip = getClientIp(req);
+  const ipVersion = ip.includes('.') ? 'IPv4' : 'IPv6';
+  const userAgent = req.headers['user-agent'] || '';
 
   try {
     await pool.query(
-      'INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)',
-      [ip, userAgent]
+      'INSERT INTO access_logs (ip, ip_version, user_agent) VALUES ($1, $2, $3)',
+      [ip, ipVersion, userAgent]
     );
   } catch (err) {
     console.error('Erro ao registrar acesso:', err);
@@ -86,13 +95,12 @@ app.use(async (req, res, next) => {
   next();
 });
 
-
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
 app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
 
-// -------------------- Inicialização do DB (criar tabelas) --------------------
+// -------------------- Inicialização do DB --------------------
 (async () => {
   try {
     await pool.query(`
@@ -112,20 +120,22 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         capa TEXT,
         UNIQUE(data, posicao)
       );
+
       CREATE TABLE IF NOT EXISTS access_logs (
         id SERIAL PRIMARY KEY,
         ip VARCHAR(45),
+        ip_version VARCHAR(5),
         user_agent TEXT,
         accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // garantir usuário admin (se não existir)
+    // Criar usuário admin se não existir
     const adminRes = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
     if (adminRes.rows.length === 0) {
       const hash = await bcrypt.hash("F1003J", 10);
       await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", ["admin", hash]);
-      console.log("Usuário admin criado -> usuário: admin / senha: 1234 (altere depois)");
+      console.log("Usuário admin criado -> usuário: admin / senha: F1003J (alterar depois)");
     }
 
     app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
@@ -167,7 +177,7 @@ app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-// UPLOAD (admin) - envia arquivo e retorna { url }
+// UPLOAD (admin)
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
@@ -179,7 +189,7 @@ app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   }
 });
 
-// GET public: retornar músicas agrupadas por data (AAAA-MM-DD)
+// GET público: músicas agrupadas por data
 app.get("/api/musicas", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data, posicao");
@@ -202,7 +212,7 @@ app.get("/api/musicas", async (req, res) => {
   }
 });
 
-// GET admin raw: lista todas (para painel)
+// GET admin raw
 app.get("/api/admin/musicas", auth, async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data DESC, posicao");
@@ -212,16 +222,20 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
     res.status(500).json({ error: "Erro" });
   }
 });
-// GET admin: logs agrupados por IP
+
+// GET admin logs agrupados
 app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT ip,
-             COUNT(*) AS total_acessos,
-             MAX(accessed_at) AS ultimo_acesso,
-             (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent
+      SELECT 
+        ip,
+        ip_version,
+        COUNT(*) AS total_acessos,
+        MAX(accessed_at) AS ultimo_acesso,
+        (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent,
+        ARRAY_AGG(DATE(accessed_at) ORDER BY accessed_at DESC) AS dias_acessos
       FROM access_logs
-      GROUP BY ip
+      GROUP BY ip, ip_version
       ORDER BY ultimo_acesso DESC
       LIMIT 100
     `);
@@ -232,17 +246,12 @@ app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   }
 });
 
-
-
-// POST adicionar/editar música (admin)
+// POST adicionar/editar música
 app.post("/api/musicas", auth, async (req, res) => {
   try {
     const { data, posicao, titulo, audio, letra, capa } = req.body;
     if (!data) return res.status(400).json({ error: "Campo data é obrigatório (AAAA-MM-DD)" });
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
-      return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
-    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
 
     let p;
     if (posicao) {
@@ -268,7 +277,7 @@ app.post("/api/musicas", auth, async (req, res) => {
   }
 });
 
-// DELETE música (admin)
+// DELETE música
 app.delete("/api/musicas/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
