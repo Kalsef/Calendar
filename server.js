@@ -68,20 +68,39 @@ app.use(async (req, res, next) => {
   try {
     if (!pool) return next();
 
+    // Pega o primeiro IP da lista x-forwarded-for
     const ipHeader = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-    const ip = ipHeader.split(',')[0].trim();
-    const userAgent = req.headers['user-agent'] || '';
+    let ip = ipHeader.split(',')[0].trim();
 
-    if (!ip || ip.length > 45) {
-      console.warn('IP inválido detectado, não será registrado:', ip);
+    if (!ip) return next(); // ignora se não houver IP
+
+    // Normaliza IPv6 abreviado (::1) para forma completa mínima
+    if (ip.includes('::')) {
+      ip = ip.replace('::', ':0:0:0:0:0:0:'); // simplificação mínima para PostgreSQL
+    }
+
+    if (ip.length > 45) { // evita quebrar VARCHAR(45)
+      console.warn('IP muito longo detectado, ignorado:', ip);
       return next();
     }
 
-    console.log('Registrando acesso:', { ip, userAgent });
+    const userAgent = req.headers['user-agent'] || '';
+
+    // Detecta tipo de dispositivo
+    let dispositivo = 'Desktop';
+    const ua = userAgent.toLowerCase();
+    if (/bot|crawl|spider|uptimerobot/.test(ua)) dispositivo = 'Bot';
+    else if (/tablet|ipad/.test(ua)) dispositivo = 'Tablet';
+    else if (/mobile|iphone|android|phone/.test(ua)) dispositivo = 'Mobile';
+
+    // Insere no banco
     await pool.query(
       'INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)',
       [ip, userAgent]
     );
+
+    // Pode armazenar dispositivo se quiser criar outra coluna, mas podemos usar no agrupamento
+    req.deviceType = dispositivo;
 
   } catch (err) {
     console.error('Erro ao registrar acesso:', err);
