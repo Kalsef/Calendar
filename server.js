@@ -221,6 +221,27 @@ app.get("/api/admin/logs", auth, async (req, res) => {
   }
 });
 
+// ✅ NOVO ENDPOINT: logs agrupados por IP
+app.get("/api/admin/logs/grouped", auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT ip,
+             COUNT(*) AS total_acessos,
+             MAX(accessed_at) AS ultimo_acesso,
+             (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent
+      FROM access_logs
+      GROUP BY ip
+      ORDER BY ultimo_acesso DESC
+      LIMIT 100
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar logs agrupados:", err);
+    res.status(500).json({ error: "Erro ao buscar logs agrupados" });
+  }
+});
+
+
 
 // POST adicionar/editar música (admin)
 app.post("/api/musicas", auth, async (req, res) => {
