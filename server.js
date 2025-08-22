@@ -221,27 +221,37 @@ app.get("/api/admin/logs", auth, async (req, res) => {
   }
 });
 
-// ✅ Endpoint logs agrupados por prefixo de IP (três primeiros octetos)
+// ✅ Endpoint logs agrupados por prefixo de IP (IPv4 e IPv6)
 app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT 
-        split_part(ip, '.', 1) || '.' || split_part(ip, '.', 2) || '.' || split_part(ip, '.', 3) AS ip_prefix,
+      SELECT
+        CASE
+          -- IPv4: pegar os três primeiros octetos
+          WHEN ip ~ '^\\d+\\.\\d+\\.\\d+\\.\\d+$' THEN
+            LEFT(ip, LENGTH(ip) - LENGTH(SPLIT_PART(ip, '.', 4)) - 1)
+          -- IPv6: pegar os quatro primeiros blocos
+          WHEN ip ~ '^[0-9a-fA-F:]+$' THEN
+            array_to_string(ARRAY_SLICE(string_to_array(ip, ':'), 1, 4), ':')
+          ELSE
+            ip
+        END AS ip_prefix,
         COUNT(*) AS total_acessos,
         MAX(accessed_at) AS ultimo_acesso,
         (ARRAY_AGG(user_agent ORDER BY accessed_at DESC))[1] AS ultimo_user_agent
       FROM access_logs
-      WHERE ip ~ '^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$'  -- apenas IPv4 válidos
       GROUP BY ip_prefix
       ORDER BY ultimo_acesso DESC
-      LIMIT 100
+      LIMIT 100;
     `);
+
     res.json(rows);
   } catch (err) {
     console.error("Erro ao buscar logs agrupados por prefixo:", err);
     res.status(500).json({ error: "Erro ao buscar logs agrupados" });
   }
 });
+
 
 
 
