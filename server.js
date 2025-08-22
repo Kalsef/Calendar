@@ -258,15 +258,6 @@ app.get("/api/admin/logs/grouped", auth, async (req, res) => {
 });
 
 
-    res.json(rows);
-  } catch (err) {
-    console.error("Erro ao buscar logs agrupados por prefixo:", err);
-    res.status(500).json({ error: "Erro ao buscar logs agrupados" });
-  }
-});
-
-
-
 
 // POST adicionar/editar música (admin)
 app.post("/api/musicas", auth, async (req, res) => {
