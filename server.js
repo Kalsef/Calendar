@@ -60,32 +60,24 @@ const upload = multer({
       cb(null, true);
     } else cb(new Error("Apenas arquivos de áudio são permitidos"));
   },
-  limits: { fileSize: 50 * 1024 * 1024 } // 50 MB
+  limits: { fileSize: 50 * 1024 * 1024 }
 });
 
 // -------------------- Middlewares --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware de logs
+// Middleware de logs (IP truncado + dispositivo)
 app.use(async (req, res, next) => {
   try {
     if (!pool) return next();
 
-    const ipHeader = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-    let ip = ipHeader.split(',')[0].trim();
-
+    let ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
     if (!ip) return next();
 
-    // Normaliza IPv6 abreviado (::1) para forma mínima
-    if (ip.includes('::')) {
-      ip = ip.replace('::', ':0:0:0:0:0:0:');
-    }
-
-    if (ip.length > 45) {
-      console.warn('IP muito longo detectado, ignorado:', ip);
-      return next();
-    }
+    // Pega apenas os 3 primeiros blocos de IPv4
+    const ipv4Match = ip.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})/);
+    if (ipv4Match) ip = ipv4Match[1];
 
     const userAgent = req.headers['user-agent'] || '';
 
@@ -114,7 +106,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
 app.use("/uploads", express.static(uploadsDir));
 
-// -------------------- Inicialização do DB (criar tabelas) --------------------
+// -------------------- Inicialização do DB --------------------
 (async () => {
   try {
     await pool.query(`
@@ -157,7 +149,7 @@ app.use("/uploads", express.static(uploadsDir));
   }
 })();
 
-// -------------------- Auth middleware --------------------
+// -------------------- Auth --------------------
 function auth(req, res, next) {
   if (req.session && req.session.userId) return next();
   return res.status(401).json({ error: "Não autorizado" });
@@ -189,7 +181,7 @@ app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-// UPLOAD (admin)
+// UPLOAD
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
@@ -201,7 +193,7 @@ app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   }
 });
 
-// GET public: músicas agrupadas por data
+// GET public: músicas agrupadas
 app.get("/api/musicas", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data, posicao");
@@ -224,7 +216,7 @@ app.get("/api/musicas", async (req, res) => {
   }
 });
 
-// GET admin raw: lista todas músicas
+// GET admin raw: todas músicas
 app.get("/api/admin/musicas", auth, async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data DESC, posicao");
@@ -235,7 +227,7 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
   }
 });
 
-// GET admin: logs agrupados por IP e dispositivo
+// GET admin: logs agrupados por IP truncado + dispositivo
 app.get("/api/admin/logs/grouped", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
@@ -266,10 +258,7 @@ app.post("/api/musicas", auth, async (req, res) => {
   try {
     const { data, posicao, titulo, audio, letra, capa } = req.body;
     if (!data) return res.status(400).json({ error: "Campo data é obrigatório (AAAA-MM-DD)" });
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
-      return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
-    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
 
     let p;
     if (posicao) {
@@ -282,27 +271,4 @@ app.post("/api/musicas", auth, async (req, res) => {
 
     const upsertSql = `
       INSERT INTO musicas (data, posicao, titulo, audio, letra, capa)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      ON CONFLICT (data, posicao)
-      DO UPDATE SET titulo = EXCLUDED.titulo, audio = EXCLUDED.audio, letra = EXCLUDED.letra, capa = EXCLUDED.capa
-      RETURNING posicao;
-    `;
-    const { rows } = await pool.query(upsertSql, [data, p, titulo || null, audio || null, letra || null, capa || null]);
-    res.json({ success: true, posicao: rows[0].posicao });
-  } catch (err) {
-    console.error("Erro ao salvar música:", err);
-    res.status(500).json({ error: "Erro ao salvar música" });
-  }
-});
-
-// DELETE música (admin)
-app.delete("/api/musicas/:id", auth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pool.query("DELETE FROM musicas WHERE id = $1", [id]);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao deletar" });
-  }
-});
+      VALUES ($1,
