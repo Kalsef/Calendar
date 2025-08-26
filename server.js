@@ -211,9 +211,19 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
 // GET admin: listar últimos 100 logs de acesso
 app.get("/api/admin/logs", auth, async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      "SELECT * FROM access_logs ORDER BY accessed_at DESC LIMIT 100"
-    );
+    const { data } = req.query;
+
+    let query = "SELECT * FROM access_logs";
+    let params = [];
+
+    if (data) {
+      query += " WHERE DATE(accessed_at) = $1";
+      params.push(data);
+    }
+
+    query += " ORDER BY accessed_at DESC LIMIT 100";
+
+    const { rows } = await pool.query(query, params);
     res.json(rows);
   } catch (err) {
     console.error("Erro ao buscar logs:", err);
