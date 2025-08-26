@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8"/>
-  <title>Painel Admin - Calendário</title>
+  <title>Painel Admin - Música & Lembranças</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
     body {
@@ -42,57 +42,20 @@
       transition: background 0.3s ease;
     }
 
-    button:hover {
-      background: #3a54d6;
-    }
+    button:hover { background: #3a54d6; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .top {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .small {
-      width: 120px;
-    }
-
-    .list-item {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-      font-size: 16px;
-    }
-
-    .danger {
-      background: #ff6b6b;
-    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .top { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    .list-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 16px; }
+    .danger { background: #ff6b6b; }
 
     .back-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
+      position: fixed; top: 20px; left: 20px;
       background: linear-gradient(135deg, #5a4dff, #7a69ff);
-      color: #e0e0ff;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(90, 77, 255, 0.6);
-      z-index: 1000;
-      transition: box-shadow 0.3s ease, transform 0.15s ease;
+      color: #e0e0ff; padding: 10px 16px;
+      border: none; border-radius: 12px; cursor: pointer;
+      font-size: 14px; box-shadow: 0 4px 12px rgba(90, 77, 255, 0.6);
+      z-index: 1000; transition: box-shadow 0.3s ease, transform 0.15s ease;
       user-select: none;
     }
 
@@ -102,13 +65,6 @@
       transform: scale(1.05);
     }
 
-    .back-btn:focus {
-      outline: 2px solid #a29bff;
-      outline-offset: 3px;
-      box-shadow: 0 0 10px #a29bff;
-    }
-
-    /* Estilo melhorado para a área do IP nos logs */
     .log-ip {
       font-family: monospace;
       background: #e9f0ff;
@@ -122,73 +78,15 @@
       user-select: text;
     }
 
-    .log-ip svg {
-      width: 16px;
-      height: 16px;
-      fill: #3f51b5;
-      flex-shrink: 0;
-    }
-
-    /* Mobile Responsivo */
     @media (max-width: 600px) {
-      body {
-        padding: 12px 10px;
-      }
-
-      .card {
-        padding: 14px 12px;
-        margin: 12px 8px;
-        max-width: 100%;
-      }
-
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      input, textarea, select {
-        font-size: 14px;
-      }
-
-      button {
-        font-size: 14px;
-        padding: 10px 12px;
-      }
-
-      .top {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-      }
-
-      .list-item {
-        padding: 8px 6px;
-        font-size: 14px;
-      }
-
-      .back-btn {
-        top: 12px;
-        left: 12px;
-        padding: 8px 12px;
-        font-size: 13px;
-      }
-
-      #musicForm > div[style*="display:flex"][style*="gap:8px"] {
-        flex-direction: column;
-      }
-
-      #musicForm > div[style*="display:flex"][style*="gap:6px"] {
-        flex-direction: row;
-        gap: 6px;
-      }
-
-      #musicForm > div[style*="display:flex"][style*="gap:8px"]:last-child {
-        flex-wrap: wrap;
-      }
-
-      #musicForm > div[style*="display:flex"][style*="gap:8px"]:last-child > button {
-        flex: 1 1 100%;
-        margin-bottom: 8px;
-      }
+      body { padding: 12px 10px; }
+      .card { padding: 14px 12px; margin: 12px 8px; max-width: 100%; }
+      .grid { grid-template-columns: 1fr; }
+      input, textarea, select { font-size: 14px; }
+      button { font-size: 14px; padding: 10px 12px; }
+      .top { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .list-item { padding: 8px 6px; font-size: 14px; }
+      .back-btn { top: 12px; left: 12px; padding: 8px 12px; font-size: 13px; }
     }
   </style>
 </head>
@@ -221,20 +119,18 @@
             <input name="data" placeholder="2025-08-06" required/>
           </div>
           <div>
-            <label>Posição (opcional — deixar vazio para adicionar ao final)</label>
-            <input name="posicao" placeholder="1, 2, ..." />
+            <label>Posição (opcional)</label>
+            <input name="posicao" placeholder="1,2,..." />
           </div>
         </div>
-
         <input name="titulo" placeholder="Título da música"/>
         <div style="display:flex;gap:8px;align-items:center">
-          <input id="audioUrl" name="audio" placeholder="URL do arquivo .mp3 (ou faça upload abaixo)" />
+          <input id="audioUrl" name="audio" placeholder="URL do arquivo .mp3" />
           <div style="display:flex;flex-direction:column;gap:6px">
             <input id="audioFile" type="file" accept="audio/*" />
             <button id="uploadBtn" type="button">Fazer upload</button>
           </div>
         </div>
-
         <input name="capa" placeholder="URL da capa (opcional)"/>
         <textarea name="letra" rows="6" placeholder="Letra (opcional)"></textarea>
         <div style="display:flex;gap:8px">
@@ -247,47 +143,49 @@
       <h4>Músicas existentes</h4>
       <div id="listaMusicas"></div>
       <hr/>
+      <h3>Adicionar / Editar Lembrança</h3>
+      <form id="memoryForm">
+        <div class="grid">
+          <div>
+            <label>Mensagem</label>
+            <input name="message" placeholder="Digite a mensagem da lembrança" required/>
+          </div>
+          <div>
+            <label>Imagem (URL)</label>
+            <input name="image" placeholder="URL da imagem" required/>
+          </div>
+          <div>
+            <label>Posição (opcional)</label>
+            <input name="posicao" placeholder="1,2,..." />
+          </div>
+        </div>
+        <button type="submit">Salvar Lembrança</button>
+      </form>
+
+      <h4>Lembranças existentes</h4>
+      <div id="listaMemories"></div>
+
+      <hr/>
       <h4>Últimos acessos</h4>
       <div id="listaLogs"></div>
-      <form id="filtro-logs">
-  <label for="data">Filtrar por dia:</label>
-  <input type="date" id="data" name="data">
-  <button type="submit">Buscar</button>
-</form>
-
-<div id="resultado-logs"></div>
-
-<script>
-document.getElementById('filtro-logs').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const data = document.getElementById('data').value;
-  let url = '/api/admin/logs';
-  if (data) url += `?data=${data}`;
-
-  const res = await fetch(url);
-  const logs = await res.json();
-
-  document.getElementById('resultado-logs').innerHTML = logs.map(log => `
-    <p>${log.ip} - ${log.accessed_at}</p>
-  `).join('');
-});
-</script>
-
     </div>
   </div>
 
   <script>
     const loginForm = document.getElementById("loginForm");
     const musicForm = document.getElementById("musicForm");
+    const memoryForm = document.getElementById("memoryForm");
     const loginArea = document.getElementById("loginArea");
     const adminArea = document.getElementById("adminArea");
     const logoutBtn = document.getElementById("logoutBtn");
     const listaMusicas = document.getElementById("listaMusicas");
+    const listaMemories = document.getElementById("listaMemories");
     const audioFile = document.getElementById("audioFile");
     const uploadBtn = document.getElementById("uploadBtn");
     const audioUrlInput = document.getElementById("audioUrl");
     const previewBtn = document.getElementById("previewBtn");
 
+    // LOGIN
     loginForm.onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(loginForm);
@@ -302,6 +200,7 @@ document.getElementById('filtro-logs').addEventListener('submit', async (e) => {
         adminArea.style.display = "block";
         logoutBtn.style.display = "inline-block";
         carregarLista();
+        carregarMemories();
         carregarLogs();
       } else {
         const json = await res.json();
@@ -316,8 +215,9 @@ document.getElementById('filtro-logs').addEventListener('submit', async (e) => {
       logoutBtn.style.display = "none";
     };
 
+    // UPLOAD ÁUDIO
     uploadBtn.onclick = async () => {
-      if (!audioFile.files || audioFile.files.length === 0) return alert("Selecione um arquivo primeiro");
+      if (!audioFile.files.length) return alert("Selecione um arquivo primeiro");
       const fd = new FormData();
       fd.append("audio", audioFile.files[0]);
       uploadBtn.disabled = true;
@@ -331,15 +231,11 @@ document.getElementById('filtro-logs').addEventListener('submit', async (e) => {
         } else {
           alert(json?.error || "Erro no upload");
         }
-      } catch (err) {
-        alert("Erro no upload");
-        console.error(err);
-      } finally {
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = "Fazer upload";
-      }
+      } catch(e) { alert("Erro no upload"); console.error(e); }
+      finally { uploadBtn.disabled = false; uploadBtn.textContent = "Fazer upload"; }
     };
 
+    // MÚSICAS CRUD
     musicForm.onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(musicForm);
@@ -350,19 +246,13 @@ document.getElementById('filtro-logs').addEventListener('submit', async (e) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(json)
       });
-      if (res.ok) {
-        alert("Música salva!");
-        musicForm.reset();
-        carregarLista();
-      } else {
-        const j = await res.json();
-        alert(j?.error || "Erro ao salvar");
-      }
+      if (res.ok) { alert("Música salva!"); musicForm.reset(); carregarLista(); }
+      else { const j = await res.json(); alert(j?.error || "Erro ao salvar"); }
     };
 
     previewBtn.onclick = () => {
       const url = audioUrlInput.value.trim();
-      if (!url) return alert("Preencha a URL do áudio primeiro (ou faça upload).");
+      if (!url) return alert("Preencha a URL do áudio primeiro");
       window.open(url, "_blank");
     };
 
@@ -370,24 +260,24 @@ document.getElementById('filtro-logs').addEventListener('submit', async (e) => {
       const res = await fetch("/api/admin/musicas");
       if (!res.ok) return;
       const rows = await res.json();
-      listaMusicas.innerHTML = rows.map(r => {
-        return `<div class="list-item">
-          <strong>${r.data} — Pos ${r.posicao}</strong>
+      listaMusicas.innerHTML = rows.map(r => `
+        <div class="list-item">
+          <strong>${r.data} — Pos ${r.posicao || "-"}</strong>
           <div>${r.titulo || "(sem título)"}</div>
           <div style="font-size:12px;color:#666">${r.audio || ""}</div>
           <div style="margin-top:6px">
-            <button onclick="editar(${r.id})">Editar</button>
-            <button onclick="deletar(${r.id})" class="danger" style="margin-left:8px;background:#ff6b6b">Deletar</button>
+            <button onclick="editarMusica(${r.id})">Editar</button>
+            <button onclick="deletarMusica(${r.id})" class="danger">Deletar</button>
           </div>
-        </div>`;
-      }).join("");
+        </div>
+      `).join("");
     }
 
-    window.editar = async (id) => {
+    window.editarMusica = async (id) => {
       const res = await fetch("/api/admin/musicas");
       if (!res.ok) return alert("Erro");
       const rows = await res.json();
-      const m = rows.find(x => x.id === id);
+      const m = rows.find(x=>x.id===id);
       if (!m) return alert("Não encontrado");
       musicForm.data.value = m.data;
       musicForm.posicao.value = m.posicao;
@@ -395,55 +285,85 @@ document.getElementById('filtro-logs').addEventListener('submit', async (e) => {
       musicForm.audio.value = m.audio || "";
       musicForm.capa.value = m.capa || "";
       musicForm.letra.value = m.letra || "";
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({top:0,behavior:"smooth"});
     };
 
-    window.deletar = async (id) => {
+    window.deletarMusica = async (id) => {
       if (!confirm("Deseja deletar esta música?")) return;
-      const res = await fetch(`/api/musicas/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        alert("Deletado");
-        carregarLista();
-      } else {
-        alert("Erro ao deletar");
-      }
+      const res = await fetch(`/api/musicas/${id}`, { method:"DELETE" });
+      if (res.ok) { alert("Deletado"); carregarLista(); }
+      else alert("Erro ao deletar");
     };
 
+    // LEMBRANÇAS CRUD
+    memoryForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(memoryForm);
+      const json = Object.fromEntries(fd.entries());
+      if (!json.posicao) delete json.posicao;
+      const res = await fetch("/api/memories", {
+        method:"POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(json)
+      });
+      if (res.ok) { alert("Lembrança salva!"); memoryForm.reset(); carregarMemories(); }
+      else { const j = await res.json(); alert(j?.error || "Erro ao salvar"); }
+    };
+
+    async function carregarMemories() {
+      const res = await fetch("/api/admin/memories");
+      if (!res.ok) return;
+      const rows = await res.json();
+      listaMemories.innerHTML = rows.map(r=>`
+        <div class="list-item">
+          <img src="${r.image}" style="width:60px;height:60px;border-radius:8px;margin-right:8px;vertical-align:middle"/>
+          <strong>${r.message}</strong> (Pos ${r.posicao||"-"})
+          <div style="margin-top:6px">
+            <button onclick="editarMemory(${r.id})">Editar</button>
+            <button onclick="deletarMemory(${r.id})" class="danger">Deletar</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    window.editarMemory = async (id) => {
+      const res = await fetch("/api/admin/memories");
+      if (!res.ok) return alert("Erro");
+      const rows = await res.json();
+      const m = rows.find(x=>x.id===id);
+      if (!m) return alert("Não encontrado");
+      memoryForm.message.value = m.message;
+      memoryForm.image.value = m.image;
+      memoryForm.posicao.value = m.posicao || "";
+      window.scrollTo({top:0,behavior:"smooth"});
+    };
+
+    window.deletarMemory = async (id) => {
+      if (!confirm("Deseja deletar esta lembrança?")) return;
+      const res = await fetch(`/api/memories/${id}`, { method:"DELETE" });
+      if (res.ok) { alert("Deletado"); carregarMemories(); }
+      else alert("Erro ao deletar");
+    };
+
+    // LOGS
     async function carregarLogs() {
       const res = await fetch("/api/admin/logs");
       if (!res.ok) return;
       const rows = await res.json();
-
-      // Formatar a data para algo legível
       function formatarDataHora(dt) {
         const d = new Date(dt);
         return d.toLocaleString("pt-BR", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit", second: "2-digit"
+          day:"2-digit", month:"2-digit", year:"numeric",
+          hour:"2-digit", minute:"2-digit", second:"2-digit"
         });
       }
-
-      // Função simples para limpar IP (se quiser manter o original, retire)
-      function limparIP(ip) {
-        return ip.trim();
-      }
-
-      listaLogs.innerHTML = rows.map(log => {
-        const ipLimpo = limparIP(log.ip);
-        const dataFormatada = formatarDataHora(log.accessed_at);
-        return `
-          <div class="list-item">
-            <strong>${dataFormatada}</strong><br/>
-            <div class="log-ip" title="Endereço IP">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
-              </svg>
-              ${ipLimpo}
-            </div>
-            <div><strong>UA:</strong> ${log.user_agent}</div>
-          </div>
-        `;
-      }).join("");
+      listaLogs.innerHTML = rows.map(log=>`
+        <div class="list-item">
+          <strong>${formatarDataHora(log.accessed_at)}</strong><br/>
+          <div class="log-ip" title="Endereço IP">${log.ip}</div>
+          <div><strong>UA:</strong> ${log.user_agent}</div>
+        </div>
+      `).join("");
     }
   </script>
 </body>
