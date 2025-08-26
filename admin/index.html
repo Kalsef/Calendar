@@ -249,6 +249,30 @@
       <hr/>
       <h4>Últimos acessos</h4>
       <div id="listaLogs"></div>
+      <form id="filtro-logs">
+  <label for="data">Filtrar por dia:</label>
+  <input type="date" id="data" name="data">
+  <button type="submit">Buscar</button>
+</form>
+
+<div id="resultado-logs"></div>
+
+<script>
+document.getElementById('filtro-logs').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = document.getElementById('data').value;
+  let url = '/api/admin/logs';
+  if (data) url += `?data=${data}`;
+
+  const res = await fetch(url);
+  const logs = await res.json();
+
+  document.getElementById('resultado-logs').innerHTML = logs.map(log => `
+    <p>${log.ip} - ${log.accessed_at}</p>
+  `).join('');
+});
+</script>
+
     </div>
   </div>
 
