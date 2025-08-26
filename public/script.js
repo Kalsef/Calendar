@@ -23,6 +23,12 @@ const eventTitle = document.querySelector(".event-title");
 const eventTime = document.querySelector(".event-time");
 const coracao = document.getElementById("coracao");
 const tabsContainer = document.getElementById("tabs");
+const backBtn = document.getElementById('backBtn');
+backBtn.addEventListener('click', () => {
+  // Voltar para a página inicial
+  window.location.href = '../index.html'; // ajuste o caminho se necessário
+});
+
 
 let songs = {}; // vindo do backend
 let musicaAtualIndex = 0; // índice da aba
