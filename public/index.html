@@ -111,7 +111,17 @@
     color: #c0c0d0; 
     font-weight: bold;
   }
-  
+
+  /* --- Estilo fixo para imagens de lembranças --- */
+  #memories img {
+    width: 300px;      /* largura fixa */
+    height: 300px;     /* altura fixa */
+    object-fit: contain;
+    background-color: #1e1e2f; /* opcional, para preencher fundo */
+    border-radius: 15px;
+    margin-bottom: 15px;
+    border: 2px solid #5aaafa;
+  }
 </style>
 </head>
 <body>
@@ -137,8 +147,6 @@
   <button onclick="backToMenu()">Voltar</button>
 </div>
 
-
-
 <div id="memories">
   <h2>Lembranças</h2>
   <img id="memoryImage" src="" alt="Lembrança">
@@ -153,14 +161,12 @@ const counters = document.getElementById('counters');
 const memories = document.getElementById('memories');
 
 function goToCalendar() { window.location.href = 'calendar.html'; }
-function showMessage() { menu.style.display = 'none'; message.style.display = 'block'; }
 function backToMenu() { 
   calendar.style.display = 'none'; 
   counters.style.display = 'none';  
   memories.style.display = 'none'; 
   menu.style.display = 'flex'; 
 
-  // Para o contador
   if(intervalId) {
     clearInterval(intervalId);
     intervalId = null;
@@ -175,7 +181,7 @@ const counterElems = [
 
 const countersData = [
   { name: "EU CONHECI A MULHER QUE VIRIA SER O AMOR DA MINHA VIDA", date: new Date('2024-11-27T22:30:00'), image: "1.png" }, 
-  { name: "EU ADMITI QUE AMAVA ELA E DESCOBRI QUE ERA RECÍPROCO", date: new Date('2025-03-10T07:00:00'), image: "1.png" }, 
+  { name: "EU ADMITI QUE AMAVA E ELA DESCOBRIU QUE ERA RECÍPROCO", date: new Date('2025-03-10T07:00:00'), image: "1.png" }, 
   { name: "PARAMOS DE NOS FALAR E AGORA À ESPERO ETERNAMENTE", date: new Date('2025-08-11T17:15:00'), image: "2.png" }
 ];
 
