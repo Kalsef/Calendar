@@ -108,6 +108,12 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         capa TEXT,
         UNIQUE(data, posicao)
       );
+       CREATE TABLE IF NOT EXISTS memories (
+        id SERIAL PRIMARY KEY,
+        image TEXT NOT NULL,
+        message TEXT NOT NULL,
+        posicao INTEGER
+      );
       CREATE TABLE IF NOT EXISTS access_logs (
         id SERIAL PRIMARY KEY,
         ip VARCHAR(45),
