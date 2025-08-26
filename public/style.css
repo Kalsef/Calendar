@@ -617,18 +617,23 @@ progress#progressBar::-moz-progress-bar {
 }
 #backBtn {
   position: fixed;
-  bottom: 20px;       /* distância do rodapé */
-  right: 20px;        /* distância da direita */
-  padding: 10px 18px;
-  font-size: 16px;
-  border-radius: 8px;
+  bottom: 20px;
+  right: 20px;
+  padding: 6px 10px;       /* menor que antes */
+  font-size: 14px;          /* menor texto */
+  border-radius: 50%;       /* botão redondo */
   border: none;
   background-color: #5aaafa;
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   z-index: 1000;
-  transition: all 0.3s ease; /* animação suave */
+  transition: all 0.2s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Hover */
@@ -642,7 +647,8 @@ progress#progressBar::-moz-progress-bar {
   #backBtn {
     bottom: 10px;
     right: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
+    width: 35px;
+    height: 35px;
+    font-size: 12px;
   }
 }
