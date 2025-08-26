@@ -615,3 +615,36 @@ progress#progressBar::-moz-progress-bar {
   opacity: 0.9;
   box-shadow: 0 0 15px rgba(93, 110, 255, 0.6);
 }
+
+#backBtn {
+  position: fixed;
+  top: 20px;       /* distância do topo */
+  left: 20px;      /* distância da esquerda */
+  padding: 10px 18px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  background-color: #5aaafa;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: all 0.3s ease; /* animação suave */
+}
+
+/* Pequenas melhorias visuais */
+#backBtn:hover {
+  background-color: #3d8ddb;
+  transform: translateY(-2px);
+}
+
+/* Responsividade: ajustar em telas pequenas */
+@media (max-width: 600px) {
+  #backBtn {
+    top: 10px;
+    left: 10px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
