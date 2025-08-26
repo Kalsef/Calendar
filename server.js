@@ -211,19 +211,9 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
 // GET admin: listar últimos 100 logs de acesso
 app.get("/api/admin/logs", auth, async (req, res) => {
   try {
-    const { data } = req.query;
-
-    let query = "SELECT * FROM access_logs";
-    let params = [];
-
-    if (data) {
-      query += " WHERE DATE(accessed_at) = $1";
-      params.push(data);
-    }
-
-    query += " ORDER BY accessed_at DESC LIMIT 100";
-
-    const { rows } = await pool.query(query, params);
+    const { rows } = await pool.query(
+      "SELECT * FROM access_logs ORDER BY accessed_at DESC LIMIT 100"
+    );
     res.json(rows);
   } catch (err) {
     console.error("Erro ao buscar logs:", err);
@@ -277,3 +267,46 @@ app.delete("/api/musicas/:id", auth, async (req, res) => {
     res.status(500).json({ error: "Erro ao deletar" });
   }
 });
+
+// -------------------- Memories --------------------
+
+// GET todas as lembranças (public)
+app.get("/api/memories", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM memories ORDER BY id");
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar lembranças" });
+  }
+});
+
+// POST adicionar nova lembrança (admin)
+app.post("/api/memories", auth, async (req, res) => {
+  try {
+    const { image, message } = req.body;
+    if (!image || !message) return res.status(400).json({ error: "Campos image e message são obrigatórios" });
+
+    const { rows } = await pool.query(
+      "INSERT INTO memories (image, message) VALUES ($1, $2) RETURNING *",
+      [image, message]
+    );
+    res.json({ success: true, memory: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao adicionar lembrança" });
+  }
+});
+
+// DELETE lembrança (admin)
+app.delete("/api/memories/:id", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM memories WHERE id = $1", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao deletar lembrança" });
+  }
+});
+
