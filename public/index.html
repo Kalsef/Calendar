@@ -112,15 +112,7 @@
     font-weight: bold;
   }
 
-  /* --- Estilo fixo para imagens de lembranças --- */
-  #memories img {
-    width: 300px;      /* largura fixa */
-    height: 300px;     /* altura fixa */
-    object-fit: contain;
-    background-color: #1e1e2f; /* opcional, para preencher fundo */
-    border-radius: 15px;
-    margin-bottom: 15px;
-    border: 2px solid #5aaafa;
+
   }
 </style>
 </head>
@@ -128,8 +120,7 @@
 
 <div id="menu">
   <button onclick="goToCalendar()">📅 Ir para o Calendário</button>
-  <button onclick="showCounters()">⏱ Contadores de Tempo</button>
-  <button onclick="showMemories()">💭 Lembranças</button>
+  <button onclick="showCounters()">⏱ Tempo</button>
 </div>
 
 <div id="calendar">
@@ -147,18 +138,10 @@
   <button onclick="backToMenu()">Voltar</button>
 </div>
 
-<div id="memories">
-  <h2>Lembrança do dia</h2>
-  <img id="memoryImage" src="" alt="Lembrança">
-  <p id="memoryText"></p>
-  <button onclick="backToMenu()">Voltar</button>
-</div>
-
 <script>
 const menu = document.getElementById('menu');
 const calendar = document.getElementById('calendar');
 const counters = document.getElementById('counters');
-const memories = document.getElementById('memories');
 
 function goToCalendar() { window.location.href = 'calendar.html'; }
 function backToMenu() { 
@@ -182,7 +165,7 @@ const counterElems = [
 const countersData = [
   { name: "EU CONHECI A MULHER QUE VIRIA SER O AMOR DA MINHA VIDA", date: new Date('2024-11-27T22:30:00'), image: "1.png" }, 
   { name: "EU ADMITI QUE AMAVA ELA", date: new Date('2025-03-10T07:00:00'), image: "1.png" }, 
-  { name: ":(", date: new Date('2025-08-11T17:15:00'), image: "2.png" }
+  { name: "ADEUS", date: new Date('2025-08-11T17:15:00'), image: "2.png" }
 ];
 
 let intervalId;
@@ -238,33 +221,6 @@ function showCounters() {
   menu.style.display = 'none';
   counters.style.display = 'block';
   startCounters();
-}
-
-// --- Lembranças dinâmicas ---
-async function showMemories() { 
-  menu.style.display = 'none'; 
-  memories.style.display = 'block'; 
-
-  try {
-    const res = await fetch('/api/memories'); // endpoint do backend
-    if (!res.ok) throw new Error('Erro ao carregar lembranças');
-    const data = await res.json(); // espera array [{image:'', message:''}]
-
-    if (data.length === 0) {
-      document.getElementById('memoryImage').src = '';
-      document.getElementById('memoryText').textContent = 'Nenhuma lembrança disponível.';
-      return;
-    }
-
-    const index = Math.floor(Math.random() * data.length);
-    document.getElementById('memoryImage').src = data[index].image;
-    document.getElementById('memoryText').textContent = data[index].message;
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById('memoryImage').src = '';
-    document.getElementById('memoryText').textContent = 'Erro ao carregar lembranças.';
-  }
 }
 
 menu.style.display = 'flex';
