@@ -8,6 +8,8 @@ import multer from "multer";
 import fs from "fs";
 import pkg from "pg";
 import pgSession from "connect-pg-simple";
+import nodemailer from 'nodemailer';
+
 
 
 
