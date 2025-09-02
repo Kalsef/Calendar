@@ -352,9 +352,6 @@ carregarMusicas();
   }
 
   // Segunda etapa
-function addSecondStepEvents() {
-  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
-    try {
       
 function addSecondStepEvents() {
   document.getElementById('yesFinalBtn').addEventListener('click', async () => {
