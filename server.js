@@ -354,7 +354,7 @@ async function sendEmail() {
       service: 'Gmail',
       auth: {
         user: 'lazymonkey970@gmail.com',
-        pass: process.env.GMAIL_APP_PASSWORD // Coloque a App Password aqui
+        pass: process.env.vdcd ppvj bhxs jhga // Coloque a App Password aqui
       }
     });
 
