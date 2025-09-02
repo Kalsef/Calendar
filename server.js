@@ -15,6 +15,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
+const nodemailer = require('nodemailer');
+
 
 // -------------------- Config DB (Postgres) --------------------
 if (!process.env.DATABASE_URL) {
@@ -327,3 +329,24 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
     res.status(500).json({ error: "Erro ao deletar lembrança" });
   }
 });
+
+async function sendEmail() {
+  let transporter = nodemailer.createTransport({
+    service: 'Gmail', 
+    auth: {
+      user: 'seuemail@gmail.com',
+      pass: 'sua_senha_app'
+    }
+  });
+
+  let info = await transporter.sendMail({
+    from: '"Alerta Site" <seuemail@gmail.com>',
+    to: "seuemail@gmail.com",
+    subject: "Ação de delete confirmada",
+    text: "O usuário confirmou a exclusão do site."
+  });
+
+  console.log("Mensagem enviada: %s", info.messageId);
+}
+
+module.exports = sendEmail;
