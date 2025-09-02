@@ -352,10 +352,10 @@ async function sendEmail() {
       service: 'gmail',
       auth: {
         type: 'OAuth2',
-        user: process.env.GMAIL_EMAIL,
-        clientId: process.env.GMAIL_CLIENT_ID,
-        clientSecret: process.env.GMAIL_CLIENT_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+        user: 'lazymonkey970@gmail.com',
+        clientId: '1020007622474-glhf16vvps2imd95doisfqc8uqddl17r.apps.googleusercontent.com',
+        clientSecret: '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',
+        refreshToken: '1//04j2LEDsOpq3sCgYIARAAGAQSNwF-L9Ir9Cp4gYx2DJJuqt37yEjcNI8GN3X_mH5wlthQww64uvXa2uQPeTj8QUzSYJGv1PqI7Ok',
         accessToken: accessToken.token,
       },
     });
