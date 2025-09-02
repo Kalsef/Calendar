@@ -361,7 +361,7 @@ async function sendEmail() {
     clientId: process.env.GMAIL_CLIENT_ID,
     clientSecret: process.env.GMAIL_CLIENT_SECRET,
     refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-    accessToken: accessToken.token,
+    accessToken, // já é a string correta
   },
 });
 
