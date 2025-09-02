@@ -365,8 +365,9 @@ async function sendEmail() {
     return { success: true };
   } catch (err) {
     console.error("Erro ao enviar e-mail:", err);
-    return { success: false, error: err.message };
-  }
+    return { success: false, error: err }; // mostra objeto completo
+}
+
 }
 
 export { sendEmail };
