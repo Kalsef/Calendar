@@ -120,7 +120,7 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
       );
       CREATE TABLE IF NOT EXISTS access_logs (
         id SERIAL PRIMARY KEY,
-        ip VARCHAR(100);,
+        ip VARCHAR(100),
         user_agent TEXT,
         accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
