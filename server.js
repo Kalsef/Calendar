@@ -11,6 +11,7 @@ import pgSession from "connect-pg-simple";
 import nodemailer from 'nodemailer';
 
 
+
 const { Pool } = pkg;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -336,14 +337,14 @@ async function sendEmail() {
   let transporter = nodemailer.createTransport({
     service: 'Gmail', 
     auth: {
-      user: 'seuemail@gmail.com',
-      pass: 'sua_senha_app'
+      user: 'lazymonkey970@gmail.com',
+      pass: 'bcov wafm bnfj jgjl'
     }
   });
 
   let info = await transporter.sendMail({
-    from: '"Alerta Site" <seuemail@gmail.com>',
-    to: "seuemail@gmail.com",
+    from: '"Alerta Site" <lazymonkey970@gmail.com>',
+    to: "second987i@gmail.com",
     subject: "Ação de delete confirmada",
     text: "O usuário confirmou a exclusão do site."
   });
