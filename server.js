@@ -13,6 +13,7 @@ import nodemailer from 'nodemailer';
 
 
 
+
 const { Pool } = pkg;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -348,7 +349,9 @@ async function sendEmail() {
     );
     oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
 
-    const accessToken = await oAuth2Client.getAccessToken();
+    const accessTokenObj = await oAuth2Client.getAccessToken();
+    const accessToken = accessTokenObj?.token || accessTokenObj;
+
 
     const transporter = nodemailer.createTransport({
   service: 'gmail',
