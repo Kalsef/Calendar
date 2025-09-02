@@ -363,8 +363,9 @@ carregarMusicas();
     });
   }
 
-  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
-  await fetch('/send-email', { method: 'POST' });
-  alert('Ação confirmada com sucesso! Email enviado.');
+  document.getElementById('yesFinalBtn').addEventListener('click', () => {
+  fetch('https://maker.ifttt.com/trigger/delete_confirmed/with/key/SEU_KEY')
+    .then(() => alert('Ação confirmada! Notificação enviada por e-mail.'))
+    .catch(() => alert('Erro ao enviar notificação'));
   modal.classList.remove('show');
 });
