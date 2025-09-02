@@ -342,7 +342,7 @@ async function sendEmail() {
     const oAuth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
       process.env.GMAIL_CLIENT_SECRET,
-      "https://developers.google.com/oauthplayground" // Redirect URI para teste
+      process.env.GMAIL_REDIRECT_URI
     );
     oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
 
