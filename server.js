@@ -333,23 +333,51 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
   }
 });
 
+
+
 async function sendEmail() {
-  let transporter = nodemailer.createTransport({
-    service: 'Gmail', 
-    auth: {
-      user: 'lazymonkey970@gmail.com',
-      pass: 'bcov wafm bnfj jgjl'
-    }
-  });
+  try {
+    // Para desenvolvimento/testes, podemos usar Ethereal
+    // const testAccount = await nodemailer.createTestAccount();
+    // let transporter = nodemailer.createTransport({
+    //   host: testAccount.smtp.host,
+    //   port: testAccount.smtp.port,
+    //   secure: testAccount.smtp.secure,
+    //   auth: {
+    //     user: testAccount.user,
+    //     pass: testAccount.pass,
+    //   },
+    // });
 
-  let info = await transporter.sendMail({
-    from: '"Alerta Site" <lazymonkey970@gmail.com>',
-    to: "second987i@gmail.com",
-    subject: "Ação de delete confirmada",
-    text: "O usuário confirmou a exclusão do site."
-  });
+    // Para produção com Gmail
+    let transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: 'lazymonkey970@gmail.com',
+        pass: process.env.GMAIL_APP_PASSWORD // Coloque a App Password aqui
+      }
+    });
 
-  console.log("Mensagem enviada: %s", info.messageId);
+    const mailOptions = {
+      from: '"Alerta Site" <lazymonkey970@gmail.com>',
+      to: "second987i@gmail.com",
+      subject: "Ação de delete confirmada",
+      text: "O usuário confirmou a exclusão do site.",
+      html: "<p>O usuário confirmou a <strong>exclusão do site</strong>.</p>"
+    };
+
+    let info = await transporter.sendMail(mailOptions);
+
+    console.log("Mensagem enviada: %s", info.messageId);
+
+    // Se estiver usando Ethereal para testes, você pode obter a URL de visualização:
+    // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+
+    return { success: true };
+  } catch (err) {
+    console.error("Erro ao enviar e-mail:", err);
+    return { success: false, error: err.message };
+  }
 }
 
 export { sendEmail };
