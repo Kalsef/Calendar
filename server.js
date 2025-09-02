@@ -8,7 +8,6 @@ import multer from "multer";
 import fs from "fs";
 import pkg from "pg";
 import pgSession from "connect-pg-simple";
-import nodemailer from 'nodemailer';
 
 
 
@@ -335,24 +334,34 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
 
 
 
+// -------------------- Nodemailer OAuth2 --------------------
+import { google } from 'googleapis';
+
 async function sendEmail() {
   try {
-    let transporter = nodemailer.createTransport({
+    const oAuth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      "https://developers.google.com/oauthplayground" // Redirect URI para teste
+    );
+    oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
+
+    const accessToken = await oAuth2Client.getAccessToken();
+
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'lazymonkey970@gmail.com',
-        pass: 'vdcdppvjbhxsjhga'
+        type: 'OAuth2',
+        user: process.env.GMAIL_EMAIL,
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+        accessToken: accessToken.token,
       },
-      logger: true,
-      debug: true
     });
 
-    // Verifica se a conexão SMTP está ok
-    await transporter.verify();
-    console.log("Conexão SMTP verificada com sucesso!");
-
     const mailOptions = {
-      from: '"Alerta Site" <lazymonkey970@gmail.com>',
+      from: `"Alerta Site" <${process.env.GMAIL_EMAIL}>`,
       to: "second987i@gmail.com",
       subject: "Ação de delete confirmada",
       text: "O usuário confirmou a exclusão do site.",
@@ -362,12 +371,12 @@ async function sendEmail() {
     let info = await transporter.sendMail(mailOptions);
 
     console.log("Mensagem enviada: %s", info.messageId);
+
     return { success: true };
   } catch (err) {
     console.error("Erro ao enviar e-mail:", err);
-    return { success: false, error: err }; // mostra objeto completo
-}
-
+    return { success: false, error: err.message };
+  }
 }
 
 export { sendEmail };
