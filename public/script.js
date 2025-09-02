@@ -355,13 +355,21 @@ carregarMusicas();
 function addSecondStepEvents() {
   document.getElementById('yesFinalBtn').addEventListener('click', async () => {
     try {
+      
+function addSecondStepEvents() {
+  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
+    try {
       const res = await fetch("/api/send-delete-alert", { method: "POST" });
-const data = await res.json();
-if (data.success) {
-  alert("E-mail enviado com sucesso!");
-} else {
-  alert("Erro ao enviar e-mail: " + data.error);
-}
+      const data = await res.json();
+      if (data.success) {
+        alert("Ação confirmada e e-mail enviado!");
+      } else {
+        alert("Erro ao enviar e-mail");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao enviar e-mail");
+    }
 
 
     modal.classList.remove('show');
