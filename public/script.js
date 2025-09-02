@@ -2,6 +2,11 @@ const date = new Date();
 let currYear = date.getFullYear();
 let currMonth = date.getMonth();
 
+const deleteBtn = document.getElementById("Delete");
+const modal = document.getElementById("confirmModal");
+const modalContent = document.querySelector(".modal-content");
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
 const daysContainer = document.querySelector(".days");
 const monthElement = document.querySelector(".date");
 const prevBtn = document.querySelector(".prev");
@@ -23,12 +28,11 @@ const eventTitle = document.querySelector(".event-title");
 const eventTime = document.querySelector(".event-time");
 const coracao = document.getElementById("coracao");
 const tabsContainer = document.getElementById("tabs");
-const backBtn = document.getElementById('backBtn');
-backBtn.addEventListener('click', () => {
+const backBtn = document.getElementById("backBtn");
+backBtn.addEventListener("click", () => {
   // Voltar para a página inicial
-  window.location.href = '../index.html'; // ajuste o caminho se necessário
+  window.location.href = "../index.html"; // ajuste o caminho se necessário
 });
-
 
 let songs = {}; // vindo do backend
 let musicaAtualIndex = 0; // índice da aba
@@ -45,8 +49,18 @@ pauseBtn?.addEventListener("click", () => {
 });
 
 const months = [
-  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 async function carregarMusicas() {
@@ -69,23 +83,35 @@ function renderCalendar() {
   const prevLastDate = new Date(currYear, currMonth, 0).getDate();
   let days = "";
 
-  for (let i = firstDay; i > 0; i--) days += `<div class="day prev-date">${prevLastDate - i + 1}</div>`;
+  for (let i = firstDay; i > 0; i--)
+    days += `<div class="day prev-date">${prevLastDate - i + 1}</div>`;
 
   for (let i = 1; i <= lastDate; i++) {
-    const fullDate = `${currYear}-${String(currMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+    const fullDate = `${currYear}-${String(currMonth + 1).padStart(
+      2,
+      "0"
+    )}-${String(i).padStart(2, "0")}`;
     const hasEvent = songs[fullDate] ? "event" : "";
-    const todayCheck = (i === date.getDate() && currMonth === date.getMonth() && currYear === date.getFullYear()) ? "today" : "";
+    const todayCheck =
+      i === date.getDate() &&
+      currMonth === date.getMonth() &&
+      currYear === date.getFullYear()
+        ? "today"
+        : "";
     days += `<div class="day ${hasEvent} ${todayCheck}" data-date="${fullDate}">${i}</div>`;
   }
 
-  for (let i = lastDay; i < 6; i++) days += `<div class="day next-date">${i - lastDay + 1}</div>`;
+  for (let i = lastDay; i < 6; i++)
+    days += `<div class="day next-date">${i - lastDay + 1}</div>`;
 
   daysContainer.innerHTML = days;
   monthElement.textContent = `${months[currMonth]} ${currYear}`;
 
   const selected = document.querySelector(".day.selected");
   if (!selected) {
-    const todayStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const todayStr = `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     const todayEl = document.querySelector(`.day[data-date="${todayStr}"]`);
     if (todayEl) {
       todayEl.classList.add("selected");
@@ -98,7 +124,9 @@ function renderCalendar() {
 daysContainer?.addEventListener("click", (e) => {
   const day = e.target.closest(".day");
   if (!day || !day.dataset.date) return;
-  daysContainer.querySelectorAll(".day.selected").forEach(d => d.classList.remove("selected"));
+  daysContainer
+    .querySelectorAll(".day.selected")
+    .forEach((d) => d.classList.remove("selected"));
   day.classList.add("selected");
   musicaAtualIndex = 0;
   updateTabsForDate(day.dataset.date);
@@ -149,7 +177,7 @@ function updateTabsForDate(dateStr) {
 
 function updateTabStyles() {
   [...tabsContainer.children].forEach((btn, idx) => {
-    btn.style.opacity = (idx === musicaAtualIndex) ? "1" : "0.6";
+    btn.style.opacity = idx === musicaAtualIndex ? "1" : "0.6";
   });
 }
 
@@ -159,7 +187,11 @@ function loadSong(dateStr) {
 
   const [year, month, day] = dateStr.split("-");
   if (eventDay) eventDay.textContent = String(parseInt(day, 10));
-  if (eventDate) eventDate.textContent = `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+  if (eventDate)
+    eventDate.textContent = `${day.padStart(2, "0")}/${month.padStart(
+      2,
+      "0"
+    )}/${year}`;
 
   updateTabsForDate(dateStr);
 
@@ -190,8 +222,10 @@ function loadSong(dateStr) {
 }
 
 audioPlay?.addEventListener("loadedmetadata", () => {
-  if (audioPlay && totalTime) totalTime.textContent = formatTime(audioPlay.duration || 0);
-  if (audioPlay && eventTime) eventTime.textContent = formatTime(audioPlay.duration || 0);
+  if (audioPlay && totalTime)
+    totalTime.textContent = formatTime(audioPlay.duration || 0);
+  if (audioPlay && eventTime)
+    eventTime.textContent = formatTime(audioPlay.duration || 0);
 });
 
 function atualizarProgresso() {
@@ -215,7 +249,7 @@ audioPlay?.addEventListener("ended", () => {
 });
 
 const barra = document.querySelector(".barra");
-barra?.addEventListener("click", e => {
+barra?.addEventListener("click", (e) => {
   if (!audioPlay || !barra || !audioPlay.duration) return;
   const rect = barra.getBoundingClientRect();
   const clickX = e.clientX - rect.left;
@@ -234,22 +268,32 @@ progressBar?.addEventListener("input", () => {
 function formatTime(sec) {
   if (!sec || isNaN(sec)) return "00:00";
   const minutes = Math.floor(sec / 60);
-  const seconds = Math.floor(sec % 60).toString().padStart(2, "0");
+  const seconds = Math.floor(sec % 60)
+    .toString()
+    .padStart(2, "0");
   return `${minutes}:${seconds}`;
 }
 
 prevBtn?.addEventListener("click", () => {
   currMonth--;
-  if (currMonth < 0) { currMonth = 11; currYear--; }
+  if (currMonth < 0) {
+    currMonth = 11;
+    currYear--;
+  }
   renderCalendar();
 });
 nextBtn?.addEventListener("click", () => {
   currMonth++;
-  if (currMonth > 11) { currMonth = 0; currYear++; }
+  if (currMonth > 11) {
+    currMonth = 0;
+    currYear++;
+  }
   renderCalendar();
 });
 todayBtn?.addEventListener("click", () => {
-  currYear = date.getFullYear(); currMonth = date.getMonth(); renderCalendar();
+  currYear = date.getFullYear();
+  currMonth = date.getMonth();
+  renderCalendar();
 });
 gotoBtn?.addEventListener("click", () => {
   const val = dateInput?.value.trim();
@@ -259,9 +303,68 @@ gotoBtn?.addEventListener("click", () => {
     const m = parseInt(dateArr[0], 10) - 1;
     const y = parseInt(dateArr[1], 10);
     if (!isNaN(m) && !isNaN(y) && m >= 0 && m <= 11 && y > 0) {
-      currMonth = m; currYear = y; renderCalendar();
+      currMonth = m;
+      currYear = y;
+      renderCalendar();
     } else alert("Data inválida! Use o formato mm/aaaa.");
   } else alert("Data inválida! Use o formato mm/aaaa.");
 });
 
 carregarMusicas();
+
+
+
+
+
+  //// Abrir modal ao clicar em Delete
+  deleteBtn.addEventListener('click', () => {
+    modal.classList.add('show');
+    modalContent.innerHTML = `
+      <h2>Você deseja apagar este site?</h2>
+      <p>Isso fará tudo ser apagado permanentemente.</p>
+      <div class="buttons">
+        <button id="yesBtn">Sim</button>
+        <button id="noBtn">Não</button>
+      </div>
+    `;
+    modalContent.classList.add('fade-in');
+    addFirstStepEvents();
+  });
+
+  // Primeira etapa
+  function addFirstStepEvents() {
+    document.getElementById('yesBtn').addEventListener('click', () => {
+      modalContent.innerHTML = `
+        <h2>Confirme novamente sua escolha para acabar com tudo!</h2>
+        <p>Se sim, após 12h horas ele deixará de existir.</p>
+        <div class="buttons">
+          <button id="yesFinalBtn">Sim</button>
+          <button id="noFinalBtn">Não</button>
+        </div>
+      `;
+      modalContent.classList.add('fade-in');
+      addSecondStepEvents();
+    });
+
+    document.getElementById('noBtn').addEventListener('click', () => {
+      modal.classList.remove('show');
+    });
+  }
+
+  // Segunda etapa
+  function addSecondStepEvents() {
+    document.getElementById('yesFinalBtn').addEventListener('click', () => {
+      alert('Ação confirmada com sucesso!');
+      modal.classList.remove('show');
+    });
+
+    document.getElementById('noFinalBtn').addEventListener('click', () => {
+      modal.classList.remove('show');
+    });
+  }
+
+  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
+  await fetch('/send-email', { method: 'POST' });
+  alert('Ação confirmada com sucesso! Email enviado.');
+  modal.classList.remove('show');
+});
