@@ -337,26 +337,19 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
 
 async function sendEmail() {
   try {
-    // Para desenvolvimento/testes, podemos usar Ethereal
-    // const testAccount = await nodemailer.createTestAccount();
-    // let transporter = nodemailer.createTransport({
-    //   host: testAccount.smtp.host,
-    //   port: testAccount.smtp.port,
-    //   secure: testAccount.smtp.secure,
-    //   auth: {
-    //     user: testAccount.user,
-    //     pass: testAccount.pass,
-    //   },
-    // });
-
-    // Para produção com Gmail
     let transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: 'lazymonkey970@gmail.com',
-        pass: 'vdcdppvjbhxsjhga' // Coloque a App Password aqui
-      }
+        pass: 'vdcdppvjbhxsjhga'
+      },
+      logger: true,
+      debug: true
     });
+
+    // Verifica se a conexão SMTP está ok
+    await transporter.verify();
+    console.log("Conexão SMTP verificada com sucesso!");
 
     const mailOptions = {
       from: '"Alerta Site" <lazymonkey970@gmail.com>',
@@ -369,10 +362,6 @@ async function sendEmail() {
     let info = await transporter.sendMail(mailOptions);
 
     console.log("Mensagem enviada: %s", info.messageId);
-
-    // Se estiver usando Ethereal para testes, você pode obter a URL de visualização:
-    // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-
     return { success: true };
   } catch (err) {
     console.error("Erro ao enviar e-mail:", err);
