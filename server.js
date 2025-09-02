@@ -351,7 +351,7 @@ async function sendEmail() {
 
     // Para produção com Gmail
     let transporter = nodemailer.createTransport({
-      service: 'Gmail',
+      service: 'gmail',
       auth: {
         user: 'lazymonkey970@gmail.com',
         pass: 'vdcdppvjbhxsjhga' // Coloque a App Password aqui
