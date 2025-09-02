@@ -352,18 +352,25 @@ carregarMusicas();
   }
 
   // Segunda etapa
-  function addSecondStepEvents() {
-    document.getElementById('yesFinalBtn').addEventListener('click', () => {
-      alert('Ação confirmada com sucesso!');
-      modal.classList.remove('show');
-    });
+function addSecondStepEvents() {
+  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
+    try {
+      const res = await fetch("/api/send-delete-alert", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        alert("Ação confirmada e e-mail enviado!");
+      } else {
+        alert("Erro ao enviar e-mail");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao enviar e-mail");
+    }
 
-    document.getElementById('noFinalBtn').addEventListener('click', () => {
-      modal.classList.remove('show');
-    });
-  }
+    modal.classList.remove('show');
+  });
 
-import { sendEmail } from './server.js';
-
-// Exemplo: chamar quando alguém confirmar delete
-await sendEmail();
+  document.getElementById('noFinalBtn').addEventListener('click', () => {
+    modal.classList.remove('show');
+  });
+}
