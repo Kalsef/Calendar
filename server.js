@@ -67,23 +67,56 @@ const upload = multer({
 });
 
 // -------------------- Middlewares --------------------
+// -------------------- Middlewares --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(async (req, res, next) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const userAgent = req.headers['user-agent'];
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+  const userAgent = req.headers["user-agent"] || "desconhecido";
 
   try {
+    // salva no banco
     await pool.query(
-      'INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)',
+      "INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)",
       [ip, userAgent]
     );
+
+    // --- Evita notificação para bots ---
+    if (!/bot|crawl|spider|slurp|curl|wget/i.test(userAgent)) {
+      // tenta pegar info de localização
+      let location = "Localização desconhecida";
+      try {
+        const ipInfoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+        if (ipInfoRes.ok) {
+          const ipInfo = await ipInfoRes.json();
+          location = `${ipInfo.city || "???"}, ${ipInfo.region || "???"}, ${ipInfo.country_name || "???"}`;
+        }
+      } catch (err) {
+        console.error("Erro ao buscar localização do IP:", err.message);
+      }
+
+      // envia alerta pro Telegram
+      const token = process.env.TELEGRAM_BOT_TOKEN;
+      const chat_id = process.env.TELEGRAM_CHAT_ID;
+      const message = `👤 Novo acesso no site!\n\n📍 IP: ${ip}\n🌍 Localização: ${location}\n💻 User-Agent: ${userAgent}`;
+
+      try {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id, text: message }),
+        });
+      } catch (err) {
+        console.error("Erro ao enviar notificação Telegram:", err.message);
+      }
+    }
   } catch (err) {
-    console.error('Erro ao registrar acesso:', err);
+    console.error("Erro ao registrar acesso:", err);
   }
 
   next();
 });
+
 
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
