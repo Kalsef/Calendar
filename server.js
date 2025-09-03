@@ -338,15 +338,24 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
 
 
 // -------------------- Notificação via Discord Webhook --------------------
+// server.js ou onde você tiver seus endpoints
+
+import dotenv from "dotenv";
+
+dotenv.config();
+
 
 app.post("/api/send-delete-alert", async (req, res) => {
   try {
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL || 
+      "https://discord.com/api/webhooks/1412595327516807168/nusgqJSmmrgTafH8WtwRPy4zwp9R-IcYIz-cGidbKosVEeg0WzTjyYBdu1mVnSzz1TI6";
 
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: "⚠️ Site será deletado em 12h!" })
+      body: JSON.stringify({
+        content: "⚠️ Atenção! Alerta de exclusão: o site será deletado em 12h!"
+      }),
     });
 
     if (!response.ok) {
@@ -359,3 +368,4 @@ app.post("/api/send-delete-alert", async (req, res) => {
     res.json({ success: false, error: err.message });
   }
 });
+
