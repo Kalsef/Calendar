@@ -327,22 +327,31 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
   }
 });
 // Telegram
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+// POST enviar alerta Telegram
+app.post("/api/send-telegram-alert", async (req, res) => {
+  try {
+    const chat_id = process.env.TELEGRAM_CHAT_ID;
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const message = "⚠️ Alerta: site será deletado em 12h!";
 
-async function sendTelegramMessage(text) {
-  const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: CHAT_ID, text }),
-  });
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id, text: message }),
+    });
 
-  if (!res.ok) {
-    const txt = await res.text();
-    console.error("Erro Telegram:", txt);
+    const data = await response.json();
+
+    if (data.ok) {
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ success: false, error: data.description });
+    }
+  } catch (err) {
+    console.error("Erro ao enviar Telegram:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
-}
+});
 
 // exemplo de uso
 sendTelegramMessage("⚠️ Alerta: site será deletado em 12h!");
