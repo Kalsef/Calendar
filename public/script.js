@@ -150,6 +150,8 @@ function renderCalendar() {
 daysContainer?.addEventListener("click", (e) => {
   const day = e.target.closest(".day");
   if (!day?.dataset.date) return;
+  // registrar clique no dia
+  registrarClique(`Dia selecionado: ${day.dataset.date}`);
   daysContainer.querySelectorAll(".day.selected").forEach(d => d.classList.remove("selected"));
   day.classList.add("selected");
   musicaAtualIndex = 0;
@@ -223,14 +225,14 @@ function loadSong(dateStr) {
   }
 }
 
-prevBtn?.addEventListener("click", () => { currMonth--; if(currMonth<0){currMonth=11; currYear--;} renderCalendar(); });
-nextBtn?.addEventListener("click", () => { currMonth++; if(currMonth>11){currMonth=0; currYear++;} renderCalendar(); });
-todayBtn?.addEventListener("click", () => { currYear=date.getFullYear(); currMonth=date.getMonth(); renderCalendar(); });
+prevBtn?.addEventListener("click", () => { currMonth--; if(currMonth<0){currMonth=11; currYear--;} renderCalendar(); registrarClique("Botão mês anterior clicado"); });
+nextBtn?.addEventListener("click", () => { currMonth++; if(currMonth>11){currMonth=0; currYear++;} renderCalendar(); registrarClique("Botão próximo mês clicado"); });
+todayBtn?.addEventListener("click", () => { currYear=date.getFullYear(); currMonth=date.getMonth(); renderCalendar(); registrarClique("Botão Hoje clicado"); });
 gotoBtn?.addEventListener("click", () => {
   const val = dateInput?.value.trim();
   if(!val) return alert("Data inválida! Use o formato mm/aaaa.");
   const [m,y] = val.split("/").map(Number);
-  if(!isNaN(m) && !isNaN(y) && m>=1 && m<=12 && y>0){ currMonth=m-1; currYear=y; renderCalendar(); }
+  if(!isNaN(m) && !isNaN(y) && m>=1 && m<=12 && y>0){ currMonth=m-1; currYear=y; renderCalendar(); registrarClique(`Ir para mm/aaaa: ${val}`); }
   else alert("Data inválida! Use o formato mm/aaaa.");
 });
 
