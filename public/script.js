@@ -324,16 +324,31 @@ function addSecondStepEvents() {
   });
 }
 
- // -------------------- Registrar cliques manualmente --------------------
-  const botoesFixos = [backBtn, playBtn, pauseBtn, prevBtn, nextBtn, todayBtn, gotoBtn, deleteBtn];
-  botoesFixos.forEach(btn => {
-    if (!btn) return;
-    btn.addEventListener("click", () => {
-      const descricao = identificarBotao(btn);
-      registrarClique(descricao);
-    });
-  });
+function identificarBotao(botao) {
+    if (botao.id) return `Botão [${botao.id}]`;
+    if (botao.innerText.trim()) return `Botão "${botao.innerText.trim()}"`;
+    return "Botão sem identificação";
+  }
 
+  async function registrarClique(descricao) {
+    try {
+      await fetch("/api/button-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ descricao })
+      });
+    } catch (err) {
+      console.error("Erro ao registrar clique:", err);
+    }
+  }
+
+  // **Delegação de eventos**: captura todos os cliques em qualquer botão
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const descricao = identificarBotao(btn);
+    registrarClique(descricao);
+  });
 
 // -------------------- Inicialização --------------------
 carregarMusicas();
