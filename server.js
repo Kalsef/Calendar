@@ -9,20 +9,15 @@ import fs from "fs";
 import pkg from "pg";
 import pgSession from "connect-pg-simple";
 import fetch from "node-fetch";
+import dotenv from "dotenv";
 
-
-
-
-
+dotenv.config();
 
 const { Pool } = pkg;
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-
 
 // -------------------- Config DB (Postgres) --------------------
 if (!process.env.DATABASE_URL) {
@@ -40,8 +35,8 @@ const pgSessionStore = pgSession(session);
 
 app.use(session({
   store: new pgSessionStore({
-    pool: pool,                // conexão do pg
-    tableName: "session"       // tabela para armazenar sessões
+    pool: pool,
+    tableName: "session"
   }),
   secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
   resave: false,
@@ -90,7 +85,6 @@ app.use(async (req, res, next) => {
   next();
 });
 
-
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
@@ -116,12 +110,14 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         capa TEXT,
         UNIQUE(data, posicao)
       );
-       CREATE TABLE IF NOT EXISTS memories (
+
+      CREATE TABLE IF NOT EXISTS memories (
         id SERIAL PRIMARY KEY,
         image TEXT NOT NULL,
         message TEXT NOT NULL,
         posicao INTEGER
       );
+
       CREATE TABLE IF NOT EXISTS access_logs (
         id SERIAL PRIMARY KEY,
         ip VARCHAR(100),
@@ -130,7 +126,6 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
       );
     `);
 
-    // garantir usuário admin (se não existir)
     const adminRes = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
     if (adminRes.rows.length === 0) {
       const hash = await bcrypt.hash("F1003J", 10);
@@ -177,7 +172,7 @@ app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-// UPLOAD (admin) - envia arquivo e retorna { url }
+// UPLOAD (admin)
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
@@ -189,7 +184,7 @@ app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   }
 });
 
-// GET public: retornar músicas agrupadas por data (AAAA-MM-DD)
+// GET músicas públicas
 app.get("/api/musicas", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data, posicao");
@@ -212,7 +207,7 @@ app.get("/api/musicas", async (req, res) => {
   }
 });
 
-// GET admin raw: lista todas (para painel)
+// GET admin raw
 app.get("/api/admin/musicas", auth, async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data DESC, posicao");
@@ -222,7 +217,8 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
     res.status(500).json({ error: "Erro" });
   }
 });
-// GET admin: listar últimos 100 logs de acesso
+
+// GET logs admin
 app.get("/api/admin/logs", auth, async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -235,16 +231,12 @@ app.get("/api/admin/logs", auth, async (req, res) => {
   }
 });
 
-
-// POST adicionar/editar música (admin)
+// POST adicionar/editar música
 app.post("/api/musicas", auth, async (req, res) => {
   try {
     const { data, posicao, titulo, audio, letra, capa } = req.body;
     if (!data) return res.status(400).json({ error: "Campo data é obrigatório (AAAA-MM-DD)" });
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
-      return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
-    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
 
     let p;
     if (posicao) {
@@ -270,7 +262,7 @@ app.post("/api/musicas", auth, async (req, res) => {
   }
 });
 
-// DELETE música (admin)
+// DELETE música
 app.delete("/api/musicas/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -282,10 +274,9 @@ app.delete("/api/musicas/:id", auth, async (req, res) => {
   }
 });
 
-
 // -------------------- Memories --------------------
 
-// GET public: retornar todas as lembranças
+// GET public
 app.get("/api/memories", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM memories ORDER BY posicao, id");
@@ -296,7 +287,7 @@ app.get("/api/memories", async (req, res) => {
   }
 });
 
-// GET admin: listar todas as lembranças para painel
+// GET admin
 app.get("/api/admin/memories", auth, async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM memories ORDER BY posicao, id");
@@ -307,7 +298,7 @@ app.get("/api/admin/memories", auth, async (req, res) => {
   }
 });
 
-// POST adicionar nova lembrança (admin)
+// POST adicionar memória
 app.post("/api/memories", auth, async (req, res) => {
   try {
     const { image, message, posicao } = req.body;
@@ -324,7 +315,7 @@ app.post("/api/memories", auth, async (req, res) => {
   }
 });
 
-// DELETE lembrança (admin)
+// DELETE memória
 app.delete("/api/memories/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -336,14 +327,7 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
   }
 });
 
-
-// -------------------- Notificação via Discord Webhook --------------------
-// server.js ou onde você tiver seus endpoints
-
-import dotenv from "dotenv";
-
-dotenv.config();
-
+// -------------------- Discord Webhook com retry --------------------
 app.post("/api/send-delete-alert", async (req, res) => {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) return res.status(500).json({ success: false, error: "Webhook não definido" });
@@ -355,15 +339,13 @@ app.post("/api/send-delete-alert", async (req, res) => {
       const response = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: "⚠️ Alerta: site será deletado em 12h!"
-        }),
-        timeout: 5000 // timeout 5s
+        body: JSON.stringify({ content: "⚠️ Alerta: site será deletado em 12h!" }),
+        timeout: 5000
       });
 
       if (response.status === 429) {
         const data = await response.json().catch(() => ({}));
-        const retryAfter = (data.retry_after || 1) * 1000; // em ms
+        const retryAfter = (data.retry_after || 1) * 1000;
         console.warn(`Rate limit do Discord. Retry em ${retryAfter}ms`);
         if (retries > 0) {
           await new Promise(r => setTimeout(r, retryAfter));
@@ -380,7 +362,6 @@ app.post("/api/send-delete-alert", async (req, res) => {
       }
 
       return true;
-
     } catch (err) {
       if (retries > 0) {
         console.warn("Erro ao enviar para Discord, tentando novamente:", err.message);
