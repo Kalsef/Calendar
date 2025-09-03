@@ -94,6 +94,7 @@ app.use(async (req, res, next) => {
       "66.249.",      // Googlebot
       "157.55.",      // Bingbot
       "216.144",      //bot
+      "34.82.",        // http client
     ];
     const isIgnoredIP = ignoredPrefixes.some(prefix => ip.startsWith(prefix));
 
