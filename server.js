@@ -346,41 +346,26 @@ dotenv.config();
 
 app.post("/api/send-delete-alert", async (req, res) => {
   try {
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL || 
-      "https://discord.com/api/webhooks/1412595327516807168/nusgqJSmmrgTafH8WtwRPy4zwp9R-IcYIz-cGidbKosVEeg0WzTjyYBdu1mVnSzz1TI6";
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    if (!webhookUrl) throw new Error("Webhook não definido");
 
-    async function sendMessage(retries = 3) {
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: "⚠️ Atenção! Alerta de exclusão: o site será deletado em 12h!"
-        }),
-      });
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: "⚠️ Alerta: site será deletado em 12h!"
+      }),
+    });
 
-      if (response.status === 429) {
-        // Webhook limitado: pegar Retry-After e tentar de novo
-        const retryAfter = (await response.json()).retry_after || 1; // em segundos
-        console.warn(`Rate limited. Tentando novamente em ${retryAfter}s...`);
-        if (retries > 0) {
-          await new Promise(r => setTimeout(r, retryAfter * 1000));
-          return sendMessage(retries - 1);
-        } else {
-          throw new Error("Muitas requisições. Não foi possível enviar para Discord.");
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`Discord respondeu com status ${response.status}`);
-      }
-
-      return true;
+    if (!response.ok) {
+      let text = await response.text();
+      console.error("Erro do Discord:", text);
+      return res.status(500).json({ success: false, error: `Discord retornou ${response.status}` });
     }
 
-    await sendMessage();
     res.json({ success: true });
   } catch (err) {
-    console.error("Erro ao enviar para Discord:", err);
-    res.json({ success: false, error: err.message });
+    console.error("Erro ao enviar notificação:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
