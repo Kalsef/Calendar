@@ -326,57 +326,23 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
     res.status(500).json({ error: "Erro ao deletar lembrança" });
   }
 });
+// Telegram
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// -------------------- Discord Webhook com retry --------------------
-app.post("/api/send-delete-alert", async (req, res) => {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-  if (!webhookUrl) return res.status(500).json({ success: false, error: "Webhook não definido" });
+async function sendTelegramMessage(text) {
+  const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: CHAT_ID, text }),
+  });
 
-  const maxRetries = 3;
-
-  async function sendMessage(retries = maxRetries) {
-    try {
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: "⚠️ Alerta: site será deletado em 12h!" }),
-        timeout: 5000
-      });
-
-      if (response.status === 429) {
-        const data = await response.json().catch(() => ({}));
-        const retryAfter = (data.retry_after || 1) * 1000;
-        console.warn(`Rate limit do Discord. Retry em ${retryAfter}ms`);
-        if (retries > 0) {
-          await new Promise(r => setTimeout(r, retryAfter));
-          return sendMessage(retries - 1);
-        } else {
-          throw new Error("Muitas requisições, não foi possível enviar para Discord");
-        }
-      }
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Discord retornou erro:", text);
-        throw new Error(`Discord retornou ${response.status}`);
-      }
-
-      return true;
-    } catch (err) {
-      if (retries > 0) {
-        console.warn("Erro ao enviar para Discord, tentando novamente:", err.message);
-        await new Promise(r => setTimeout(r, 1000));
-        return sendMessage(retries - 1);
-      }
-      throw err;
-    }
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error("Erro Telegram:", txt);
   }
+}
 
-  try {
-    await sendMessage();
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Falha ao enviar notificação final:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+// exemplo de uso
+sendTelegramMessage("⚠️ Alerta: site será deletado em 12h!");
