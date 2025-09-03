@@ -233,9 +233,9 @@ gotoBtn?.addEventListener("click", () => {
 });
 
 // -------------------- Modal Delete --------------------
-//// Abrir modal ao clicar em Delete
-//// Abrir modal ao clicar em Delete
-deleteBtn.addEventListener('click', () => {
+let sendingAlert = false;
+
+deleteBtn?.addEventListener('click', () => {
   modal.classList.add('show');
   modalContent.innerHTML = `
     <h2>Você deseja apagar este site?</h2>
@@ -249,7 +249,6 @@ deleteBtn.addEventListener('click', () => {
   addFirstStepEvents();
 });
 
-// Primeira etapa
 function addFirstStepEvents() {
   document.getElementById('yesBtn').addEventListener('click', () => {
     modalContent.innerHTML = `
@@ -269,39 +268,26 @@ function addFirstStepEvents() {
   });
 }
 
-// Segunda etapa com Telegram
-let sendingAlert = false; // trava para não enviar várias requisições
-
 function addSecondStepEvents() {
   document.getElementById('yesFinalBtn').addEventListener('click', async () => {
-    if (sendingAlert) return; // evita múltiplos cliques
+    if (sendingAlert) return;
     sendingAlert = true;
 
     try {
-      // Substitua pelo seu chat_id e token do bot
-      const chat_id = "SEU_CHAT_ID";
-      const token = "SEU_BOT_TOKEN";
-      const message = "⚠️ Alerta: site será deletado em 12h!";
+      const res = await fetch("/api/send-telegram-alert", { method: "POST" });
+      const data = await res.json();
 
-      const telegramRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id, text: message }),
-      });
-
-      const data = await telegramRes.json();
-
-      if (data.ok) {
+      if (data.success) {
         alert("Ação confirmada e notificação enviada no Telegram!");
       } else {
-        alert("Erro ao enviar notificação: " + (data.description || "Desconhecido"));
+        alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
       }
     } catch (err) {
-      console.error("Erro ao enviar notificação:", err);
+      console.error(err);
       alert("Erro ao enviar notificação: " + err.message);
     } finally {
-      sendingAlert = false; // libera o envio
-      modal.classList.remove('show'); // fecha modal
+      sendingAlert = false;
+      modal.classList.remove('show');
     }
   });
 
@@ -309,7 +295,6 @@ function addSecondStepEvents() {
     modal.classList.remove('show');
   });
 }
-await fetch("/api/send-telegram-alert", { method: "POST" });
 
 // -------------------- Inicialização --------------------
 carregarMusicas();
