@@ -250,6 +250,7 @@ deleteBtn?.addEventListener('click', () => {
 });
 
 function addFirstStepEvents() {
+  // Botão "Sim" da primeira etapa
   document.getElementById('yesBtn').addEventListener('click', () => {
     modalContent.innerHTML = `
       <h2>Confirme novamente sua escolha para acabar com tudo!</h2>
@@ -263,62 +264,59 @@ function addFirstStepEvents() {
     addSecondStepEvents();
   });
 
-  document.getElementById('noBtn').addEventListener('click', () => {
-    modal.classList.remove('show');
+  // Botão "Não" da primeira etapa
+  document.getElementById('noBtn').addEventListener('click', async () => {
+    try {
+      await sendTelegramMessage("✅ Usuário cancelou a ação na primeira etapa.");
+    } catch (err) {
+      console.error("Erro ao enviar Telegram:", err);
+    } finally {
+      modal.classList.remove('show');
+    }
   });
+}
+
+// Função auxiliar para enviar mensagem ao Telegram
+async function sendTelegramMessage(message) {
+  if (sendingAlert) return;
+  sendingAlert = true;
+
+  try {
+    const res = await fetch("/api/send-telegram-alert", { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Desconhecido");
+  } finally {
+    sendingAlert = false;
+  }
 }
 
 function addSecondStepEvents() {
   // Botão "Sim" final
   document.getElementById('yesFinalBtn').addEventListener('click', async () => {
-    if (sendingAlert) return;
-    sendingAlert = true;
-
     try {
-      const res = await fetch("/api/send-telegram-alert", { 
-        method: "POST",
-        body: JSON.stringify({ message: "⚠️ Alerta: site será deletado em 12h!" }),
-        headers: { "Content-Type": "application/json" }
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        alert("Ação confirmada e notificação enviada no Telegram!");
-      } else {
-        alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
-      }
+      await sendTelegramMessage("⚠️ Alerta: site será deletado em 12h!");
+      alert("Ação confirmada e notificação enviada no Telegram!");
     } catch (err) {
       console.error(err);
       alert("Erro ao enviar notificação: " + err.message);
     } finally {
-      sendingAlert = false;
       modal.classList.remove('show');
     }
   });
 
   // Botão "Não" final
   document.getElementById('noFinalBtn').addEventListener('click', async () => {
-    if (sendingAlert) return;
-    sendingAlert = true;
-
     try {
-      const res = await fetch("/api/send-telegram-alert", { 
-        method: "POST",
-        body: JSON.stringify({ message: "✅ Usuário desistiu de apagar o site." }),
-        headers: { "Content-Type": "application/json" }
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        alert("Você desistiu da ação. Notificação enviada no Telegram!");
-      } else {
-        alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
-      }
+      await sendTelegramMessage("✅ Usuário desistiu de apagar o site.");
+      alert("Você desistiu da ação. Notificação enviada no Telegram!");
     } catch (err) {
       console.error(err);
       alert("Erro ao enviar notificação: " + err.message);
     } finally {
-      sendingAlert = false;
       modal.classList.remove('show');
     }
   });
