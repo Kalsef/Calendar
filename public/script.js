@@ -233,7 +233,8 @@ gotoBtn?.addEventListener("click", () => {
 });
 
 // -------------------- Modal Delete --------------------
-deleteBtn?.addEventListener('click', () => {
+//// Abrir modal ao clicar em Delete
+deleteBtn.addEventListener('click', () => {
   modal.classList.add('show');
   modalContent.innerHTML = `
     <h2>Você deseja apagar este site?</h2>
@@ -247,11 +248,12 @@ deleteBtn?.addEventListener('click', () => {
   addFirstStepEvents();
 });
 
+// Primeira etapa
 function addFirstStepEvents() {
-  document.getElementById('yesBtn')?.addEventListener('click', () => {
+  document.getElementById('yesBtn').addEventListener('click', () => {
     modalContent.innerHTML = `
       <h2>Confirme novamente sua escolha para acabar com tudo!</h2>
-      <p>Se sim, após 12h horas ele deixará de existir.</p>
+      <p>Se sim, após 12h ele deixará de existir.</p>
       <div class="buttons">
         <button id="yesFinalBtn">Sim</button>
         <button id="noFinalBtn">Não</button>
@@ -259,51 +261,51 @@ function addFirstStepEvents() {
     `;
     modalContent.classList.add('fade-in');
     addSecondStepEvents();
-  }, { once: true });
+  });
 
-  document.getElementById('noBtn')?.addEventListener('click', closeModal, { once: true });
+  document.getElementById('noBtn').addEventListener('click', () => {
+    modal.classList.remove('show');
+  });
 }
 
-let sendingAlert = false;
+// Segunda etapa
+let sendingAlert = false; // trava para não enviar várias requisições
 
 function addSecondStepEvents() {
-  const yesFinalBtn = document.getElementById('yesFinalBtn');
-  const noFinalBtn = document.getElementById('noFinalBtn');
-
-  yesFinalBtn?.addEventListener('click', async () => {
-    if(sendingAlert) return;
-    sendingAlert=true;
-    const originalText = yesFinalBtn.textContent;
-    yesFinalBtn.textContent="Enviando...";
-    yesFinalBtn.disabled=true;
+  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
+    if (sendingAlert) return; // já está enviando
+    sendingAlert = true;
 
     try {
-      const res = await fetch("/api/send-delete-alert",{method:"POST"});
+      const res = await fetch("/api/send-telegram-alert", { method: "POST" });
+
       let data;
-      try { data = await res.json(); }
-      catch { throw new Error("Resposta do servidor não é JSON."); }
+      try {
+        data = await res.json(); // tenta ler JSON
+      } catch {
+        const text = await res.text(); // se não for JSON
+        console.error("Resposta não é JSON:", text);
+        throw new Error("Resposta do servidor não é JSON. Veja console.");
+      }
 
-      if(data.success) alert("Ação confirmada e notificação enviada no Discord!");
-      else alert("Erro: "+(data.error||"Desconhecido"));
-    } catch(err) { alert("Erro ao enviar notificação: "+err.message); }
-    finally {
-      sendingAlert=false;
-      yesFinalBtn.textContent=originalText;
-      yesFinalBtn.disabled=false;
-      closeModal();
+      if (data.success) {
+        alert("Ação confirmada e notificação enviada no Telegram!");
+      } else {
+        alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
+      }
+
+    } catch (err) {
+      console.error("Erro ao enviar notificação:", err);
+      alert("Erro ao enviar notificação: " + err.message);
+    } finally {
+      sendingAlert = false; // libera envio
+      modal.classList.remove('show'); // fecha modal
     }
-  }, { once:true });
+  });
 
-  noFinalBtn?.addEventListener('click', closeModal, { once:true });
-}
-
-function closeModal() {
-  modalContent.classList.remove('fade-in');
-  modalContent.classList.add('fade-out');
-  setTimeout(()=>{
+  document.getElementById('noFinalBtn').addEventListener('click', () => {
     modal.classList.remove('show');
-    modalContent.classList.remove('fade-out');
-  }, 300);
+  });
 }
 
 // -------------------- Inicialização --------------------
