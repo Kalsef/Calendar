@@ -278,7 +278,7 @@ function addSecondStepEvents() {
       const data = await res.json();
 
       if (data.success) {
-        alert("Ação confirmada e notificação enviada no Telegram!");
+        alert("Ação confirmada e o desligamento ocorrerá em instantes!");
       } else {
         alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
       }
