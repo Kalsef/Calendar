@@ -354,31 +354,28 @@ carregarMusicas();
   // Segunda etapa
       function addSecondStepEvents() {
   document.getElementById('yesFinalBtn').addEventListener('click', async () => {
-    try {
-      // Faz requisição POST para seu endpoint do backend
-      const res = await fetch("/api/send-delete-alert", { method: "POST" });
+   try {
+  const res = await fetch("/api/send-delete-alert", { method: "POST" });
 
-      let data;
-      try {
-        data = await res.json(); // tenta ler JSON
-      } catch (jsonErr) {
-        // Se não for JSON, pega texto bruto
-        const text = await res.text();
-        console.error("Resposta não é JSON:", text);
-        throw new Error("Resposta do servidor não é JSON. Veja console para detalhes.");
-      }
+  let data;
+  try {
+    data = await res.json(); // tenta ler JSON
+  } catch {
+    const text = await res.text(); // se não for JSON, pega o HTML/texto
+    console.error("Resposta não é JSON:", text);
+    throw new Error("Resposta do servidor não é JSON. Veja console.");
+  }
 
-      if (data.success) {
-        alert("Ação confirmada e notificação enviada no Discord!");
-      } else {
-        alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
-        console.error("Detalhes do erro:", data);
-      }
+  if (data.success) {
+    alert("Ação confirmada e notificação enviada no Discord!");
+  } else {
+    alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
+  }
+} catch (err) {
+  console.error("Erro ao enviar notificação:", err);
+  alert("Erro ao enviar notificação: " + err.message);
+}
 
-    } catch (err) {
-      console.error("Erro ao enviar notificação:", err);
-      alert("Erro ao enviar notificação: " + err.message);
-    }
 
     // Fecha o modal
     modal.classList.remove('show');
