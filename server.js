@@ -67,6 +67,7 @@ const upload = multer({
 });
 
 // -------------------- Middlewares --------------------
+
 // -------------------- Middlewares --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -75,15 +76,29 @@ app.use(async (req, res, next) => {
   const userAgent = req.headers["user-agent"] || "desconhecido";
 
   try {
-    // salva no banco
+    // salva no banco sempre
     await pool.query(
       "INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)",
       [ip, userAgent]
     );
 
-    // --- Evita notificação para bots ---
-    if (!/bot|crawl|spider|slurp|curl|wget/i.test(userAgent)) {
-      // tenta pegar info de localização
+    // --- filtros para ignorar ---
+    const isBotUA = /bot|crawl|spider|slurp|curl|wget/i.test(userAgent);
+
+    // lista de prefixos de IP para ignorar (adicione os que quiser)
+    const ignoredPrefixes = [
+      "10.",          // rede privada
+      "192.168.",     // rede privada
+      "172.16.",      // rede privada
+      "127.",         // localhost
+      "66.249.",      // Googlebot
+      "157.55.",      // Bingbot
+      "216.144",      //bot
+    ];
+    const isIgnoredIP = ignoredPrefixes.some(prefix => ip.startsWith(prefix));
+
+    if (!isBotUA && !isIgnoredIP) {
+      // --- pega localização ---
       let location = "Localização desconhecida";
       try {
         const ipInfoRes = await fetch(`https://ipapi.co/${ip}/json/`);
@@ -95,7 +110,7 @@ app.use(async (req, res, next) => {
         console.error("Erro ao buscar localização do IP:", err.message);
       }
 
-      // envia alerta pro Telegram
+      // --- envia pro Telegram ---
       const token = process.env.TELEGRAM_BOT_TOKEN;
       const chat_id = process.env.TELEGRAM_CHAT_ID;
       const message = `👤 Novo acesso no site!\n\n📍 IP: ${ip}\n🌍 Localização: ${location}\n💻 User-Agent: ${userAgent}`;
@@ -116,6 +131,7 @@ app.use(async (req, res, next) => {
 
   next();
 });
+
 
 
 // -------------------- Static --------------------
