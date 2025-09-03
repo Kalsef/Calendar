@@ -234,6 +234,7 @@ gotoBtn?.addEventListener("click", () => {
 
 // -------------------- Modal Delete --------------------
 //// Abrir modal ao clicar em Delete
+//// Abrir modal ao clicar em Delete
 deleteBtn.addEventListener('click', () => {
   modal.classList.add('show');
   modalContent.innerHTML = `
@@ -268,37 +269,38 @@ function addFirstStepEvents() {
   });
 }
 
-// Segunda etapa
+// Segunda etapa com Telegram
 let sendingAlert = false; // trava para não enviar várias requisições
 
 function addSecondStepEvents() {
   document.getElementById('yesFinalBtn').addEventListener('click', async () => {
-    if (sendingAlert) return; // já está enviando
+    if (sendingAlert) return; // evita múltiplos cliques
     sendingAlert = true;
 
     try {
-      const res = await fetch("/api/send-telegram-alert", { method: "POST" });
+      // Substitua pelo seu chat_id e token do bot
+      const chat_id = "SEU_CHAT_ID";
+      const token = "SEU_BOT_TOKEN";
+      const message = "⚠️ Alerta: site será deletado em 12h!";
 
-      let data;
-      try {
-        data = await res.json(); // tenta ler JSON
-      } catch {
-        const text = await res.text(); // se não for JSON
-        console.error("Resposta não é JSON:", text);
-        throw new Error("Resposta do servidor não é JSON. Veja console.");
-      }
+      const telegramRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id, text: message }),
+      });
 
-      if (data.success) {
+      const data = await telegramRes.json();
+
+      if (data.ok) {
         alert("Ação confirmada e notificação enviada no Telegram!");
       } else {
-        alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
+        alert("Erro ao enviar notificação: " + (data.description || "Desconhecido"));
       }
-
     } catch (err) {
       console.error("Erro ao enviar notificação:", err);
       alert("Erro ao enviar notificação: " + err.message);
     } finally {
-      sendingAlert = false; // libera envio
+      sendingAlert = false; // libera o envio
       modal.classList.remove('show'); // fecha modal
     }
   });
