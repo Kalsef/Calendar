@@ -324,31 +324,29 @@ function addSecondStepEvents() {
   });
 }
 
-function identificarBotao(botao) {
-    if (botao.id) return `Botão [${botao.id}]`;
-    if (botao.innerText.trim()) return `Botão "${botao.innerText.trim()}"`;
-    return "Botão sem identificação";
-  }
+// buttonTracker.js
 
-  async function registrarClique(descricao) {
-    try {
-      await fetch("/api/button-click", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ descricao })
-      });
-    } catch (err) {
-      console.error("Erro ao registrar clique:", err);
-    }
+async function enviarCliqueBotao(descricao) {
+  try {
+    const response = await fetch('/api/button-click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descricao })
+    });
+    const data = await response.json();
+    if (!data.success) console.error('Erro ao enviar clique:', data.error);
+  } catch (err) {
+    console.error('Erro ao enviar clique:', err);
   }
+}
 
-  // **Delegação de eventos**: captura todos os cliques em qualquer botão
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const descricao = identificarBotao(btn);
-    registrarClique(descricao);
+// Captura todos os botões com data-descricao
+document.querySelectorAll('button[data-descricao]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const descricao = btn.getAttribute('data-descricao');
+    enviarCliqueBotao(descricao);
   });
+});
 
 // -------------------- Inicialização --------------------
 carregarMusicas();
