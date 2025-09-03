@@ -8,7 +8,8 @@ import multer from "multer";
 import fs from "fs";
 import pkg from "pg";
 import pgSession from "connect-pg-simple";
-import nodemailer from 'nodemailer';
+import fetch from "node-fetch";
+
 
 
 
@@ -336,53 +337,36 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
 });
 
 
+// -------------------- Notificação via Discord Webhook --------------------
 
-// -------------------- Nodemailer OAuth2 --------------------
-import { google } from 'googleapis';
 
-async function sendEmail() {
+async function sendDiscordNotification(message) {
   try {
-    const oAuth2Client = new google.auth.OAuth2(
-      process.env.GMAIL_CLIENT_ID,
-      process.env.GMAIL_CLIENT_SECRET,
-      process.env.GMAIL_REDIRECT_URI
-    );
-    oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    if (!webhookUrl) {
+      throw new Error("Webhook do Discord não configurado. Defina DISCORD_WEBHOOK_URL no .env");
+    }
 
-    const accessTokenObj = await oAuth2Client.getAccessToken();
-    const accessToken = accessTokenObj?.token || accessTokenObj;
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: message, // mensagem simples
+        username: "Alerta Site", // nome do bot que aparece
+      }),
+    });
 
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Erro do Discord: ${res.status} - ${text}`);
+    }
 
-    const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    type: 'OAuth2',
-    user: process.env.GMAIL_EMAIL,
-    clientId: process.env.GMAIL_CLIENT_ID,
-    clientSecret: process.env.GMAIL_CLIENT_SECRET,
-    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-    accessToken, // já é a string correta
-  },
-});
-
-
-    const mailOptions = {
-      from: `"Alerta Site" <${process.env.GMAIL_EMAIL}>`,
-      to: "second987i@gmail.com",
-      subject: "Ação de delete confirmada",
-      text: "O usuário confirmou a exclusão do site.",
-      html: "<p>O usuário confirmou a <strong>exclusão do site</strong>.</p>"
-    };
-
-    let info = await transporter.sendMail(mailOptions);
-
-    console.log("Mensagem enviada: %s", info.messageId);
-
+    console.log("✅ Notificação enviada ao Discord!");
     return { success: true };
   } catch (err) {
-    console.error("Erro ao enviar e-mail:", err);
+    console.error("❌ Erro ao enviar notificação Discord:", err);
     return { success: false, error: err.message };
   }
 }
 
-export { sendEmail };
+export { sendDiscordNotification };
