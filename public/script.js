@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 // -------------------- Variáveis iniciais --------------------
 const date = new Date();
 let currYear = date.getFullYear();
@@ -353,3 +355,8 @@ document.querySelectorAll("button").forEach(btn => {
 
 // -------------------- Inicialização --------------------
 carregarMusicas();
+
+
+});
+
+
