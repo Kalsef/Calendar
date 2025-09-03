@@ -1,3 +1,4 @@
+// -------------------- Variáveis iniciais --------------------
 const date = new Date();
 let currYear = date.getFullYear();
 let currMonth = date.getMonth();
@@ -5,8 +6,6 @@ let currMonth = date.getMonth();
 const deleteBtn = document.getElementById("Delete");
 const modal = document.getElementById("confirmModal");
 const modalContent = document.querySelector(".modal-content");
-const yesBtn = document.getElementById("yesBtn");
-const noBtn = document.getElementById("noBtn");
 const daysContainer = document.querySelector(".days");
 const monthElement = document.querySelector(".date");
 const prevBtn = document.querySelector(".prev");
@@ -29,14 +28,20 @@ const eventTime = document.querySelector(".event-time");
 const coracao = document.getElementById("coracao");
 const tabsContainer = document.getElementById("tabs");
 const backBtn = document.getElementById("backBtn");
-backBtn.addEventListener("click", () => {
-  // Voltar para a página inicial
-  window.location.href = "../index.html"; // ajuste o caminho se necessário
+
+backBtn?.addEventListener("click", () => {
+  window.location.href = "../index.html";
 });
 
-let songs = {}; // vindo do backend
-let musicaAtualIndex = 0; // índice da aba
+let songs = {};
+let musicaAtualIndex = 0;
 
+const months = [
+  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
+];
+
+// -------------------- Player --------------------
 playBtn?.addEventListener("click", () => {
   audioPlay?.play();
   playBtn.style.display = "none";
@@ -48,21 +53,53 @@ pauseBtn?.addEventListener("click", () => {
   playBtn.style.display = "inline-block";
 });
 
-const months = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
+audioPlay?.addEventListener("loadedmetadata", () => {
+  totalTime.textContent = formatTime(audioPlay.duration || 0);
+  eventTime.textContent = formatTime(audioPlay.duration || 0);
+});
 
+audioPlay?.addEventListener("timeupdate", atualizarProgresso);
+audioPlay?.addEventListener("ended", () => {
+  playBtn.style.display = "inline-block";
+  pauseBtn.style.display = "none";
+  progressBar.value = 0;
+  currentTime.textContent = "00:00";
+  eventTime.textContent = formatTime(audioPlay.duration || 0);
+});
+
+const barra = document.querySelector(".barra");
+barra?.addEventListener("click", (e) => {
+  if (!audioPlay?.duration) return;
+  const rect = barra.getBoundingClientRect();
+  const novoTempo = ((e.clientX - rect.left) / rect.width) * audioPlay.duration;
+  audioPlay.currentTime = novoTempo;
+  atualizarProgresso();
+});
+
+progressBar?.addEventListener("input", () => {
+  if (audioPlay && !isNaN(audioPlay.duration)) {
+    audioPlay.currentTime = (progressBar.value / 100) * audioPlay.duration;
+  }
+});
+
+function atualizarProgresso() {
+  if (!audioPlay || !progressBar || !coracao) return;
+  const duracao = audioPlay.duration || 0;
+  const tempoAtual = audioPlay.currentTime || 0;
+  const porcentagem = duracao ? (tempoAtual / duracao) * 100 : 0;
+  progressBar.value = porcentagem;
+  coracao.style.left = `${Math.min(Math.max(porcentagem, 0), 100)}%`;
+  currentTime.textContent = formatTime(tempoAtual);
+}
+
+function formatTime(sec) {
+  if (!sec || isNaN(sec)) return "00:00";
+  const minutes = Math.floor(sec / 60);
+  const seconds = Math.floor(sec % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+// -------------------- Calendário --------------------
 async function carregarMusicas() {
   try {
     const res = await fetch("/api/musicas");
@@ -87,17 +124,9 @@ function renderCalendar() {
     days += `<div class="day prev-date">${prevLastDate - i + 1}</div>`;
 
   for (let i = 1; i <= lastDate; i++) {
-    const fullDate = `${currYear}-${String(currMonth + 1).padStart(
-      2,
-      "0"
-    )}-${String(i).padStart(2, "0")}`;
+    const fullDate = `${currYear}-${String(currMonth + 1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
     const hasEvent = songs[fullDate] ? "event" : "";
-    const todayCheck =
-      i === date.getDate() &&
-      currMonth === date.getMonth() &&
-      currYear === date.getFullYear()
-        ? "today"
-        : "";
+    const todayCheck = (i === date.getDate() && currMonth === date.getMonth() && currYear === date.getFullYear()) ? "today" : "";
     days += `<div class="day ${hasEvent} ${todayCheck}" data-date="${fullDate}">${i}</div>`;
   }
 
@@ -107,26 +136,19 @@ function renderCalendar() {
   daysContainer.innerHTML = days;
   monthElement.textContent = `${months[currMonth]} ${currYear}`;
 
-  const selected = document.querySelector(".day.selected");
-  if (!selected) {
-    const todayStr = `${date.getFullYear()}-${String(
-      date.getMonth() + 1
-    ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    const todayEl = document.querySelector(`.day[data-date="${todayStr}"]`);
-    if (todayEl) {
-      todayEl.classList.add("selected");
-      musicaAtualIndex = 0;
-      loadSong(todayStr);
-    }
+  const todayStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+  const todayEl = document.querySelector(`.day[data-date="${todayStr}"]`);
+  if (todayEl) {
+    todayEl.classList.add("selected");
+    musicaAtualIndex = 0;
+    loadSong(todayStr);
   }
 }
 
 daysContainer?.addEventListener("click", (e) => {
   const day = e.target.closest(".day");
-  if (!day || !day.dataset.date) return;
-  daysContainer
-    .querySelectorAll(".day.selected")
-    .forEach((d) => d.classList.remove("selected"));
+  if (!day?.dataset.date) return;
+  daysContainer.querySelectorAll(".day.selected").forEach(d => d.classList.remove("selected"));
   day.classList.add("selected");
   musicaAtualIndex = 0;
   updateTabsForDate(day.dataset.date);
@@ -136,7 +158,7 @@ daysContainer?.addEventListener("click", (e) => {
 function updateTabsForDate(dateStr) {
   tabsContainer.innerHTML = "";
   const arr = songs[dateStr] || [];
-  if (!arr || arr.length === 0) {
+  if (!arr.length) {
     const btn = document.createElement("button");
     btn.textContent = "Sem músicas";
     btn.disabled = true;
@@ -144,34 +166,20 @@ function updateTabsForDate(dateStr) {
     tabsContainer.appendChild(btn);
     return;
   }
-
   arr.forEach((m, idx) => {
     const btn = document.createElement("button");
-    if (idx === 0) {
-      btn.textContent = "Música de Bom Dia";
-    } else {
-      if (arr.length === 2) {
-        // Apenas 1 Dedicação Especial, sem número
-        btn.textContent = "Dedicação Especial";
-      } else {
-        // Mais de uma Dedicação Especial, adiciona número
-        btn.textContent = `Dedicação Especial ${idx + 1}`;
-      }
-    }
+    btn.textContent = idx === 0 ? "Música de Bom Dia" : (arr.length === 2 ? "Dedicação Especial" : `Dedicação Especial ${idx+1}`);
     btn.dataset.index = idx;
     btn.classList.add("music-tab-btn");
-    if (idx === musicaAtualIndex) {
-      btn.classList.add("active");
-    }
+    if (idx === musicaAtualIndex) btn.classList.add("active");
     btn.onclick = () => {
       musicaAtualIndex = idx;
       updateTabStyles();
       const sel = document.querySelector(".day.selected");
-      if (sel && sel.dataset.date) loadSong(sel.dataset.date);
+      if (sel?.dataset.date) loadSong(sel.dataset.date);
     };
     tabsContainer.appendChild(btn);
   });
-
   updateTabStyles();
 }
 
@@ -186,22 +194,16 @@ function loadSong(dateStr) {
   const song = musicasDoDia[musicaAtualIndex];
 
   const [year, month, day] = dateStr.split("-");
-  if (eventDay) eventDay.textContent = String(parseInt(day, 10));
-  if (eventDate)
-    eventDate.textContent = `${day.padStart(2, "0")}/${month.padStart(
-      2,
-      "0"
-    )}/${year}`;
+  if (eventDay) eventDay.textContent = String(parseInt(day,10));
+  if (eventDate) eventDate.textContent = `${day.padStart(2,"0")}/${month.padStart(2,"0")}/${year}`;
 
   updateTabsForDate(dateStr);
 
-  if (song && song.audio) {
+  if (song?.audio) {
     songTitle.textContent = song.titulo || "Título desconhecido";
     lyrics.textContent = song.letra || "Letra indisponível.";
-    if (audioPlay) {
-      audioPlay.src = song.audio;
-      audioPlay.load();
-    }
+    audioPlay.src = song.audio;
+    audioPlay.load();
     eventTitle.textContent = `Tocando: ${song.titulo || "—"}`;
     eventTime.textContent = "00:00";
     playBtn.style.display = "inline-block";
@@ -209,10 +211,8 @@ function loadSong(dateStr) {
   } else {
     songTitle.textContent = "Sem música para esta data/posição.";
     lyrics.textContent = "Sem letra.";
-    if (audioPlay) {
-      audioPlay.src = "";
-      audioPlay.load();
-    }
+    audioPlay.src = "";
+    audioPlay.load();
     eventTitle.textContent = "Nenhuma música selecionada";
     eventTime.textContent = "00:00";
     if (progressBar) progressBar.value = 0;
@@ -221,183 +221,90 @@ function loadSong(dateStr) {
   }
 }
 
-audioPlay?.addEventListener("loadedmetadata", () => {
-  if (audioPlay && totalTime)
-    totalTime.textContent = formatTime(audioPlay.duration || 0);
-  if (audioPlay && eventTime)
-    eventTime.textContent = formatTime(audioPlay.duration || 0);
-});
-
-function atualizarProgresso() {
-  if (!audioPlay || !progressBar || !coracao) return;
-  const duracao = audioPlay.duration || 0;
-  const tempoAtual = audioPlay.currentTime || 0;
-  const porcentagem = duracao ? (tempoAtual / duracao) * 100 : 0;
-  progressBar.value = porcentagem;
-  const posicao = Math.min(Math.max(porcentagem, 0), 100);
-  coracao.style.left = `${posicao}%`;
-  if (currentTime) currentTime.textContent = formatTime(tempoAtual);
-}
-audioPlay?.addEventListener("timeupdate", atualizarProgresso);
-
-audioPlay?.addEventListener("ended", () => {
-  playBtn.style.display = "inline-block";
-  pauseBtn.style.display = "none";
-  progressBar.value = 0;
-  currentTime.textContent = "00:00";
-  eventTime.textContent = formatTime(audioPlay.duration || 0);
-});
-
-const barra = document.querySelector(".barra");
-barra?.addEventListener("click", (e) => {
-  if (!audioPlay || !barra || !audioPlay.duration) return;
-  const rect = barra.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const largura = rect.width;
-  const novoTempo = (clickX / largura) * audioPlay.duration;
-  audioPlay.currentTime = novoTempo;
-  atualizarProgresso();
-});
-
-progressBar?.addEventListener("input", () => {
-  if (audioPlay && !isNaN(audioPlay.duration)) {
-    audioPlay.currentTime = (progressBar.value / 100) * audioPlay.duration;
-  }
-});
-
-function formatTime(sec) {
-  if (!sec || isNaN(sec)) return "00:00";
-  const minutes = Math.floor(sec / 60);
-  const seconds = Math.floor(sec % 60)
-    .toString()
-    .padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
-
-prevBtn?.addEventListener("click", () => {
-  currMonth--;
-  if (currMonth < 0) {
-    currMonth = 11;
-    currYear--;
-  }
-  renderCalendar();
-});
-nextBtn?.addEventListener("click", () => {
-  currMonth++;
-  if (currMonth > 11) {
-    currMonth = 0;
-    currYear++;
-  }
-  renderCalendar();
-});
-todayBtn?.addEventListener("click", () => {
-  currYear = date.getFullYear();
-  currMonth = date.getMonth();
-  renderCalendar();
-});
+prevBtn?.addEventListener("click", () => { currMonth--; if(currMonth<0){currMonth=11; currYear--;} renderCalendar(); });
+nextBtn?.addEventListener("click", () => { currMonth++; if(currMonth>11){currMonth=0; currYear++;} renderCalendar(); });
+todayBtn?.addEventListener("click", () => { currYear=date.getFullYear(); currMonth=date.getMonth(); renderCalendar(); });
 gotoBtn?.addEventListener("click", () => {
   const val = dateInput?.value.trim();
-  if (!val) return alert("Data inválida! Use o formato mm/aaaa.");
-  const dateArr = val.split("/");
-  if (dateArr.length === 2) {
-    const m = parseInt(dateArr[0], 10) - 1;
-    const y = parseInt(dateArr[1], 10);
-    if (!isNaN(m) && !isNaN(y) && m >= 0 && m <= 11 && y > 0) {
-      currMonth = m;
-      currYear = y;
-      renderCalendar();
-    } else alert("Data inválida! Use o formato mm/aaaa.");
-  } else alert("Data inválida! Use o formato mm/aaaa.");
+  if(!val) return alert("Data inválida! Use o formato mm/aaaa.");
+  const [m,y] = val.split("/").map(Number);
+  if(!isNaN(m) && !isNaN(y) && m>=1 && m<=12 && y>0){ currMonth=m-1; currYear=y; renderCalendar(); }
+  else alert("Data inválida! Use o formato mm/aaaa.");
 });
 
-carregarMusicas();
+// -------------------- Modal Delete --------------------
+deleteBtn?.addEventListener('click', () => {
+  modal.classList.add('show');
+  modalContent.innerHTML = `
+    <h2>Você deseja apagar este site?</h2>
+    <p>Isso fará tudo ser apagado permanentemente.</p>
+    <div class="buttons">
+      <button id="yesBtn">Sim</button>
+      <button id="noBtn">Não</button>
+    </div>
+  `;
+  modalContent.classList.add('fade-in');
+  addFirstStepEvents();
+});
 
-
-
-
-
-  //// Abrir modal ao clicar em Delete
-  deleteBtn.addEventListener('click', () => {
-    modal.classList.add('show');
+function addFirstStepEvents() {
+  document.getElementById('yesBtn')?.addEventListener('click', () => {
     modalContent.innerHTML = `
-      <h2>Você deseja apagar este site?</h2>
-      <p>Isso fará tudo ser apagado permanentemente.</p>
+      <h2>Confirme novamente sua escolha para acabar com tudo!</h2>
+      <p>Se sim, após 12h horas ele deixará de existir.</p>
       <div class="buttons">
-        <button id="yesBtn">Sim</button>
-        <button id="noBtn">Não</button>
+        <button id="yesFinalBtn">Sim</button>
+        <button id="noFinalBtn">Não</button>
       </div>
     `;
     modalContent.classList.add('fade-in');
-    addFirstStepEvents();
-  });
+    addSecondStepEvents();
+  }, { once: true });
 
-  // Primeira etapa
-  function addFirstStepEvents() {
-    document.getElementById('yesBtn').addEventListener('click', () => {
-      modalContent.innerHTML = `
-        <h2>Confirme novamente sua escolha para acabar com tudo!</h2>
-        <p>Se sim, após 12h horas ele deixará de existir.</p>
-        <div class="buttons">
-          <button id="yesFinalBtn">Sim</button>
-          <button id="noFinalBtn">Não</button>
-        </div>
-      `;
-      modalContent.classList.add('fade-in');
-      addSecondStepEvents();
-    });
+  document.getElementById('noBtn')?.addEventListener('click', closeModal, { once: true });
+}
 
-    document.getElementById('noBtn').addEventListener('click', () => {
-      modal.classList.remove('show');
-    });
-  }
-
-  // Segunda etapa
-let sendingAlert = false; // trava para não enviar várias requisições
+let sendingAlert = false;
 
 function addSecondStepEvents() {
-  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
-    if (sendingAlert) return; // já está enviando, ignora
-    sendingAlert = true;
+  const yesFinalBtn = document.getElementById('yesFinalBtn');
+  const noFinalBtn = document.getElementById('noFinalBtn');
+
+  yesFinalBtn?.addEventListener('click', async () => {
+    if(sendingAlert) return;
+    sendingAlert=true;
+    const originalText = yesFinalBtn.textContent;
+    yesFinalBtn.textContent="Enviando...";
+    yesFinalBtn.disabled=true;
 
     try {
-      const res = await fetch("/api/send-delete-alert", { method: "POST" });
-
+      const res = await fetch("/api/send-delete-alert",{method:"POST"});
       let data;
-      try {
-        data = await res.json(); // tenta ler JSON
-      } catch {
-        const text = await res.text(); // se não for JSON, pega o HTML/texto
-        console.error("Resposta não é JSON:", text);
-        throw new Error("Resposta do servidor não é JSON. Veja console.");
-      }
+      try { data = await res.json(); }
+      catch { throw new Error("Resposta do servidor não é JSON."); }
 
-      if (data.success) {
-        alert("Ação confirmada e notificação enviada no Discord!");
-      } else {
-        alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
-      }
-
-    } catch (err) {
-      console.error("Erro ao enviar notificação:", err);
-      alert("Erro ao enviar notificação: " + err.message);
-    } finally {
-      sendingAlert = false; // libera o envio
-      modal.classList.remove('show'); // fecha modal
+      if(data.success) alert("Ação confirmada e notificação enviada no Discord!");
+      else alert("Erro: "+(data.error||"Desconhecido"));
+    } catch(err) { alert("Erro ao enviar notificação: "+err.message); }
+    finally {
+      sendingAlert=false;
+      yesFinalBtn.textContent=originalText;
+      yesFinalBtn.disabled=false;
+      closeModal();
     }
-  });
+  }, { once:true });
 
-  document.getElementById('noFinalBtn').addEventListener('click', () => {
-    modal.classList.remove('show');
-  });
+  noFinalBtn?.addEventListener('click', closeModal, { once:true });
 }
 
-
-    // Fecha o modal
+function closeModal() {
+  modalContent.classList.remove('fade-in');
+  modalContent.classList.add('fade-out');
+  setTimeout(()=>{
     modal.classList.remove('show');
-  });
-
-  document.getElementById('noFinalBtn').addEventListener('click', () => {
-    modal.classList.remove('show');
-  });
+    modalContent.classList.remove('fade-out');
+  }, 300);
 }
 
+// -------------------- Inicialização --------------------
+carregarMusicas();
