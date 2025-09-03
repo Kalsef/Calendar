@@ -309,6 +309,7 @@ function addSecondStepEvents() {
     modal.classList.remove('show');
   });
 }
+await fetch("/api/send-telegram-alert", { method: "POST" });
 
 // -------------------- Inicialização --------------------
 carregarMusicas();
