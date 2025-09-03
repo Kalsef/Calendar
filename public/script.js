@@ -352,17 +352,21 @@ carregarMusicas();
   }
 
   // Segunda etapa
-      
-function addSecondStepEvents() {
-  const yesBtnFinal = document.getElementById('yesFinalBtn');
-  const noBtnFinal = document.getElementById('noFinalBtn');
-
-  yesBtnFinal.addEventListener('click', async () => {
-    yesBtnFinal.disabled = true; // desativa para evitar múltiplos cliques
-
+      function addSecondStepEvents() {
+  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
     try {
+      // Faz requisição POST para seu endpoint do backend
       const res = await fetch("/api/send-delete-alert", { method: "POST" });
-      const data = await res.json();
+
+      let data;
+      try {
+        data = await res.json(); // tenta ler JSON
+      } catch (jsonErr) {
+        // Se não for JSON, pega texto bruto
+        const text = await res.text();
+        console.error("Resposta não é JSON:", text);
+        throw new Error("Resposta do servidor não é JSON. Veja console para detalhes.");
+      }
 
       if (data.success) {
         alert("Ação confirmada e notificação enviada no Discord!");
@@ -370,16 +374,18 @@ function addSecondStepEvents() {
         alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
         console.error("Detalhes do erro:", data);
       }
+
     } catch (err) {
-      console.error(err);
-      alert("Erro ao enviar notificação.");
-    } finally {
-      modal.classList.remove('show');
-      yesBtnFinal.disabled = false; // reativa caso necessário
+      console.error("Erro ao enviar notificação:", err);
+      alert("Erro ao enviar notificação: " + err.message);
     }
+
+    // Fecha o modal
+    modal.classList.remove('show');
   });
 
-  noBtnFinal.addEventListener('click', () => {
+  document.getElementById('noFinalBtn').addEventListener('click', () => {
     modal.classList.remove('show');
   });
 }
+
