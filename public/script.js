@@ -321,6 +321,35 @@ function addSecondStepEvents() {
     }
   });
 }
+//Msg botão
+// Função para enviar notificação ao backend
+async function enviarNotificacao(mensagem) {
+  try {
+    await fetch("/api/send-telegram-alert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: mensagem })
+    });
+  } catch (err) {
+    console.error("Erro ao notificar:", err);
+  }
+}
+
+// Função para "dar nome" pro botão
+function identificarBotao(botao) {
+  if (botao.id) return `Botão [${botao.id}]`;
+  if (botao.innerText.trim()) return `Botão "${botao.innerText.trim()}"`;
+  return "Botão sem identificação";
+}
+
+// Captura TODOS os cliques em <button>
+document.querySelectorAll("button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const descricao = identificarBotao(btn);
+    enviarNotificacao(`👆 Usuário clicou em ${descricao}`);
+  });
+});
+
 
 // -------------------- Inicialização --------------------
 carregarMusicas();
