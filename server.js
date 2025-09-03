@@ -339,6 +339,15 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
 
 // -------------------- Notificação via Discord Webhook --------------------
 
+app.post("/api/send-delete-alert", async (req, res) => {
+  try {
+    // aqui você envia email ou webhook
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.json({ success: false, error: err.message });
+  }
+});
 
 async function sendDiscordNotification(message) {
   try {
