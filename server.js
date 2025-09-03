@@ -332,7 +332,11 @@ app.post("/api/send-telegram-alert", async (req, res) => {
   try {
     const chat_id = process.env.TELEGRAM_CHAT_ID;
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    const message = "⚠️ Alerta: site será deletado em 12h!";
+    const { message } = req.body; // <-- pega a mensagem enviada pelo frontend
+
+    if (!message) {
+      return res.status(400).json({ success: false, error: "Mensagem não fornecida" });
+    }
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
@@ -352,4 +356,3 @@ app.post("/api/send-telegram-alert", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
