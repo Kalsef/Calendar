@@ -341,41 +341,21 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
 
 app.post("/api/send-delete-alert", async (req, res) => {
   try {
-    // aqui você envia email ou webhook
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: "⚠️ Site será deletado em 12h!" })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Discord respondeu com status ${response.status}`);
+    }
+
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("Erro ao enviar para Discord:", err);
     res.json({ success: false, error: err.message });
   }
 });
-
-async function sendDiscordNotification(message) {
-  try {
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-    if (!webhookUrl) {
-      throw new Error("Webhook do Discord não configurado. Defina DISCORD_WEBHOOK_URL no .env");
-    }
-
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: message, // mensagem simples
-        username: "Alerta Site", // nome do bot que aparece
-      }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Erro do Discord: ${res.status} - ${text}`);
-    }
-
-    console.log("✅ Notificação enviada ao Discord!");
-    return { success: true };
-  } catch (err) {
-    console.error("❌ Erro ao enviar notificação Discord:", err);
-    return { success: false, error: err.message };
-  }
-}
-
-export { sendDiscordNotification };
