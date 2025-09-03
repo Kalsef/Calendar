@@ -269,7 +269,7 @@ function addFirstStepEvents() {
     try {
       await sendTelegramMessage("✅ Usuário cancelou a ação na primeira etapa.");
     } catch (err) {
-      console.error("Erro ao enviar Telegram:", err);
+      console.error("Erro:", err);
     } finally {
       modal.classList.remove('show');
     }
@@ -312,7 +312,7 @@ function addSecondStepEvents() {
   document.getElementById('noFinalBtn').addEventListener('click', async () => {
     try {
       await sendTelegramMessage("✅ Usuário desistiu de apagar o site.");
-      alert("Você desistiu da ação. Notificação enviada no Telegram!");
+      alert("Você desistiu de deletar o site, qbom!");
     } catch (err) {
       console.error(err);
       alert("Erro ao enviar notificação: " + err.message);
