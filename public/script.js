@@ -360,12 +360,15 @@ function addSecondStepEvents() {
       const res = await fetch("/api/send-delete-alert", { method: "POST" });
       const data = await res.json();
 
+      
+
       if (data.success) {
-        alert("Ação confirmada e notificação enviada no Discord!");
-      } else {
-        alert("Erro ao enviar notificação.");
-        console.error("Erro:", data.error);
-      }
+  alert("Ação confirmada e notificação enviada no Discord!");
+} else {
+  alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
+  console.error("Detalhes do erro:", data);
+}
+
 
     } catch (err) {
       console.error(err);
