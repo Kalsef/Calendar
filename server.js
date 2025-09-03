@@ -67,34 +67,45 @@ const upload = multer({
 });
 
 // -------------------- msg botão  --------------------
-// Função para enviar notificação ao backend
-async function enviarNotificacao(mensagem) {
+// Rota para capturar clique com IP e localização
+app.post("/api/button-click", async (req, res) => {
   try {
-    await fetch("/api/send-telegram-alert", {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const { descricao } = req.body;
+
+    // Pega geolocalização básica
+    let location = "Desconhecida";
+    try {
+      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+      const geoData = await geoRes.json();
+      if (geoData && !geoData.error) {
+        location = `${geoData.city || "?"}, ${geoData.region || "?"}, ${geoData.country_name || "?"}`;
+      }
+    } catch (err) {
+      console.error("Erro ao buscar localização:", err);
+    }
+
+    // Monta mensagem pro Telegram
+    const mensagem = `👆 Clique detectado:
+🔘 Botão: ${descricao}
+🌐 IP: ${ip}
+📍 Localização: ${location}`;
+
+    const chat_id = process.env.TELEGRAM_CHAT_ID;
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: mensagem })
+      body: JSON.stringify({ chat_id, text: mensagem }),
     });
+
+    res.json({ success: true });
   } catch (err) {
-    console.error("Erro ao notificar:", err);
+    console.error("Erro ao processar clique:", err);
+    res.status(500).json({ error: err.message });
   }
-}
-
-// Função para "dar nome" pro botão
-function identificarBotao(botao) {
-  if (botao.id) return `Botão [${botao.id}]`;
-  if (botao.innerText.trim()) return `Botão "${botao.innerText.trim()}"`;
-  return "Botão sem identificação";
-}
-
-// Captura TODOS os cliques em <button>
-document.querySelectorAll("button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const descricao = identificarBotao(btn);
-    enviarNotificacao(`👆 Usuário clicou em ${descricao}`);
-  });
 });
-
 
 // -------------------- Middlewares --------------------
 app.use(express.json());
