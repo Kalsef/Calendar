@@ -345,27 +345,57 @@ import dotenv from "dotenv";
 dotenv.config();
 
 app.post("/api/send-delete-alert", async (req, res) => {
-  try {
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-    if (!webhookUrl) throw new Error("Webhook não definido");
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) return res.status(500).json({ success: false, error: "Webhook não definido" });
 
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: "⚠️ Alerta: site será deletado em 12h!"
-      }),
-    });
+  const maxRetries = 3;
 
-    if (!response.ok) {
-      let text = await response.text();
-      console.error("Erro do Discord:", text);
-      return res.status(500).json({ success: false, error: `Discord retornou ${response.status}` });
+  async function sendMessage(retries = maxRetries) {
+    try {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: "⚠️ Alerta: site será deletado em 12h!"
+        }),
+        timeout: 5000 // timeout 5s
+      });
+
+      if (response.status === 429) {
+        const data = await response.json().catch(() => ({}));
+        const retryAfter = (data.retry_after || 1) * 1000; // em ms
+        console.warn(`Rate limit do Discord. Retry em ${retryAfter}ms`);
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, retryAfter));
+          return sendMessage(retries - 1);
+        } else {
+          throw new Error("Muitas requisições, não foi possível enviar para Discord");
+        }
+      }
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Discord retornou erro:", text);
+        throw new Error(`Discord retornou ${response.status}`);
+      }
+
+      return true;
+
+    } catch (err) {
+      if (retries > 0) {
+        console.warn("Erro ao enviar para Discord, tentando novamente:", err.message);
+        await new Promise(r => setTimeout(r, 1000));
+        return sendMessage(retries - 1);
+      }
+      throw err;
     }
+  }
 
+  try {
+    await sendMessage();
     res.json({ success: true });
   } catch (err) {
-    console.error("Erro ao enviar notificação:", err);
+    console.error("Falha ao enviar notificação final:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
