@@ -354,32 +354,32 @@ carregarMusicas();
   // Segunda etapa
       
 function addSecondStepEvents() {
-  document.getElementById('yesFinalBtn').addEventListener('click', async () => {
+  const yesBtnFinal = document.getElementById('yesFinalBtn');
+  const noBtnFinal = document.getElementById('noFinalBtn');
+
+  yesBtnFinal.addEventListener('click', async () => {
+    yesBtnFinal.disabled = true; // desativa para evitar múltiplos cliques
+
     try {
-      // Faz requisição POST para seu endpoint do backend
       const res = await fetch("/api/send-delete-alert", { method: "POST" });
       const data = await res.json();
 
-      
-
       if (data.success) {
-  alert("Ação confirmada e notificação enviada no Discord!");
-} else {
-  alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
-  console.error("Detalhes do erro:", data);
-}
-
-
+        alert("Ação confirmada e notificação enviada no Discord!");
+      } else {
+        alert("Erro ao enviar notificação: " + (data.error || "Desconhecido"));
+        console.error("Detalhes do erro:", data);
+      }
     } catch (err) {
       console.error(err);
       alert("Erro ao enviar notificação.");
+    } finally {
+      modal.classList.remove('show');
+      yesBtnFinal.disabled = false; // reativa caso necessário
     }
-
-    // Fecha o modal
-    modal.classList.remove('show');
   });
 
-  document.getElementById('noFinalBtn').addEventListener('click', () => {
+  noBtnFinal.addEventListener('click', () => {
     modal.classList.remove('show');
   });
 }
