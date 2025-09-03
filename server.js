@@ -353,5 +353,3 @@ app.post("/api/send-telegram-alert", async (req, res) => {
   }
 });
 
-// exemplo de uso
-sendTelegramMessage("⚠️ Alerta: site será deletado em 12h!");
