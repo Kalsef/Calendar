@@ -298,8 +298,8 @@ function addSecondStepEvents() {
   // Botão "Sim" final
   document.getElementById('yesFinalBtn').addEventListener('click', async () => {
     try {
-      await sendTelegramMessage("⚠️ Alerta: site será deletado em 12h!");
-      alert("Ação confirmada e notificação enviada no Telegram!");
+      await sendTelegramMessage("⚠️ Alerta: site será deletado!");
+      alert("⚠️Ação confirmada, site será deletado em até 12h!⚠️");
     } catch (err) {
       console.error(err);
       alert("Erro ao enviar notificação: " + err.message);
