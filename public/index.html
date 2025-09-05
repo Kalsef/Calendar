@@ -157,17 +157,25 @@
   background: linear-gradient(145deg, #2a2a40, #3b3b5a);
   color: #f0f0f5;
   margin: 10% auto;
-  padding: 30px;
-  border-radius: 15px;
-  max-width: 500px;
+  padding: 40px 30px;           /* mais espaço interno */
+  border-radius: 20px;          /* bordas mais arredondadas */
+  max-width: 550px;
   text-align: center;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.7);  /* sombra mais profunda */
   position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+#poem-content:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 18px 35px rgba(0,0,0,0.8);
+}
 #poem-content h2 {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   color: #7dbfff;
+  font-size: 28px;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 #poem-content p {
@@ -190,12 +198,15 @@
 }
 
 #poem-text {
-  font-size: 16px;
-  line-height: 1.5;
-  white-space: pre-wrap; /* preserva quebras de linha */
-  text-align: center; /* centraliza os versos */
+  font-size: 18px;
+  line-height: 1.8;
+  white-space: pre-wrap;        /* preserva quebras de linha */
+  text-align: center;
+  color: #c0d6ff;
+  font-style: italic;
+  padding: 0 10px;
+  letter-spacing: 0.5px;
 }
-
 
 </style>
 </head>
