@@ -142,30 +142,34 @@
   }
 
   /* Modal */
-   #poem-modal {
-    display: none; 
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.7);
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-  }
-  
+ #poem-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: flex-start; /* modal vai ficar no topo */
+  justify-content: center;
+  padding-top: 50px;       /* distância do topo */
+  padding-left: 10px;
+  padding-right: 10px;
+  overflow-y: auto;
+}
+
 #poem-content {
   background: linear-gradient(145deg, #2a2a40, #3b3b5a);
   color: #f0f0f5;
-  padding: 20px;
+  padding: 25px 20px;
   border-radius: 15px;
   width: 90%;
-  max-width: 400px;       /* largura máxima menor para mobile */
-  max-height: 80vh;
+  max-width: 450px;      /* largura máxima maior que antes */
+  max-height: 85vh;      /* mais alto para caber mais conteúdo */
   overflow-y: auto;
-  word-break: break-word;  /* força quebra de palavras longas */
-  text-align: center;
+  word-break: break-word;
+  text-align: left;      /* texto alinhado à esquerda */
   box-shadow: 0 12px 30px rgba(0,0,0,0.7);
   position: relative;
   animation: fadeInScale 0.4s ease;
@@ -182,9 +186,10 @@
   font-size: 16px;
   line-height: 1.6;
   white-space: pre-wrap;
-  word-break: break-word; /* força quebra de palavras longas */
+  word-break: break-word;
   color: #c0d6ff;
   font-style: italic;
+  text-align: left;      /* texto alinhado à esquerda */
 }
   
   #close-modal {
@@ -203,9 +208,9 @@
 @media (max-width: 768px) {
   #poem-content {
     width: 95%;
-    max-width: 350px;
-    padding: 18px;
-    max-height: 75vh;
+    max-width: 400px;
+    padding: 20px;
+    max-height: 80vh;
   }
   #poem-content h2 {
     font-size: 18px;
@@ -220,9 +225,9 @@
 @media (max-width: 480px) {
   #poem-content {
     width: 95%;
-    max-width: 300px; /* modal agora bem estreito */
-    padding: 15px;
-    max-height: 70vh;
+    max-width: 350px;
+    padding: 18px;
+    max-height: 75vh;
   }
   #poem-content h2 {
     font-size: 16px;
