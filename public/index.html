@@ -376,19 +376,6 @@ menu.style.display = 'flex';
     });
   });
 
-  // Lista de poemas diários
-const poems = [
-  "Amar você é um sonho que nunca termina 💖\nCada dia contigo é um verso de felicidade 🌹",
-  "Você é minha inspiração e minha poesia ✨\nNosso amor é a rima mais bonita da vida 💕",
-  "Meu coração bate em seu ritmo todos os dias ❤️\nE cada momento contigo é especial"
-];
-
-
-// Função para pegar poema do dia
-function getDailyPoem() {
-  const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 1000 / 60 / 60 / 24);
-  return poems[dayOfYear % poems.length];
-}
 
 // Modal
 const poemBtn = document.getElementById('poem-btn');
