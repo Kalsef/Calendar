@@ -157,11 +157,22 @@ body {
   background: #3b3b55;
   color: #c0c0d0;
   font-weight: 600;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   cursor: pointer;
   border-radius: 10px;
   padding: 10px;
 }
+.event::before {
+  content: "";
+  position: absolute;
+  bottom: 0; /* Posiciona a linha na parte inferior */
+  left: 0;
+  width: 100%;
+  height: 4px; /* Espessura da linha */
+  background-color: #7dbfff; /* Cor da linha */
+  border-radius: 2px;
+}
+
 
 .day.event {
   position: relative;
