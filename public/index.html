@@ -366,7 +366,11 @@ poemBtn.addEventListener('click', async () => {
   try {
     const response = await fetch("/api/poem"); // rota do backend
     const data = await response.json();
-    poemText.textContent = data.poem || "💖 Nenhum poema disponível 💖";
+    let poem = data.poem || "💖 Nenhum poema disponível 💖";
+
+    // Substitui \n por quebras de linha se o backend usar \n
+    poemText.textContent = poem;
+
     poemModal.style.display = 'block';
   } catch (err) {
     console.error("Erro ao carregar poema:", err);
