@@ -113,13 +113,6 @@
   }
 
 
-  /* Sininho no canto */
-#top-right-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-}
 
 #poem-btn {
   padding: 18px;
@@ -140,73 +133,76 @@
   box-shadow: 0 8px 20px rgba(0,0,0,0.5);
 }
 
-/* Modal */
-#poem-modal {
-  display: none; /* só aparece quando JS muda para flex */
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.7);
-  align-items: center;
-  justify-content: center;
-  padding: 15px;
-}
+/* 🔔 Sininho */
+  #top-right-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
 
+  /* Modal */
+  #poem-modal {
+    display: none; /* 🔹 fechado por padrão */
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;          /* 🔹 flex só funciona quando o JS mudar display */
+    align-items: center;    /* centraliza vertical */
+    justify-content: center;/* centraliza horizontal */
+    padding: 15px;
+  }
 
-#poem-content {
-  background: linear-gradient(145deg, #2a2a40, #3b3b5a);
-  color: #f0f0f5;
-  padding: clamp(20px, 5vw, 40px); /* responsivo */
-  border-radius: 20px;
-  max-width: 600px;
-  width: 100%;
-  max-height: 80vh; /* não estoura a tela */
-  overflow-y: auto; /* rolagem caso poema seja muito longo */
-  text-align: center;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.7);
-  position: relative;
-  animation: fadeInScale 0.4s ease;
-}
+  #poem-content {
+    background: linear-gradient(145deg, #2a2a40, #3b3b5a);
+    color: #f0f0f5;
+    padding: clamp(20px, 5vw, 40px);
+    border-radius: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+    position: relative;
+    animation: fadeInScale 0.4s ease;
+  }
 
-@keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
+  @keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
 
-#poem-content h2 {
-  margin-bottom: 20px;
-  color: #7dbfff;
-  font-size: clamp(20px, 4vw, 28px); /* adapta em celular */
-  letter-spacing: 1px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-}
-#poem-text {
-  font-size: clamp(15px, 2.5vw, 18px);
-  line-height: 1.8;
-  white-space: pre-wrap;
-  text-align: center;
-  color: #c0d6ff;
-  font-style: italic;
-  padding: 0 5px;
-  word-wrap: break-word;
-}
+  #poem-content h2 {
+    margin-bottom: 20px;
+    color: #7dbfff;
+    font-size: clamp(20px, 4vw, 28px);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  }
 
-/* Botão de fechar */
-#close-modal {
-  position: absolute;
-  top: 12px;
-  right: 18px;
-  font-size: 30px;
-  cursor: pointer;
-  color: #f0f0f5;
-  transition: color 0.2s;
-}
+  #poem-text {
+    font-size: clamp(15px, 2.5vw, 18px);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    text-align: center;
+    color: #c0d6ff;
+    font-style: italic;
+  }
 
-#close-modal:hover {
-  color: #7dbfff;
-}
+  #close-modal {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 30px;
+    cursor: pointer;
+    color: #f0f0f5;
+    transition: color 0.2s;
+  }
+
+  #close-modal:hover { color: #7dbfff; }
 
 /* Responsividade */
 @media (max-width: 768px) {
@@ -240,20 +236,19 @@
 </style>
 </head>
 <body>
- <!-- Sininho de Poema -->
-<div id="top-right-container">
-  <button id="poem-btn" title="Poema do Dia">🔔</button>
-</div>
-
-<!-- Modal do Poema -->
-<div id="poem-modal">
-  <div id="poem-content">
-    <span id="close-modal">&times;</span>
-    <h2>Poema do Dia</h2>
-    <div id="poem-text"></div>
+<!-- 🔔 Sininho -->
+  <div id="top-right-container">
+    <button id="poem-btn" title="Poema do Dia">🔔</button>
   </div>
-</div>
 
+  <!-- 📜 Modal -->
+  <div id="poem-modal">
+    <div id="poem-content">
+      <span id="close-modal">&times;</span>
+      <h2>Poema do Dia</h2>
+      <div id="poem-text"></div>
+    </div>
+  </div>
 <div id="menu">
   <button data-descricao="Ir para o Calendário" onclick="goToCalendar()">📅 Ir para o Calendário</button>
   <button data-descricao="Tempo" onclick="showCounters()">⏱ Tempo</button>
@@ -418,6 +413,10 @@ poemBtn.addEventListener('click', async () => {
     poemModal.style.display = 'block';
   }
 });
+ poemBtn.addEventListener('click', () => {
+    poemText.textContent = getDailyPoem();
+    poemModal.style.display = 'flex'; // 🔹 agora sim funciona
+  });
 
 closeModal.addEventListener('click', () => {
   poemModal.style.display = 'none';
