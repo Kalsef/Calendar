@@ -417,6 +417,10 @@ async function carregarAvaliacao(data) {
 
       const avaliacao = opcao.dataset.avaliacao;
 
+      // Registrar clique
+    registrarClique(`Avaliação selecionada: ${avaliacao} na data ${dataSelecionada}`);
+
+
       fetch('/api/avaliacao-dia', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
