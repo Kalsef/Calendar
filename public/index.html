@@ -155,42 +155,41 @@
     padding: 15px;
   }
   
-  #poem-content {
-    background: linear-gradient(145deg, #2a2a40, #3b3b5a);
-    color: #f0f0f5;
-    padding: clamp(20px, 5vw, 40px);
-    border-radius: 20px;
-    max-width: 600px;
-    width: 100%;
-    max-height: 80vh;
-    overflow-y: auto;
-    text-align: center;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.7);
-    position: relative;
-    animation: fadeInScale 0.4s ease;
-  }
+ #poem-content {
+  background: linear-gradient(145deg, #2a2a40, #3b3b5a);
+  color: #f0f0f5;
+  padding: clamp(20px, 5vw, 40px);
+  border-radius: 20px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+  position: relative;
+  animation: fadeInScale 0.4s ease;
+}
 
   @keyframes fadeInScale {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
   }
 
-  #poem-content h2 {
-    margin-bottom: 20px;
-    color: #7dbfff;
-    font-size: clamp(20px, 4vw, 28px);
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-  }
+#poem-content h2 {
+  margin-bottom: 20px;
+  color: #7dbfff;
+  font-size: clamp(20px, 5vw, 28px);
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
 
-  #poem-text {
-    font-size: clamp(15px, 2.5vw, 18px);
-    line-height: 1.8;
-    white-space: pre-wrap;
-    text-align: center;
-    color: #c0d6ff;
-    font-style: italic;
-  }
-
+#poem-text {
+  font-size: clamp(14px, 4vw, 18px);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  text-align: center;
+  color: #c0d6ff;
+  font-style: italic;
+}
   #close-modal {
     position: absolute;
     top: 12px;
@@ -206,32 +205,33 @@
 /* Responsividade */
 @media (max-width: 768px) {
   #poem-content {
-    padding: 20px 15px;
-    max-width: 80%;
+    padding: 20px;
+    width: 95%;
+    max-height: 75vh;
   }
   #poem-content h2 {
-    font-size: 20px;
+    font-size: 22px;
   }
   #poem-text {
-    font-size: 12px;
-    line-height: 1.6;
+    font-size: 16px;
+    line-height: 1.5;
   }
 }
 
 @media (max-width: 480px) {
   #poem-content {
-    padding: 17px 12px;
-    border-radius: 15px;
+    padding: 15px;
+    width: 95%;
+    max-height: 70vh;
   }
   #poem-content h2 {
-    font-size: 15px;
+    font-size: 18px;
   }
   #poem-text {
-    font-size: 10px;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.4;
   }
 }
-
 </style>
 </head>
 <body>
