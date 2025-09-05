@@ -53,7 +53,7 @@
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  #calendar, #counters, #memories {
+  #calendar, #counters {
     background-color: #2a2a40; 
     padding: 30px;
     border-radius: 15px;
@@ -113,10 +113,98 @@
   }
 
 
-  }
+  /* Sininho no canto */
+#top-right-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+#poem-btn {
+  padding: 18px;
+  font-size: 20px;
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #5aaafa, #5a6eff);
+  color: #f0f0f5;
+  font-weight: bold;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+  transition: all 0.3s ease;
+}
+
+#poem-btn:hover {
+  background: linear-gradient(145deg, #7dbfff, #5aaafa);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+/* Modal */
+#poem-modal {
+  display: none; 
+  position: fixed;
+  z-index: 2000; 
+  left: 0;
+  top: 0;
+  width: 100%; 
+  height: 100%; 
+  overflow: auto;
+  background-color: rgba(0,0,0,0.7); 
+}
+
+#poem-content {
+  background: linear-gradient(145deg, #2a2a40, #3b3b5a);
+  color: #f0f0f5;
+  margin: 10% auto;
+  padding: 30px;
+  border-radius: 15px;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+  position: relative;
+}
+
+#poem-content h2 {
+  margin-bottom: 20px;
+  color: #7dbfff;
+}
+
+#poem-content p {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+#close-modal {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  cursor: pointer;
+  color: #f0f0f5;
+  transition: color 0.2s;
+}
+
+#close-modal:hover {
+  color: #7dbfff;
+}
+
 </style>
 </head>
 <body>
+ <!-- Sininho de Poema -->
+<div id="top-right-container">
+  <button id="poem-btn" title="Poema do Dia">🔔</button>
+</div>
+
+<!-- Modal do Poema -->
+<div id="poem-modal">
+  <div id="poem-content">
+    <span id="close-modal">&times;</span>
+    <h2>Poema do Dia</h2>
+    <p id="poem-text"></p>
+  </div>
+</div>
 
 <div id="menu">
   <button data-descricao="Ir para o Calendário" onclick="goToCalendar()">📅 Ir para o Calendário</button>
@@ -146,8 +234,7 @@ const counters = document.getElementById('counters');
 function goToCalendar() { window.location.href = 'calendar.html'; }
 function backToMenu() { 
   calendar.style.display = 'none'; 
-  counters.style.display = 'none';  
-  memories.style.display = 'none'; 
+  counters.style.display = 'none';   
   menu.style.display = 'flex'; 
 
   if(intervalId) {
@@ -165,7 +252,7 @@ const counterElems = [
 const countersData = [
   { name: "EU CONHECI A MULHER QUE VIRIA SER O AMOR DA MINHA VIDA", date: new Date('2024-11-27T22:30:00'), image: "1.png" }, 
   { name: "EU ADMITI QUE AMAVA ELA", date: new Date('2025-03-10T07:00:00'), image: "1.png" }, 
-  { name: "ADEUS", date: new Date('2025-08-11T17:15:00'), image: "2.png" }
+  { name: "ATÉ", date: new Date('2025-08-11T17:15:00'), image: "2.png" }
 ];
 
 let intervalId;
@@ -247,8 +334,50 @@ menu.style.display = 'flex';
     });
   });
 
+  // Lista de poemas diários
+const poems = [
+  "Amar você é um sonho que nunca termina 💖",
+  "Cada dia contigo é um verso de felicidade 🌹",
+  "Você é minha inspiração e minha poesia ✨",
+  "Nosso amor é a rima mais bonita da vida 💕",
+  "Meu coração bate em seu ritmo todos os dias ❤️"
+];
 
-  
+// Função para pegar poema do dia
+function getDailyPoem() {
+  const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 1000 / 60 / 60 / 24);
+  return poems[dayOfYear % poems.length];
+}
+
+// Modal
+const poemBtn = document.getElementById('poem-btn');
+const poemModal = document.getElementById('poem-modal');
+const poemText = document.getElementById('poem-text');
+const closeModal = document.getElementById('close-modal');
+
+poemBtn.addEventListener('click', async () => {
+  try {
+    const response = await fetch("/api/poem"); // rota do backend
+    const data = await response.json();
+    poemText.textContent = data.poem || "💖 Nenhum poema disponível 💖";
+    poemModal.style.display = 'block';
+  } catch (err) {
+    console.error("Erro ao carregar poema:", err);
+    poemText.textContent = "Erro ao carregar poema 😢";
+    poemModal.style.display = 'block';
+  }
+});
+
+closeModal.addEventListener('click', () => {
+  poemModal.style.display = 'none';
+});
+
+window.addEventListener('click', (e) => {
+  if(e.target == poemModal) {
+    poemModal.style.display = 'none';
+  }
+});
+
 </script>
 
 
