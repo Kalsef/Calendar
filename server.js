@@ -201,7 +201,35 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         user_agent TEXT,
         accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS poems (
+        id SERIAL PRIMARY KEY,
+        content TEXT NOT NULL,
+        date DATE UNIQUE
+      );
+
+      CREATE TABLE IF NOT EXISTS avaliacoes (
+        id SERIAL PRIMARY KEY,
+        data DATE NOT NULL,
+        avaliacao TEXT NOT NULL
+      );
     `);
+
+await pool.query(`
+  DO $$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+      WHERE conname = 'unique_data'
+    ) THEN
+      ALTER TABLE avaliacoes
+      ADD CONSTRAINT unique_data UNIQUE (data);
+    END IF;
+  END
+  $$;
+`);
+
 
     const adminRes = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
     if (adminRes.rows.length === 0) {
@@ -428,3 +456,124 @@ app.post("/api/send-telegram-alert", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+// GET todos os poemas (admin)
+app.get("/api/admin/poems", auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM poems ORDER BY date DESC");
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar poemas:", err);
+    res.status(500).json({ error: "Erro ao buscar poemas" });
+  }
+});
+
+
+// GET poema do dia
+app.get("/api/poem", async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const result = await pool.query("SELECT content FROM poems WHERE date = $1", [today]);
+    
+    if (result.rows.length > 0) {
+      res.json({ poem: result.rows[0].content });
+    } else {
+      res.json({ poem: "💖 Nenhum poema cadastrado para hoje 💖" });
+    }
+  } catch (err) {
+    console.error("Erro ao buscar poema:", err);
+    res.status(500).json({ poem: "Erro ao carregar poema" });
+  }
+});
+
+// POST adicionar/editar poema diário (admin)
+app.post("/api/admin/poem", auth, async (req, res) => {
+  try {
+    const { content, date } = req.body;
+    if (!content || !date) {
+      return res.status(400).json({ error: "Campos 'content' e 'date' são obrigatórios" });
+    }
+
+    // Inserir ou atualizar o poema do dia
+    await pool.query(`
+      INSERT INTO poems (date, content)
+      VALUES ($1, $2)
+      ON CONFLICT (date)
+      DO UPDATE SET content = EXCLUDED.content
+    `, [date, content]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao salvar poema:", err);
+    res.status(500).json({ error: "Erro ao salvar poema" });
+  }
+});
+
+
+app.delete("/api/admin/poems/:id", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM poems WHERE id = $1", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao deletar poema" });
+  }
+});
+
+
+// POST adicionar/editar avaliação do dia
+
+
+// GET avaliação do dia
+app.get("/api/avaliacao-dia/:data", async (req, res) => {
+  try {
+    const { data } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM avaliacoes WHERE data = $1",
+      [data]
+    );
+    res.json({ avaliacao: result.rows[0]?.avaliacao || null });
+  } catch (err) {
+    console.error("Erro ao buscar avaliação:", err);
+    res.status(500).json({ error: "Erro ao buscar avaliação" });
+  }
+});
+
+
+
+app.post("/api/avaliacao-dia", async (req, res) => {
+  try {
+    const { data, avaliacao } = req.body;
+    if (!data || !avaliacao) {
+      return res.status(400).json({ error: "Data e avaliação são obrigatórios" });
+    }
+
+    // Tenta atualizar primeiro
+    const updateRes = await pool.query(
+  "UPDATE avaliacoes SET avaliacao = $2 WHERE data = $1 RETURNING *",
+  [data, avaliacao]
+);
+
+
+
+    let row;
+    if (updateRes.rows.length > 0) {
+      row = updateRes.rows[0];
+    } else {
+      // Se não existia, insere
+      const insertRes = await pool.query(
+        "INSERT INTO avaliacoes (data, avaliacao) VALUES ($1, $2) RETURNING *",
+        [data, avaliacao]
+      );
+      row = insertRes.rows[0];
+    }
+
+    res.json({ success: true, avaliacao: row });
+  } catch (err) {
+    console.error("Erro ao salvar avaliação:", err);
+    res.status(500).json({ error: "Erro ao salvar avaliação" });
+  }
+});
+
