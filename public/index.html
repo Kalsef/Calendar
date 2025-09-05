@@ -189,6 +189,14 @@
   color: #7dbfff;
 }
 
+#poem-text {
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: pre-wrap; /* preserva quebras de linha */
+  text-align: center; /* centraliza os versos */
+}
+
+
 </style>
 </head>
 <body>
@@ -202,7 +210,7 @@
   <div id="poem-content">
     <span id="close-modal">&times;</span>
     <h2>Poema do Dia</h2>
-    <p id="poem-text"></p>
+    <div id="poem-text"></div>
   </div>
 </div>
 
@@ -336,12 +344,11 @@ menu.style.display = 'flex';
 
   // Lista de poemas diários
 const poems = [
-  "Amar você é um sonho que nunca termina 💖",
-  "Cada dia contigo é um verso de felicidade 🌹",
-  "Você é minha inspiração e minha poesia ✨",
-  "Nosso amor é a rima mais bonita da vida 💕",
-  "Meu coração bate em seu ritmo todos os dias ❤️"
+  "Amar você é um sonho que nunca termina 💖\nCada dia contigo é um verso de felicidade 🌹",
+  "Você é minha inspiração e minha poesia ✨\nNosso amor é a rima mais bonita da vida 💕",
+  "Meu coração bate em seu ritmo todos os dias ❤️\nE cada momento contigo é especial"
 ];
+
 
 // Função para pegar poema do dia
 function getDailyPoem() {
