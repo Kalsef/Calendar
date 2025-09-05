@@ -30,6 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const coracao = document.getElementById("coracao");
   const tabsContainer = document.getElementById("tabs");
   const backBtn = document.getElementById("backBtn");
+   const opcoesDia = document.querySelectorAll('.avaliacao-dia .opcao');
+   let dataSelecionada = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+
+  
 
   backBtn?.addEventListener("click", () => {
     registrarClique("Botão de Voltar do Calendário");
@@ -45,6 +49,22 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   // -------------------- Função de rastreio --------------------
+
+
+
+  // Marcar avaliação visualmente
+  function marcarOpcao(avaliacao) {
+    opcoesDia.forEach(o => {
+      o.classList.remove('selecionado');
+      if (o.dataset.avaliacao === avaliacao) {
+        o.classList.add('selecionado');
+      }
+    });
+  }
+
+
+
+
   function registrarClique(descricao) {
     try {
       fetch("/api/button-click", {
@@ -162,6 +182,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const todayEl = document.querySelector(`.day[data-date="${todayStr}"]`);
     if (todayEl) {
       todayEl.classList.add("selected");
+
+      carregarAvaliacao(todayStr);
+
       musicaAtualIndex = 0;
       loadSong(todayStr);
     }
@@ -170,7 +193,11 @@ document.addEventListener("DOMContentLoaded", () => {
   daysContainer?.addEventListener("click", (e) => {
     const day = e.target.closest(".day");
     if (!day?.dataset.date) return;
+    dataSelecionada = day.dataset.date; // Atualiza a data selecionada
+
     registrarClique(`Dia selecionado: ${day.dataset.date}`);
+    carregarAvaliacao(dataSelecionada);
+
     daysContainer.querySelectorAll(".day.selected").forEach(d => d.classList.remove("selected"));
     day.classList.add("selected");
     musicaAtualIndex = 0;
@@ -360,9 +387,57 @@ document.addEventListener("DOMContentLoaded", () => {
       const descricao = btn.getAttribute('data-descricao');
       registrarClique(descricao);
     });
+
   });
+
+
+ // notas
+
+async function carregarAvaliacao(data) {
+  try {
+    const res = await fetch(`/api/avaliacao-dia/${data}`);
+    const json = await res.json();
+    if (json.avaliacao) {
+      marcarOpcao(json.avaliacao);
+    } else {
+      // limpa seleção caso não tenha avaliação nesse dia
+      opcoesDia.forEach(o => o.classList.remove('selecionado'));
+    }
+  } catch (err) {
+    console.error("Erro ao carregar avaliação:", err);
+  }
+}
+
+
+ // Clique nas opções de avaliação
+  opcoesDia.forEach(opcao => {
+    opcao.addEventListener('click', () => {
+      opcoesDia.forEach(o => o.classList.remove('selecionado'));
+      opcao.classList.add('selecionado');
+
+      const avaliacao = opcao.dataset.avaliacao;
+
+      fetch('/api/avaliacao-dia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: dataSelecionada, avaliacao })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if(res.success){
+          marcarOpcao(avaliacao);
+          console.log("Avaliação salva:", res.avaliacao);
+        } else console.error("Erro ao salvar avaliação:", res.error);
+      })
+      .catch(err => console.error("Erro na requisição:", err));
+    });
+  });
+
+
 
   // -------------------- Inicialização --------------------
   carregarMusicas();
+  carregarAvaliacao(dataSelecionada);
 
 });
+
