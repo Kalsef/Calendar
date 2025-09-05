@@ -155,41 +155,38 @@
     padding: 15px;
   }
   
- #poem-content {
+#poem-content {
   background: linear-gradient(145deg, #2a2a40, #3b3b5a);
   color: #f0f0f5;
-  padding: clamp(20px, 5vw, 40px);
-  border-radius: 20px;
-  max-width: 600px;
+  padding: 20px;
+  border-radius: 15px;
   width: 90%;
+  max-width: 400px;       /* largura máxima menor para mobile */
   max-height: 80vh;
   overflow-y: auto;
+  word-break: break-word;  /* força quebra de palavras longas */
   text-align: center;
   box-shadow: 0 12px 30px rgba(0,0,0,0.7);
   position: relative;
   animation: fadeInScale 0.4s ease;
 }
 
-  @keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
 #poem-content h2 {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   color: #7dbfff;
-  font-size: clamp(20px, 5vw, 28px);
+  font-size: 20px;
   text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 #poem-text {
-  font-size: clamp(14px, 4vw, 18px);
+  font-size: 16px;
   line-height: 1.6;
   white-space: pre-wrap;
-  text-align: center;
+  word-break: break-word; /* força quebra de palavras longas */
   color: #c0d6ff;
   font-style: italic;
 }
+  
   #close-modal {
     position: absolute;
     top: 12px;
@@ -202,33 +199,36 @@
 
   #close-modal:hover { color: #7dbfff; }
 
-/* Responsividade */
+/* Tablets */
 @media (max-width: 768px) {
   #poem-content {
-    padding: 20px;
     width: 95%;
+    max-width: 350px;
+    padding: 18px;
     max-height: 75vh;
-  }
-  #poem-content h2 {
-    font-size: 22px;
-  }
-  #poem-text {
-    font-size: 16px;
-    line-height: 1.5;
-  }
-}
-
-@media (max-width: 480px) {
-  #poem-content {
-    padding: 15px;
-    width: 95%;
-    max-height: 70vh;
   }
   #poem-content h2 {
     font-size: 18px;
   }
   #poem-text {
     font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+/* Celulares */
+@media (max-width: 480px) {
+  #poem-content {
+    width: 95%;
+    max-width: 300px; /* modal agora bem estreito */
+    padding: 15px;
+    max-height: 70vh;
+  }
+  #poem-content h2 {
+    font-size: 16px;
+  }
+  #poem-text {
+    font-size: 13px;
     line-height: 1.4;
   }
 }
