@@ -163,17 +163,6 @@ body {
   padding: 10px;
 }
 
-.event::before {
-  content: "";
-  position: absolute;
-  bottom: 0; /* Posiciona a linha na parte inferior */
-  left: 0;
-  width: 100%;
-  height: 4px; /* Espessura da linha */
-  background-color: #7dbfff; /* Cor da linha */
-  border-radius: 2px;
-}
-
 .day.event {
   position: relative;
   display: flex;
@@ -859,3 +848,119 @@ progress#progressBar::-moz-progress-bar {
 }
 
 /* Fim do CSS */
+
+/* Container da avaliação */
+.add-event {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #3b3b55; /* fundo escuro da caixa */
+  color: #c0c0d0;
+  font-weight: 600;
+  font-size: 1.4rem;
+  border-radius: 10px;
+  padding: 15px;
+  gap: 12px;
+}
+
+/* Mini título */
+.add-event .mini-titulo {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1rem;
+  color: #e0e0ff;
+  margin-bottom: 10px;
+  padding: 0 5px;
+}
+
+/* Fundo único para os ícones */
+.avaliacao-dia {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap; /* permite quebrar em linhas menores */
+  gap: 20px;
+  background: #3b3b55; /* fundo da barra */
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Ícones individuais */
+.avaliacao-dia .opcao {
+  font-size: 36px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #fff;
+  background: transparent; /* transparente para mostrar o fundo da barra */
+}
+
+/* Hover: leve aumento e brilho */
+.avaliacao-dia .opcao:hover {
+  transform: scale(1.2);
+  filter: brightness(1.2);
+}
+
+/* Selecionado: brilho mais perceptível */
+.avaliacao-dia .opcao.selecionado {
+  color: #64b5f6; /* muda a cor do ícone */
+  text-shadow: 
+    0 0 18px rgba(100, 181, 246, 0.8),
+    0 0 24px rgba(100, 181, 246, 0.6),
+    0 0 30px rgba(100, 181, 246, 0.4); /* brilho perceptível */
+  transform: scale(1.2);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Responsivo: tablets */
+@media (max-width: 768px) {
+  .avaliacao-dia .opcao {
+    font-size: 32px;
+    width: 38px;
+    height: 38px;
+  }
+  .avaliacao-dia {
+    gap: 16px;
+  }
+  .add-event .mini-titulo {
+    font-size: 0.95rem;
+  }
+}
+
+/* Responsivo: celulares */
+@media (max-width: 480px) {
+  .avaliacao-dia .opcao {
+    font-size: 28px;
+    width: 35px;
+    height: 35px;
+  }
+  .avaliacao-dia {
+    gap: 12px;
+    padding: 8px 12px;
+  }
+  .add-event .mini-titulo {
+    font-size: 0.9rem;
+  }
+}
+
+/* Responsivo: celulares muito pequenos */
+@media (max-width: 360px) {
+  .avaliacao-dia .opcao {
+    font-size: 24px;
+    width: 30px;
+    height: 30px;
+  }
+  .avaliacao-dia {
+    gap: 8px;
+  }
+  .add-event .mini-titulo {
+    font-size: 0.85rem;
+  }
+}
