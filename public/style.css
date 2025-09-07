@@ -9,7 +9,7 @@
 }
 
 body {
-  background: #1e1e2f;
+   background: rgba(30,41,59,0.9);
   color: #f0f0f5;
   display: flex;
   justify-content: center;
@@ -29,10 +29,10 @@ body {
 /* === LEFT (Calendário) === */
 .left {
   flex: 1.1;
-  background: #2a2a40;
-  border-radius: 16px;
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));  
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  border-radius: 12px;
   padding: 35px;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
 }
 
 /* Month header */
@@ -86,7 +86,7 @@ body {
   position: relative;
   width: 100%;
   height: 70px;
-  background: #3b3b55;
+  background: linear-gradient(145deg,rgba(22, 30, 43, 0.9), rgba(30,41,59,0.9));
   border-radius: 10px;
   color: #c0c0d0;
   cursor: pointer;
@@ -104,6 +104,7 @@ body {
 /* Hover com fundo vermelho e coração branco no topo esquerdo */
 .day:hover {
   background-color: #ff4c4c;
+  background: linear-gradient(145deg, #b93636, #b61313);
   color: #fff;
   transform: scale(1.05);
 }
@@ -138,7 +139,7 @@ body {
 
 .prev-date,
 .next-date {
-  background: transparent;
+  background: linear-gradient(145deg,rgba(22, 30, 43, 0.281), rgba(30, 41, 59, 0.233));
   color: #555573;
   cursor: default;
 }
@@ -154,7 +155,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #3b3b55;
+  background: traansparent;
   color: #c0c0d0;
   font-weight: 600;
   font-size: 1.2rem;
@@ -179,7 +180,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #3b3b55;
+  background: linear-gradient(145deg,rgba(22, 30, 43, 0.9), rgba(30,41,59,0.9));
   color: #c0c0d0;
   font-weight: 600;
   font-size: 1.4rem;
@@ -189,7 +190,7 @@ body {
 }
 
 .day.event:hover {
-  background-color: #ff4c4c; /* Cor de fundo no hover */
+  background:linear-gradient(145deg, #df4242, #e01717);
   color: #fff;
   transform: scale(1.05);
 }
@@ -249,28 +250,31 @@ body {
 
 .goto-btn,
 .today-btn {
-  background: #5a6eff;
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
   border: none;
   color: white;
   font-weight: 700;
   padding: 12px 26px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 1.1rem;
   cursor: pointer;
 }
 
 .goto-btn:hover,
 .today-btn:hover {
-  background: #7dbfff;
+  background: linear-gradient(145deg,rgba(22, 30, 43, 0.9), rgba(30,41,59,0.9));
+color: #fff;
+transform: translateY(-2px);
 }
 
 /* === RIGHT (Player e Info) === */
 .right {
   flex: 1.4;
-  background: #2a2a40;
-  border-radius: 16px;
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));  
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  border-radius: 12px;
   padding: 35px;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   gap: 30px;
@@ -300,7 +304,8 @@ body {
 
 /* Eventos */
 .events {
-  background: #3b3b55;
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
   border-radius: 12px;
   padding: 16px 22px;
   color: #c0c0d0;
@@ -329,13 +334,13 @@ body {
 
 /* Player */
 .player {
-  background: #3b3b55;
-  border-radius: 16px;
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));  
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  border-radius: 12px;
   padding: 30px;
   display: flex;
   flex-direction: column;
   gap: 22px;
-  box-shadow: 0 0 16px rgba(0, 0, 0, 0.4);
 }
 
 .cover {
@@ -379,13 +384,15 @@ body {
   gap: 10px;
   width: 100%;
   height: 10px;
-  background: #555577;
+      background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));
+
   border-radius: 6px;
   cursor: pointer;
   overflow: visible;
 }
 
 progress#progressBar {
+  background: rgba(30,41,59,0.9);
   width: 100%;
   height: 10px;
   -webkit-appearance: none;
@@ -402,10 +409,12 @@ progress#progressBar::-webkit-progress-bar {
 
 progress#progressBar::-webkit-progress-value {
   background-color: #7dbfff;
+  border-radius: 6px;
 }
 
 progress#progressBar::-moz-progress-bar {
   background-color: #7dbfff;
+  border-radius: 6px;
 }
 
 .coracao {
@@ -430,23 +439,27 @@ progress#progressBar::-moz-progress-bar {
 }
 
 .controles button {
-  background: #5a6eff;
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
   border: none;
   color: white;
   font-weight: 700;
   font-size: 1.3rem;
   padding: 12px 36px;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
 }
 
 .controles button:hover {
-  background: #7dbfff;
+  background: linear-gradient(145deg,rgba(22, 30, 43, 0.9), rgba(30,41,59,0.9));
+color: #fff;
+transform: translateY(-2px);
 }
 
 /* Letra da música */
 .lyric {
-  background: #222240;
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
   padding: 20px;
   border-radius: 12px;
   font-size: 1.2rem;
@@ -458,16 +471,17 @@ progress#progressBar::-moz-progress-bar {
 
 /* Estilizando a barra de rolagem */
 .lyric::-webkit-scrollbar {
-  width: 12px; /* Largura da barra de rolagem */
+  width: 18px; /* Largura da barra de rolagem */
 }
 
 .lyric::-webkit-scrollbar-track {
-  background: #444466; /* Cor do fundo da barra de rolagem */
+      background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));
+ /* Cor do fundo da barra de rolagem */
   border-radius: 6px; /* Cantos arredondados */
 }
 
 .lyric::-webkit-scrollbar-thumb {
-  background: #7dbfff; /* Cor da parte que pode ser movida */
+  background-color: #7dbfff; /* Cor da parte que pode ser movida */
   border-radius: 6px; /* Cantos arredondados */
   border: 3px solid #444466; /* Borda para a parte deslizante */
 }
@@ -587,7 +601,8 @@ progress#progressBar::-moz-progress-bar {
   }
 }
 .music-tab-btn {
-  background-color: #3b3b55;        /* tom escuro similar aos dias */
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);        /* tom escuro similar aos dias */
   color: #c0c0d0;                   /* texto clarinho */
   border: none;
   padding: 12px 24px;               /* mais espaçamento, alinhado com seus botões */
@@ -599,21 +614,21 @@ progress#progressBar::-moz-progress-bar {
   transition: background-color 0.3s ease, color 0.3s ease, opacity 0.3s ease;
   opacity: 0.6;
   user-select: none;
-  box-shadow: 0 0 10px rgba(125, 191, 255, 0.3); /* leve brilho azul */
 }
 
 .music-tab-btn.active {
-  background-color: #5aaafa;        /* azul claro para o ativo */
-  color: #1e1e2f;                  /* texto escuro no ativo para contraste */
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));        /* azul claro para o ativo */
+  color: #f0f0f5;                  /* texto escuro no ativo para contraste */
   opacity: 1;
-  box-shadow: 0 0 20px rgba(125, 191, 255, 0.8); /* brilho mais forte no ativo */
+  box-shadow: 5 5 30px linear-gradient(145deg,rgba(22, 30, 43, 0.9), rgba(30,41,59,0.9)); /* brilho mais forte no ativo */
 }
 
 .music-tab-btn:hover:not(.active) {
-  background-color: #5a6eff;        /* azul mais forte no hover */
-  color: #f0f0f5;                   /* texto quase branco no hover */
+  background: linear-gradient(145deg,rgba(22, 30, 43, 0.9), rgba(30,41,59,0.9));
+color: #fff;
+transform: translateY(-2px);             /* texto quase branco no hover */
   opacity: 0.9;
-  box-shadow: 0 0 15px rgba(93, 110, 255, 0.6);
+  box-shadow: 5 5 30px linear-gradient(145deg,rgba(22, 30, 43, 0.9), rgba(30,41,59,0.9)); /* brilho mais forte no ativo */
 }
 #backBtn {
   position: fixed;
@@ -621,19 +636,19 @@ progress#progressBar::-moz-progress-bar {
   right: 20px;        /* distância da direita */
   padding: 10px 18px;
   font-size: 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: none;
-  background-color: #5aaafa;
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   z-index: 1000;
   transition: all 0.3s ease; /* animação suave */
 }
 
 /* Hover */
 #backBtn:hover {
-  background-color: #3d8ddb;
+  background: linear-gradient(145deg,rgba(22, 30, 43, 0.9), rgba(30,41,59,0.9));
   transform: translateY(-2px);
 }
 
@@ -646,140 +661,9 @@ progress#progressBar::-moz-progress-bar {
     font-size: 14px;
   }
 }
-#Delete {
-  position: fixed;
-  top: 5px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 18px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  background-color: #ff4c4c;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  transition: all 0.3s ease;
-}
-
-#Delete:hover {
-  background-color: #cc3a3a;
-  transform: translate(-50%, -2px);
-}
-
-/* Responsividade do botão Delete */
-@media (max-width: 500px) {
-  #Delete {
-    top: 8px;                 /* um pouco mais de espaço do topo */
-    padding: 8px 12px;        /* botão menor */
-    font-size: 14px;          /* texto menor */
-    width: 80%;               /* ocupa 80% da tela no mobile */
-    max-width: 200px;         /* não fica muito grande */
-  }
-}
 
 
-/* Modal oculto por padrão */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
 
-/* Quando ativo */
-.modal.show {
-  opacity: 1;
-  pointer-events: all;
-}
-
-/* Modal conteúdo */
-.modal-content {
-  position: relative;
-  background: #3b3b55;
-  color: #fff;
-  padding: 30px 25px;
-  border-radius: 10px;
-  text-align: center;
-  width: 350px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  animation: scaleIn 0.3s ease;
-  background: linear-gradient(135deg, #3b3b55, #2a2a40);
-  border: 2px solid #5a6eff;
-  box-shadow: 0 0 20px rgba(90, 110, 255, 0.6);
-
-}
-
-/* Título */
-.modal-content h2 {
-  margin-bottom: 15px;
-  font-size: 20px;
-}
-
-/* Texto */
-.modal-content p {
-  margin-bottom: 20px;
-  line-height: 1.5;
-  font-size: 16px;
-}
-
-/* Container dos botões */
-.buttons {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-}
-
-/* Botões */
-.buttons button {
-  padding: 10px 18px;
-  font-size: 15px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-/* Botão Sim */
-#yesBtn, #yesFinalBtn {
-  background-color: #28a745;
-  color: #fff;
-}
-#yesBtn:hover, #yesFinalBtn:hover {
-  background-color: #218838;
-}
-
-/* Botão Não */
-#noBtn, #noFinalBtn {
-  background-color: #cc3a3a;
-  color: #fff;
-}
-#noBtn:hover, #noFinalBtn:hover {
-  background-color: #ca2323;
-}
-
-/* Animação de entrada */
-@keyframes scaleIn {
-  from {
-    transform: scale(0.85);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
 
 /* Fade-in para troca de conteúdo */
 .fade-in {
@@ -790,75 +674,7 @@ progress#progressBar::-moz-progress-bar {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Modal conteúdo */
-.modal-content {
-  position: relative;
-  background: #3b3b55;
-  color: #fff;
-  padding: 30px 25px;
-  border-radius: 10px;
-  text-align: center;
-  width: 90%;         /* ocupa até 90% da tela */
-  max-width: 400px;   /* mas nunca maior que 400px */
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  animation: scaleIn 0.3s ease;
-}
-
-/* Título */
-.modal-content h2 {
-  margin-bottom: 15px;
-  font-size: 20px;
-}
-
-/* Texto */
-.modal-content p {
-  margin-bottom: 20px;
-  line-height: 1.5;
-  font-size: 16px;
-}
-
-/* Container dos botões */
-.buttons {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  flex-wrap: wrap; /* permite quebrar linha */
-}
-
-/* Botões */
-.buttons button {
-  padding: 10px 18px;
-  font-size: 15px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.3s;
-  flex: 1;           /* cresce de forma igual */
-  min-width: 100px;  /* não fica pequeno demais */
-}
-
-/* Ajustes para telas pequenas */
-@media (max-width: 500px) {
-  .modal-content {
-    padding: 20px 15px;
-  }
-  .modal-content h2 {
-    font-size: 18px;
-  }
-  .modal-content p {
-    font-size: 14px;
-  }
-  .buttons {
-    flex-direction: column; /* empilha botões */
-    gap: 10px;
-  }
-  .buttons button {
-    width: 100%;
-  }
-}
-
-/* Fim do CSS */
+/*Fim do css do calendário/*/
 
 /* Container da avaliação */
 .add-event {
@@ -866,13 +682,14 @@ progress#progressBar::-moz-progress-bar {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #3b3b55; /* fundo escuro da caixa */
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));  
+  box-shadow: 0 0 20px rgba(0,0,0,0.5); /* fundo escuro da caixa */
   color: #c0c0d0;
   font-weight: 600;
   font-size: 1.4rem;
-  border-radius: 10px;
-  padding: 15px;
+  border-radius: 12px;
   gap: 12px;
+  padding: 15px 20px;
 }
 
 /* Mini título */
@@ -891,10 +708,11 @@ progress#progressBar::-moz-progress-bar {
   justify-content: center;
   flex-wrap: wrap; /* permite quebrar em linhas menores */
   gap: 20px;
-  background: #3b3b55; /* fundo da barra */
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9), rgba(30,41,59,0.9));  
+  box-shadow: 0 0 20px rgba(0,0,0,0.5); /* fundo da barra */
   padding: 10px 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  border-radius: 12px;
+
 }
 
 /* Ícones individuais */
@@ -920,11 +738,9 @@ progress#progressBar::-moz-progress-bar {
 
 /* Selecionado: brilho mais perceptível */
 .avaliacao-dia .opcao.selecionado {
-  color: #64b5f6; /* muda a cor do ícone */
-  text-shadow: 
-    0 0 18px rgba(100, 181, 246, 0.8),
-    0 0 24px rgba(100, 181, 246, 0.6),
-    0 0 30px rgba(100, 181, 246, 0.4); /* brilho perceptível */
+   color: #64b5f6;
+  text-shadow: 0 0 18px rgba(100, 181, 246, 0.8), 0 0 24px rgba(100, 181, 246, 0.6), 0 0 30px rgba(100, 181, 246, 0.4);
+ /* muda a cor do ícone */
   transform: scale(1.2);
   background: transparent;
   box-shadow: none;
@@ -942,6 +758,7 @@ progress#progressBar::-moz-progress-bar {
   }
   .add-event .mini-titulo {
     font-size: 0.95rem;
+    color: #e0e0ff;
   }
 }
 
