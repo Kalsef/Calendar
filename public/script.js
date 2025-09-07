@@ -227,7 +227,8 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTabStyles();
         const sel = document.querySelector(".day.selected");
         if (sel?.dataset.date) loadSong(sel.dataset.date);
-        registrarClique(`Tab música selecionada: índice ${idx}`);
+  const tipoMusica = idx === 0 ? "Música de Bom Dia" : "Dedicação Especial";
+  registrarClique(`Dia: ${sel?.dataset.date || 'desconhecido'} - ${tipoMusica} (índice ${idx})`);
       };
       tabsContainer.appendChild(btn);
     });
