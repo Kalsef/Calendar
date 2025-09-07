@@ -438,6 +438,39 @@ async function carregarAvaliacao(data) {
   });
 
 
+  /**
+ * Adiciona rastreamento de scroll em um elemento
+ * @param {HTMLElement} element - O elemento com scroll
+ * @param {string} message - Mensagem que será enviada ao Telegram
+ */
+function trackScroll(element, message) {
+  let sent = false; // evita enviar várias vezes
+  element.addEventListener("scroll", () => {
+    const scrollTop = element.scrollTop;
+    const scrollHeight = element.scrollHeight;
+    const clientHeight = element.clientHeight;
+
+    if (!sent && scrollTop + clientHeight >= scrollHeight - 5) {
+      sent = true; // marca como enviado
+      console.log(`Scroll completo detectado em: ${element.id}`);
+      
+      // envia mensagem para o Telegram
+      fetch("/api/send-telegram-alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) console.error("Erro ao enviar scroll:", data.error);
+      })
+      .catch(err => console.error("Erro de conexão:", err));
+    }
+  });
+}
+
+trackScroll(document.getElementById("lyrics"), "🎵 Usuário leu a música até o final!");
+
 
   // -------------------- Inicialização --------------------
   carregarMusicas();
