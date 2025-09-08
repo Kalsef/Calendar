@@ -1,5 +1,4 @@
 // server.js
-// server.js
 import express from "express";
 import session from "express-session";
 import bcrypt from "bcrypt";
@@ -11,6 +10,7 @@ import pkg from "pg";
 import pgSession from "connect-pg-simple";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
+
 
 dotenv.config();
 
@@ -37,8 +37,12 @@ const pool = new Pool({
 
 // -------------------- Config session store --------------------
 const pgSessionStore = pgSession(session);
+
 app.use(session({
-  store: new pgSessionStore({ pool, tableName: "session" }),
+  store: new pgSessionStore({
+    pool: pool,
+    tableName: "session"
+  }),
   secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
   resave: false,
   saveUninitialized: false,
@@ -57,7 +61,6 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}_${safeName}`);
   }
 });
-
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -74,210 +77,27 @@ function auth(req, res, next) {
   return res.status(401).json({ error: "Não autorizado" });
 }
 
-// -------------------- Middleware logs e Telegram --------------------
-app.use(async (req, res, next) => {
-  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
-  const userAgent = req.headers["user-agent"] || "desconhecido";
-
-  try {
-    await pool.query("INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)", [ip, userAgent]);
-
-    const isBotUA = /bot|crawl|spider|slurp|curl|wget/i.test(userAgent);
-    const ignoredPrefixes = ["10.","192.168.","172.16.","127.","66.249.","157.55.","216.144"];
-    const isIgnoredIP = ignoredPrefixes.some(prefix => ip.startsWith(prefix));
-
-// -------------------- Routes --------------------
-
-// LOGIN
-app.post("/api/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: "Dados incompletos" });
-
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-    const user = result.rows[0];
-    if (!user) return res.status(401).json({ error: "Usuário ou senha inválidos" });
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ error: "Usuário ou senha inválidos" });
-
-    req.session.userId = user.id;
-    req.session.username = user.username;
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro interno" });
-  }
-});
-
-// LOGOUT
-app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
-});
-
-// UPLOAD (admin)
-app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ success: true, url });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message || "Erro no upload" });
-  }
-});
-
-// BUTTON CLICK -> Telegram
-app.post("/api/button-click", async (req, res) => {
-  try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const { descricao } = req.body;
-    const mensagem = `👆 Clique detectado:\n🔘 Botão: ${descricao}\n🌐 IP: ${ip}`;
-
-    const chat_id = process.env.TELEGRAM_CHAT_ID;
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, text: mensagem }),
-    });
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Erro ao processar clique:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// DRIVE FILES
-app.get("/api/drive-files", async (req, res) => {
-  try {
-    const resp = await fetch('https://drive-tfxi.onrender.com/arquivos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folderId: '1SVDVg6_hG9Jd2ogNdy9jC4RkIglbEeAu' })
-    });
-    const data = await resp.json();
-    res.json(data);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar arquivos do Drive" });
-  }
-});
-
-// -------------------- Static --------------------
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/admin", express.static(path.join(__dirname, "admin")));
-app.use("/uploads", express.static(uploadsDir));
-
-// -------------------- Inicialização do DB --------------------
-(async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE,
-        password TEXT
-      );
-
-      CREATE TABLE IF NOT EXISTS musicas (
-        id SERIAL PRIMARY KEY,
-        data TEXT NOT NULL,
-        posicao INTEGER NOT NULL,
-        titulo TEXT,
-        audio TEXT,
-        letra TEXT,
-        capa TEXT,
-        UNIQUE(data, posicao)
-      );
-
-      CREATE TABLE IF NOT EXISTS memories (
-        id SERIAL PRIMARY KEY,
-        image TEXT NOT NULL,
-        message TEXT NOT NULL,
-        posicao INTEGER
-      );
-
-      CREATE TABLE IF NOT EXISTS access_logs (
-        id SERIAL PRIMARY KEY,
-        ip VARCHAR(100),
-        user_agent TEXT,
-        accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS poems (
-        id SERIAL PRIMARY KEY,
-        content TEXT NOT NULL,
-        date DATE UNIQUE
-      );
-
-      CREATE TABLE IF NOT EXISTS avaliacoes (
-        id SERIAL PRIMARY KEY,
-        data DATE NOT NULL,
-        avaliacao TEXT NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS quadro_palavras (
-        id SERIAL PRIMARY KEY,
-        palavra TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS today_drawings (
-        id SERIAL PRIMARY KEY,
-        date DATE UNIQUE NOT NULL,
-        type TEXT NOT NULL, 
-        content TEXT,       
-        url TEXT            
-      );
-    `);
-
-    // Constraint única para avaliacoes
-    await pool.query(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1
-          FROM pg_constraint
-          WHERE conname = 'unique_data'
-        ) THEN
-          ALTER TABLE avaliacoes
-          ADD CONSTRAINT unique_data UNIQUE (data);
-        END IF;
-      END
-      $$;
-    `);
-
-    // Cria usuário admin se não existir
-    const adminRes = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
-    if (adminRes.rows.length === 0) {
-      const hash = await bcrypt.hash("F1003J", 10);
-      await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", ["admin", hash]);
-      console.log("Usuário admin criado -> usuário: admin / senha: F1003J (altere depois)");
-    }
-
-    app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
-  } catch (err) {
-    console.error("Erro inicializando o banco:", err);
-    process.exit(1);
-  }
-})();
-// -------------------- Auth middleware --------------------
-function auth(req, res, next) {
-  if (req.session && req.session.userId) return next();
-  return res.status(401).json({ error: "Não autorizado" });
-}
-
 // -------------------- Rota clique botão --------------------
 app.post("/api/button-click", async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const { descricao } = req.body;
 
+    let location = "Desconhecida";
+    try {
+      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+      const geoData = await geoRes.json();
+      if (geoData && !geoData.error) {
+        location = `${geoData.city || "?"}, ${geoData.region || "?"}, ${geoData.country_name || "?"}`;
+      }
+    } catch (err) {
+      console.error("Erro ao buscar localização:", err);
+    }
+
     const mensagem = `👆 Clique detectado:
 🔘 Botão: ${descricao}
-🌐 IP: ${ip}`;
+🌐 IP: ${ip}
+📍 Localização: ${location}`;
 
     const chat_id = process.env.TELEGRAM_CHAT_ID;
     const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -287,11 +107,10 @@ app.post("/api/button-click", async (req, res) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id, text: mensagem }),
     });
-
     res.json({ success: true });
-  } catch (err) {
-    console.error("Erro ao processar clique:", err);
-    res.status(500).json({ error: err.message });
+    } catch (err) {
+      console.error("Erro ao processar clique:", err);
+      res.status(500).json({ error: err.message });
   }
 });
 
@@ -310,37 +129,22 @@ app.use(async (req, res, next) => {
     const ignoredPrefixes = ["10.","192.168.","172.16.","127.","66.249.","157.55.","216.144"];
     const isIgnoredIP = ignoredPrefixes.some(prefix => ip.startsWith(prefix));
 
-
-
-    app.post("/api/button-click", async (req, res) => {
-  try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const { descricao } = req.body;
-
-    const mensagem = `👆 Clique detectado:
-🔘 Botão: ${descricao}
-🌐 IP: ${ip}`;
-
-    const chat_id = process.env.TELEGRAM_CHAT_ID;
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, text: mensagem }),
-    });
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Erro ao processar clique:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+    if (!isBotUA && !isIgnoredIP) {
+      let location = "Localização desconhecida";
+      try {
+        const ipInfoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+        if (ipInfoRes.ok) {
+          const ipInfo = await ipInfoRes.json();
+          location = `${ipInfo.city || "???"}, ${ipInfo.region || "???"}, ${ipInfo.country_name || "???"}`;
+        }
+      } catch (err) {
+        console.error("Erro ao buscar localização do IP:", err.message);
+      }
 
       const token = process.env.TELEGRAM_BOT_TOKEN;
       const chat_id = process.env.TELEGRAM_CHAT_ID;
-      const message = `👤 Novo acesso no site!\n\n📍 IP: ${ip}\n💻 User-Agent: ${userAgent}`;
-app.post("/api/button-click", async (req, res) => {
+      const message = `👤 Novo acesso no site!\n\n📍 IP: ${ip}\n🌍 Localização: ${location}\n💻 User-Agent: ${userAgent}`;
+
       try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
           method: "POST",
@@ -851,7 +655,10 @@ app.delete("/api/admin/quadro-palavras/:id", auth, async (req, res) => {
 
 
 
-  
+  // Depois os arquivos estáticos
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/admin", express.static(path.join(__dirname, "admin")));
+app.use("/uploads", express.static(uploadsDir));
 
 
 
