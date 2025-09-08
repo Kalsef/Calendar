@@ -11,6 +11,7 @@ import pgSession from "connect-pg-simple";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 
+
 dotenv.config();
 
 const { Pool } = pkg;
@@ -162,6 +163,24 @@ app.use(async (req, res, next) => {
 });
 
 
+// server.js
+app.get("/api/drive-files", async (req, res) => {
+  try {
+    const resp = await fetch('https://drive-tfxi.onrender.com/arquivos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderId: '1SVDVg6_hG9Jd2ogNdy9jC4RkIglbEeAu' })
+    });
+    const data = await resp.json();
+    res.json(data); // agora o front acessa /api/drive-files
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar arquivos do Drive" });
+  }
+});
+
+
+
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
@@ -213,6 +232,22 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         data DATE NOT NULL,
         avaliacao TEXT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS quadro_palavras (
+        id SERIAL PRIMARY KEY,
+        palavra TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS today_drawings (
+        id SERIAL PRIMARY KEY,
+        date DATE UNIQUE NOT NULL,
+        type TEXT NOT NULL, 
+        content TEXT,       
+        url TEXT            
+      );
+
+
     `);
 
 await pool.query(`
@@ -574,6 +609,95 @@ app.post("/api/avaliacao-dia", async (req, res) => {
   } catch (err) {
     console.error("Erro ao salvar avaliação:", err);
     res.status(500).json({ error: "Erro ao salvar avaliação" });
+  }
+});
+
+// GET todas as palavras (público ou protegido)
+app.get("/api/quadro-palavras", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT id, palavra FROM quadro_palavras ORDER BY created_at ASC");
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar palavras" });
+  }
+});
+
+// POST adicionar palavra
+app.post("/api/quadro-palavras", async (req, res) => {
+  try {
+    const { palavra } = req.body;
+    if (!palavra) return res.status(400).json({ error: "Palavra é obrigatória" });
+
+    const { rows } = await pool.query(
+      "INSERT INTO quadro_palavras (palavra) VALUES ($1) RETURNING *",
+      [palavra]
+    );
+    res.json({ success: true, palavra: rows[0] });
+  } catch (err) {
+    console.error("Erro ao salvar palavra:", err);
+    res.status(500).json({ error: "Erro ao salvar palavra" });
+  }
+});
+
+// DELETE palavra (admin)
+app.delete("/api/admin/quadro-palavras/:id", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM quadro_palavras WHERE id = $1", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao deletar palavra:", err);
+    res.status(500).json({ error: "Erro ao deletar palavra" });
+  }
+});
+
+
+
+
+  // Depois os arquivos estáticos
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/admin", express.static(path.join(__dirname, "admin")));
+app.use("/uploads", express.static(uploadsDir));
+
+
+
+// GET Desenho do Dia
+app.get("/api/today-drawing", async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const result = await pool.query("SELECT * FROM today_drawings WHERE date = $1", [today]);
+
+    if (result.rows.length > 0) {
+      res.json({ success: true, ...result.rows[0] });
+    } else {
+      res.json({ success: false, message: "Nenhum desenho cadastrado para hoje." });
+    }
+  } catch (err) {
+    console.error("Erro ao buscar desenho:", err);
+    res.status(500).json({ success: false, error: "Erro ao buscar desenho" });
+  }
+});
+
+// POST adicionar/editar desenho do dia
+app.post("/api/admin/today-drawing", auth, async (req, res) => {
+  try {
+    const { date, type, content, url } = req.body;
+    if (!date || !type) {
+      return res.status(400).json({ error: "Campos 'date' e 'type' são obrigatórios" });
+    }
+
+    await pool.query(`
+      INSERT INTO today_drawings (date, type, content, url)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (date)
+      DO UPDATE SET type = EXCLUDED.type, content = EXCLUDED.content, url = EXCLUDED.url
+    `, [date, type, content || null, url || null]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao salvar desenho:", err);
+    res.status(500).json({ error: "Erro ao salvar desenho" });
   }
 });
 
