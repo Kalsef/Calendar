@@ -529,17 +529,7 @@
         background: linear-gradient(145deg, #7dbfff, #5aaafa);
         transform: scale(1.05);
       }
-      #custom-close {
-        position: absolute;
-        top: 12px;
-        right: 18px;
-        font-size: 28px;
-        cursor: pointer;
-        color: #f0f0f5;
-      }
-      #custom-close:hover {
-        color: #7dbfff;
-      }
+      
 
       @keyframes fadeInScale {
         from {
