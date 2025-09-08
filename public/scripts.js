@@ -504,7 +504,7 @@ function stopCounters() {
         document.getElementById("suggestionText"),
         "✏️ Usuário rolou a textarea de sugestão até o fim!"
       );
-
+       
       
 
 const wordBoard = document.getElementById("word-board");
@@ -583,6 +583,7 @@ addWordBtn.addEventListener("click", () => {
   if (!word) return alert("Digite uma palavra antes de adicionar!");
   addWord(word);
   newWordInput.value = "";
+       enviarCliqueBotao("Adicionou uma nova palavra");
 });
 
 loadWords();
@@ -598,6 +599,7 @@ openTodayBtn.addEventListener("click", () => {
   menu.style.display = "none";
   menuleft.style.display = "none";
   todayModal.classList.add("show");
+ enviarCliqueBotao("Abriu página desenho");
 });
 
 backFromTodayBtn.addEventListener("click", () => {
