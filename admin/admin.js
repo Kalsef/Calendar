@@ -1,4 +1,4 @@
-<script>
+
       const loginForm = document.getElementById("loginForm");
       const musicForm = document.getElementById("musicForm");
       const memoryForm = document.getElementById("memoryForm");
