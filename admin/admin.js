@@ -14,7 +14,6 @@
       const poemForm = document.getElementById("poemForm");
       const listaPoems = document.getElementById("listaPoems");
 
-      // LOGIN
       loginForm.onsubmit = async (e) => {
         e.preventDefault();
         const fd = new FormData(loginForm);
@@ -34,7 +33,7 @@
           carregarLista();
           carregarMemories();
           carregarLogs();
-          carregarPoemas(); // ← adicione aqui
+          carregarPoemas(); 
         } else {
           const json = await res.json();
           alert(json?.error || "Erro no login");
@@ -48,7 +47,7 @@
         logoutBtn.style.display = "none";
       };
 
-      // UPLOAD ÁUDIO
+     
       uploadBtn.onclick = async () => {
         if (!audioFile.files.length)
           return alert("Selecione um arquivo primeiro");
@@ -74,7 +73,7 @@
         }
       };
 
-      // MÚSICAS CRUD
+      
       musicForm.onsubmit = async (e) => {
         e.preventDefault();
         const fd = new FormData(musicForm);
@@ -148,7 +147,7 @@
         } else alert("Erro ao deletar");
       };
 
-      // LEMBRANÇAS CRUD
+    
       memoryForm.onsubmit = async (e) => {
         e.preventDefault();
         const fd = new FormData(memoryForm);
@@ -214,7 +213,7 @@
         } else alert("Erro ao deletar");
       };
 
-      // LOGS
+   
       async function carregarLogs() {
         const res = await fetch("/api/admin/logs");
         if (!res.ok) return;
@@ -265,7 +264,7 @@
       };
 
 
-      // Chama ao entrar no admin
+     
       async function carregarPoemas() {
   const res = await fetch("/api/admin/poems");
   if (!res.ok) return;
@@ -323,7 +322,7 @@ poemForm.onsubmit = async (e) => {
     if (res.ok) {
       alert("Poema salvo!");
       poemForm.reset();
-      await carregarPoemas(); // atualiza lista após salvar
+      await carregarPoemas();
     } else {
       const j = await res.json();
       console.error("Erro ao salvar:", j);
@@ -337,7 +336,7 @@ poemForm.onsubmit = async (e) => {
 
 
 async function loadAdminWords() {
-  const res = await fetch("/api/quadro-palavras"); // pega todas as palavras
+  const res = await fetch("/api/quadro-palavras"); 
   const words = await res.json();
   const tableBody = document.getElementById("words-table-body");
   tableBody.innerHTML = "";
@@ -354,7 +353,7 @@ async function loadAdminWords() {
     delBtn.onclick = async () => {
       if (confirm(`Deseja realmente deletar a palavra "${w.palavra}"?`)) {
         await fetch(`/api/admin/quadro-palavras/${w.id}`, { method: "DELETE" });
-        loadAdminWords(); // atualiza lista
+        loadAdminWords(); 
       }
     };
 
@@ -365,7 +364,7 @@ async function loadAdminWords() {
   });
 }
 
-// Carrega palavras ao abrir o admin
+
 loadAdminWords();
 
 
