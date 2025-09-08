@@ -11,7 +11,6 @@ import pgSession from "connect-pg-simple";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 
-
 dotenv.config();
 
 const { Pool } = pkg;
@@ -32,22 +31,24 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
 });
 
 // -------------------- Config session store --------------------
 const pgSessionStore = pgSession(session);
 
-app.use(session({
-  store: new pgSessionStore({
-    pool: pool,
-    tableName: "session"
-  }),
-  secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 24 * 3600 * 1000 } // 1 dia
-}));
+app.use(
+  session({
+    store: new pgSessionStore({
+      pool: pool,
+      tableName: "session",
+    }),
+    secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 3600 * 1000 }, // 1 dia
+  })
+);
 
 // -------------------- Ensure uploads folder --------------------
 const uploadsDir = path.join(__dirname, "uploads");
@@ -57,18 +58,23 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_.-]/g, "");
+    const safeName = file.originalname
+      .replace(/\s+/g, "_")
+      .replace(/[^a-zA-Z0-9_.-]/g, "");
     cb(null, `${Date.now()}_${safeName}`);
-  }
+  },
 });
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    if (/audio|mpeg|mp3|wav|m4a/.test(file.mimetype) || /\.(mp3|m4a|wav)$/i.test(file.originalname)) {
+    if (
+      /audio|mpeg|mp3|wav|m4a/.test(file.mimetype) ||
+      /\.(mp3|m4a|wav)$/i.test(file.originalname)
+    ) {
       cb(null, true);
     } else cb(new Error("Apenas arquivos de áudio são permitidos"));
   },
-  limits: { fileSize: 50 * 1024 * 1024 } // 50 MB
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
 });
 
 // -------------------- Auth middleware --------------------
@@ -80,7 +86,7 @@ function auth(req, res, next) {
 // -------------------- Rota clique botão --------------------
 app.post("/api/button-click", async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     const { descricao } = req.body;
 
     let location = "Desconhecida";
@@ -88,7 +94,9 @@ app.post("/api/button-click", async (req, res) => {
       const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
       const geoData = await geoRes.json();
       if (geoData && !geoData.error) {
-        location = `${geoData.city || "?"}, ${geoData.region || "?"}, ${geoData.country_name || "?"}`;
+        location = `${geoData.city || "?"}, ${geoData.region || "?"}, ${
+          geoData.country_name || "?"
+        }`;
       }
     } catch (err) {
       console.error("Erro ao buscar localização:", err);
@@ -108,15 +116,17 @@ app.post("/api/button-click", async (req, res) => {
       body: JSON.stringify({ chat_id, text: mensagem }),
     });
     res.json({ success: true });
-    } catch (err) {
-      console.error("Erro ao processar clique:", err);
-      res.status(500).json({ error: err.message });
+  } catch (err) {
+    console.error("Erro ao processar clique:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
 // -------------------- Middlewares --------------------
 app.use(async (req, res, next) => {
-  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
+    .split(",")[0]
+    .trim();
   const userAgent = req.headers["user-agent"] || "desconhecido";
 
   try {
@@ -126,8 +136,16 @@ app.use(async (req, res, next) => {
     );
 
     const isBotUA = /bot|crawl|spider|slurp|curl|wget/i.test(userAgent);
-    const ignoredPrefixes = ["10.","192.168.","172.16.","127.","66.249.","157.55.","216.144"];
-    const isIgnoredIP = ignoredPrefixes.some(prefix => ip.startsWith(prefix));
+    const ignoredPrefixes = [
+      "10.",
+      "192.168.",
+      "172.16.",
+      "127.",
+      "66.249.",
+      "157.55.",
+      "216.144",
+    ];
+    const isIgnoredIP = ignoredPrefixes.some((prefix) => ip.startsWith(prefix));
 
     if (!isBotUA && !isIgnoredIP) {
       let location = "Localização desconhecida";
@@ -135,7 +153,9 @@ app.use(async (req, res, next) => {
         const ipInfoRes = await fetch(`https://ipapi.co/${ip}/json/`);
         if (ipInfoRes.ok) {
           const ipInfo = await ipInfoRes.json();
-          location = `${ipInfo.city || "???"}, ${ipInfo.region || "???"}, ${ipInfo.country_name || "???"}`;
+          location = `${ipInfo.city || "???"}, ${ipInfo.region || "???"}, ${
+            ipInfo.country_name || "???"
+          }`;
         }
       } catch (err) {
         console.error("Erro ao buscar localização do IP:", err.message);
@@ -162,14 +182,13 @@ app.use(async (req, res, next) => {
   next();
 });
 
-
 // server.js
 app.get("/api/drive-files", async (req, res) => {
   try {
-    const resp = await fetch('https://drive-tfxi.onrender.com/arquivos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folderId: '1SVDVg6_hG9Jd2ogNdy9jC4RkIglbEeAu' })
+    const resp = await fetch("https://drive-tfxi.onrender.com/arquivos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folderId: "1SVDVg6_hG9Jd2ogNdy9jC4RkIglbEeAu" }),
     });
     const data = await resp.json();
     res.json(data); // agora o front acessa /api/drive-files
@@ -178,8 +197,6 @@ app.get("/api/drive-files", async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar arquivos do Drive" });
   }
 });
-
-
 
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
@@ -250,36 +267,34 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
 
     `);
 
-await pool.query(`
-  DO $$
-  BEGIN
-    IF NOT EXISTS (
-      SELECT 1
-      FROM pg_constraint
-      WHERE conname = 'unique_data'
-    ) THEN
-      ALTER TABLE avaliacoes
-      ADD CONSTRAINT unique_data UNIQUE (data);
-    END IF;
-  END
-  $$;
-`);
+    await pool.query(
+  "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_data') THEN ALTER TABLE avaliacoes ADD CONSTRAINT unique_data UNIQUE (data); END IF; END $$;"
+);
 
 
-    const adminRes = await pool.query("SELECT * FROM users WHERE username = $1", ["admin"]);
+    const adminRes = await pool.query(
+      "SELECT * FROM users WHERE username = $1",
+      ["admin"]
+    );
     if (adminRes.rows.length === 0) {
       const hash = await bcrypt.hash("F1003J", 10);
-      await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", ["admin", hash]);
-      console.log("Usuário admin criado -> usuário: admin / senha: 1234 (altere depois)");
+      await pool.query(
+        "INSERT INTO users (username, password) VALUES ($1, $2)",
+        ["admin", hash]
+      );
+      console.log(
+        "Usuário admin criado -> usuário: admin / senha: 1234 (altere depois)"
+      );
     }
 
-    app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
+    app.listen(PORT, () =>
+      console.log(`Servidor rodando em http://localhost:${PORT}`)
+    );
   } catch (err) {
     console.error("Erro inicializando o banco:", err);
     process.exit(1);
   }
 })();
-
 
 // -------------------- Routes --------------------
 
@@ -287,12 +302,17 @@ await pool.query(`
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: "Dados incompletos" });
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+    if (!username || !password)
+      return res.status(400).json({ error: "Dados incompletos" });
+    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
+      username,
+    ]);
     const user = result.rows[0];
-    if (!user) return res.status(401).json({ error: "Usuário ou senha inválidos" });
+    if (!user)
+      return res.status(401).json({ error: "Usuário ou senha inválidos" });
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ error: "Usuário ou senha inválidos" });
+    if (!valid)
+      return res.status(401).json({ error: "Usuário ou senha inválidos" });
     req.session.userId = user.id;
     req.session.username = user.username;
     res.json({ success: true });
@@ -310,7 +330,8 @@ app.post("/api/logout", (req, res) => {
 // UPLOAD (admin)
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
+    if (!req.file)
+      return res.status(400).json({ error: "Arquivo não enviado" });
     const url = `/uploads/${req.file.filename}`;
     res.json({ success: true, url });
   } catch (err) {
@@ -322,7 +343,9 @@ app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
 // GET músicas públicas
 app.get("/api/musicas", async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data, posicao");
+    const { rows } = await pool.query(
+      "SELECT * FROM musicas ORDER BY data, posicao"
+    );
     const out = {};
     for (const r of rows) {
       if (!out[r.data]) out[r.data] = [];
@@ -332,7 +355,7 @@ app.get("/api/musicas", async (req, res) => {
         audio: r.audio,
         letra: r.letra,
         capa: r.capa,
-        posicao: r.posicao
+        posicao: r.posicao,
       };
     }
     res.json(out);
@@ -345,7 +368,9 @@ app.get("/api/musicas", async (req, res) => {
 // GET admin raw
 app.get("/api/admin/musicas", auth, async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM musicas ORDER BY data DESC, posicao");
+    const { rows } = await pool.query(
+      "SELECT * FROM musicas ORDER BY data DESC, posicao"
+    );
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -370,16 +395,27 @@ app.get("/api/admin/logs", auth, async (req, res) => {
 app.post("/api/musicas", auth, async (req, res) => {
   try {
     const { data, posicao, titulo, audio, letra, capa } = req.body;
-    if (!data) return res.status(400).json({ error: "Campo data é obrigatório (AAAA-MM-DD)" });
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
+    if (!data)
+      return res
+        .status(400)
+        .json({ error: "Campo data é obrigatório (AAAA-MM-DD)" });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data))
+      return res.status(400).json({ error: "Data inválida. Use AAAA-MM-DD" });
 
     let p;
     if (posicao) {
       p = parseInt(posicao, 10);
-      if (isNaN(p) || p < 1) return res.status(400).json({ error: "posicao inválida" });
+      if (isNaN(p) || p < 1)
+        return res.status(400).json({ error: "posicao inválida" });
     } else {
-      const maxRes = await pool.query("SELECT MAX(posicao) as m FROM musicas WHERE data = $1", [data]);
-      p = (maxRes.rows[0] && maxRes.rows[0].m) ? (parseInt(maxRes.rows[0].m, 10) + 1) : 1;
+      const maxRes = await pool.query(
+        "SELECT MAX(posicao) as m FROM musicas WHERE data = $1",
+        [data]
+      );
+      p =
+        maxRes.rows[0] && maxRes.rows[0].m
+          ? parseInt(maxRes.rows[0].m, 10) + 1
+          : 1;
     }
 
     const upsertSql = `
@@ -389,7 +425,14 @@ app.post("/api/musicas", auth, async (req, res) => {
       DO UPDATE SET titulo = EXCLUDED.titulo, audio = EXCLUDED.audio, letra = EXCLUDED.letra, capa = EXCLUDED.capa
       RETURNING posicao;
     `;
-    const { rows } = await pool.query(upsertSql, [data, p, titulo || null, audio || null, letra || null, capa || null]);
+    const { rows } = await pool.query(upsertSql, [
+      data,
+      p,
+      titulo || null,
+      audio || null,
+      letra || null,
+      capa || null,
+    ]);
     res.json({ success: true, posicao: rows[0].posicao });
   } catch (err) {
     console.error("Erro ao salvar música:", err);
@@ -414,7 +457,9 @@ app.delete("/api/musicas/:id", auth, async (req, res) => {
 // GET public
 app.get("/api/memories", async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM memories ORDER BY posicao, id");
+    const { rows } = await pool.query(
+      "SELECT * FROM memories ORDER BY posicao, id"
+    );
     res.json(rows);
   } catch (err) {
     console.error("Erro ao buscar lembranças públicas:", err);
@@ -425,7 +470,9 @@ app.get("/api/memories", async (req, res) => {
 // GET admin
 app.get("/api/admin/memories", auth, async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM memories ORDER BY posicao, id");
+    const { rows } = await pool.query(
+      "SELECT * FROM memories ORDER BY posicao, id"
+    );
     res.json(rows);
   } catch (err) {
     console.error("Erro ao buscar lembranças admin:", err);
@@ -437,7 +484,10 @@ app.get("/api/admin/memories", auth, async (req, res) => {
 app.post("/api/memories", auth, async (req, res) => {
   try {
     const { image, message, posicao } = req.body;
-    if (!image || !message) return res.status(400).json({ error: "Campos image e message são obrigatórios" });
+    if (!image || !message)
+      return res
+        .status(400)
+        .json({ error: "Campos image e message são obrigatórios" });
 
     const { rows } = await pool.query(
       "INSERT INTO memories (image, message, posicao) VALUES ($1, $2, $3) RETURNING *",
@@ -470,14 +520,19 @@ app.post("/api/send-telegram-alert", async (req, res) => {
     const { message } = req.body; // <-- pega a mensagem enviada pelo frontend
 
     if (!message) {
-      return res.status(400).json({ success: false, error: "Mensagem não fornecida" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Mensagem não fornecida" });
     }
 
-    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, text: message }),
-    });
+    const response = await fetch(
+      `https://api.telegram.org/bot${token}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id, text: message }),
+      }
+    );
 
     const data = await response.json();
 
@@ -492,7 +547,6 @@ app.post("/api/send-telegram-alert", async (req, res) => {
   }
 });
 
-
 // GET todos os poemas (admin)
 app.get("/api/admin/poems", auth, async (req, res) => {
   try {
@@ -504,13 +558,15 @@ app.get("/api/admin/poems", auth, async (req, res) => {
   }
 });
 
-
 // GET poema do dia
 app.get("/api/poem", async (req, res) => {
   try {
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    const result = await pool.query("SELECT content FROM poems WHERE date = $1", [today]);
-    
+    const result = await pool.query(
+      "SELECT content FROM poems WHERE date = $1",
+      [today]
+    );
+
     if (result.rows.length > 0) {
       res.json({ poem: result.rows[0].content });
     } else {
@@ -527,16 +583,21 @@ app.post("/api/admin/poem", auth, async (req, res) => {
   try {
     const { content, date } = req.body;
     if (!content || !date) {
-      return res.status(400).json({ error: "Campos 'content' e 'date' são obrigatórios" });
+      return res
+        .status(400)
+        .json({ error: "Campos 'content' e 'date' são obrigatórios" });
     }
 
     // Inserir ou atualizar o poema do dia
-    await pool.query(`
+    await pool.query(
+      `
       INSERT INTO poems (date, content)
       VALUES ($1, $2)
       ON CONFLICT (date)
       DO UPDATE SET content = EXCLUDED.content
-    `, [date, content]);
+    `,
+      [date, content]
+    );
 
     res.json({ success: true });
   } catch (err) {
@@ -544,7 +605,6 @@ app.post("/api/admin/poem", auth, async (req, res) => {
     res.status(500).json({ error: "Erro ao salvar poema" });
   }
 });
-
 
 app.delete("/api/admin/poems/:id", auth, async (req, res) => {
   try {
@@ -557,9 +617,7 @@ app.delete("/api/admin/poems/:id", auth, async (req, res) => {
   }
 });
 
-
 // POST adicionar/editar avaliação do dia
-
 
 // GET avaliação do dia
 app.get("/api/avaliacao-dia/:data", async (req, res) => {
@@ -576,22 +634,20 @@ app.get("/api/avaliacao-dia/:data", async (req, res) => {
   }
 });
 
-
-
 app.post("/api/avaliacao-dia", async (req, res) => {
   try {
     const { data, avaliacao } = req.body;
     if (!data || !avaliacao) {
-      return res.status(400).json({ error: "Data e avaliação são obrigatórios" });
+      return res
+        .status(400)
+        .json({ error: "Data e avaliação são obrigatórios" });
     }
 
     // Tenta atualizar primeiro
     const updateRes = await pool.query(
-  "UPDATE avaliacoes SET avaliacao = $2 WHERE data = $1 RETURNING *",
-  [data, avaliacao]
-);
-
-
+      "UPDATE avaliacoes SET avaliacao = $2 WHERE data = $1 RETURNING *",
+      [data, avaliacao]
+    );
 
     let row;
     if (updateRes.rows.length > 0) {
@@ -615,7 +671,9 @@ app.post("/api/avaliacao-dia", async (req, res) => {
 // GET todas as palavras (público ou protegido)
 app.get("/api/quadro-palavras", async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT id, palavra FROM quadro_palavras ORDER BY created_at ASC");
+    const { rows } = await pool.query(
+      "SELECT id, palavra FROM quadro_palavras ORDER BY created_at ASC"
+    );
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -627,7 +685,8 @@ app.get("/api/quadro-palavras", async (req, res) => {
 app.post("/api/quadro-palavras", async (req, res) => {
   try {
     const { palavra } = req.body;
-    if (!palavra) return res.status(400).json({ error: "Palavra é obrigatória" });
+    if (!palavra)
+      return res.status(400).json({ error: "Palavra é obrigatória" });
 
     const { rows } = await pool.query(
       "INSERT INTO quadro_palavras (palavra) VALUES ($1) RETURNING *",
@@ -652,26 +711,27 @@ app.delete("/api/admin/quadro-palavras/:id", auth, async (req, res) => {
   }
 });
 
-
-
-
-  // Depois os arquivos estáticos
+// Depois os arquivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
 app.use("/uploads", express.static(uploadsDir));
-
-
 
 // GET Desenho do Dia
 app.get("/api/today-drawing", async (req, res) => {
   try {
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    const result = await pool.query("SELECT * FROM today_drawings WHERE date = $1", [today]);
+    const result = await pool.query(
+      "SELECT * FROM today_drawings WHERE date = $1",
+      [today]
+    );
 
     if (result.rows.length > 0) {
       res.json({ success: true, ...result.rows[0] });
     } else {
-      res.json({ success: false, message: "Nenhum desenho cadastrado para hoje." });
+      res.json({
+        success: false,
+        message: "Nenhum desenho cadastrado para hoje.",
+      });
     }
   } catch (err) {
     console.error("Erro ao buscar desenho:", err);
@@ -684,15 +744,20 @@ app.post("/api/admin/today-drawing", auth, async (req, res) => {
   try {
     const { date, type, content, url } = req.body;
     if (!date || !type) {
-      return res.status(400).json({ error: "Campos 'date' e 'type' são obrigatórios" });
+      return res
+        .status(400)
+        .json({ error: "Campos 'date' e 'type' são obrigatórios" });
     }
 
-    await pool.query(`
+    await pool.query(
+      `
       INSERT INTO today_drawings (date, type, content, url)
       VALUES ($1, $2, $3, $4)
       ON CONFLICT (date)
       DO UPDATE SET type = EXCLUDED.type, content = EXCLUDED.content, url = EXCLUDED.url
-    `, [date, type, content || null, url || null]);
+    `,
+      [date, type, content || null, url || null]
+    );
 
     res.json({ success: true });
   } catch (err) {
@@ -700,4 +765,3 @@ app.post("/api/admin/today-drawing", auth, async (req, res) => {
     res.status(500).json({ error: "Erro ao salvar desenho" });
   }
 });
-
