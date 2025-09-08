@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/duration.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/relativeTime.js"></script>
+  <link rel="shortcut icon" href="https://twemoji.maxcdn.com/v/latest/72x72/1f3e0.png" type="image/x-icon">
+
+  <style>  
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        text-align: center;
+        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+        color: #f0f0f5;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 20px;
+      }
+      #menu {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        width: 100%;
+        max-width: 400px;
+        animation: fadeIn 1s ease;
+        margin-top: 80px;
+      }
+      button {
+        padding: 18px 30px;
+        font-size: 18px;
+        cursor: pointer;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(
+          145deg,
+          rgba(57, 77, 110, 0.9),
+          rgba(30, 41, 59, 0.9)
+        );
+        color: #f0f0f5;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      button:hover {
+        background: linear-gradient(
+          145deg,
+          rgba(22, 30, 43, 0.9),
+          rgba(30, 41, 59, 0.9)
+        );
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+#counters {
+        background-color: #1e1e2f;
+        padding: 20px 15px; 
+        margin: 20px auto; 
+        border-radius: 18px;
+        max-width: 650px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        display: none;
+        animation: fadeIn 0.8s ease;
+      }
+
+      
+      #counters h2 {
+        font-size: 38px;
+        color: #ffffff;
+        margin-bottom: 50px;
+        text-align: center;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-shadow: 1px 2px 5px rgba(0, 0, 0, 0.4);
+      }
+      .counter {
+        display: flex;
+        align-items: center;
+        background: linear-gradient(145deg, #2a2a40, #3b3b5a);
+        padding: 20px;
+        border-radius: 18px;
+        margin: 20px 0;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s, box-shadow 0.3s;
+        width: 100%;
+        min-height: 120px;
+        box-sizing: border-box;
+        flex-wrap: wrap;  
+      }
+
+      .counter-header {
+        display: flex;
+        align-items: center; 
+        gap: 12px;
+        width: 100%;
+      }
+
+      .counter-header img {
+        width: 70px; 
+        height: 70px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 2px solid #5aaafa;
+        flex-shrink: 0;
+      }
+
+      .counter-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        flex: 1; 
+        min-width: 0; 
+      }
+
+      .counter-text .name {
+        font-size: 18px;
+        text-align: left;
+        font-weight: 600;
+        color: #f0f0f5;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+        text-overflow: ellipsis; 
+      }
+
+      .counter-text .time {
+        font-size: 16px;
+        font-weight: bold;
+        color: #f0f0f5;
+        background: rgba(0, 0, 0, 0.25);
+        padding: 8px 12px;
+        border-radius: 8px;
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+        letter-spacing: 0.5px;
+        text-align: left;
+        width: 100%; 
+        box-sizing: border-box;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; 
+      }
+
+      @media (max-width: 480px) {
+        .counter-header img {
+          width: 68px;
+          height: 68px;
+        }
+        .counter-text .name {
+          font-size: 16px;
+        }
+        .counter-text .time {
+          font-size: 12px;
+          padding: 4px 6px;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .counter-header img {
+          width: 48px;
+          height: 48px;
+        }
+
+        .counter-text .name {
+          font-size: 15px;
+        }
+
+        .counter-text .time {
+          font-size: 12px;
+        }
+      }
+
+      #poem-btn {
+        padding: 18px 30px;
+        font-size: 18px;
+        cursor: pointer;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(
+          145deg,
+          rgba(57, 77, 110, 0.9),
+          rgba(30, 41, 59, 0.9)
+        );
+        color: #f0f0f5;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        width: 100%; 
+        max-width: 400px; 
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      #poem-btn:hover {
+        background: linear-gradient(
+          145deg,
+          rgba(22, 30, 43, 0.9),
+          rgba(30, 41, 59, 0.9)
+        );
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      }
+
+      @media (max-width: 480px) {
+        #poem-btn {
+          font-size: 16px;
+          padding: 14px;
+        }
+      }
+
+      #poem-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(2px);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      #poem-container {
+        background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
+        border-radius: 7px;
+        width: 90%;
+        max-width: 450px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+        animation: fadeInScale 0.4s ease;
+      }
+      #poem-header {
+        background: linear-gradient(145deg, #2f3b57, #1f2743);
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #444466;
+      }
+
+      #poem-header h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #fff;
+      }
+      #close-modal {
+        font-size: 28px;
+        cursor: pointer;
+        color: #f0f0f5;
+        transition: color 0.2s;
+      }
+
+      #close-modal:hover {
+        color: #7dbfff;
+      }
+
+      #poem-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+      }
+
+      #poem-text {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #c0d6ff;
+        white-space: pre-wrap;
+        word-break: break-word;
+        text-align: left;
+        font-style: italic;
+      }
+
+      #poem-body::-webkit-scrollbar {
+        width: 12px;
+      }
+
+      #poem-body::-webkit-scrollbar-track {
+        background: #1a1a2e;
+        border-radius: 2px;
+      }
+
+      #poem-body::-webkit-scrollbar-thumb {
+        background: #7dbfff;
+        border-radius: 2px;
+        border: 3px solid #1a1a2e;
+      }
+      @media (max-width: 480px) {
+        #poem-content {
+          width: 95%;
+          max-width: 350px;
+          max-height: 75vh;
+          padding: 18px;
+        }
+        #poem-content h2 {
+          font-size: 18px;
+        }
+        #poem-text {
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        #custom-modal-content {
+          width: 95%;
+          max-width: 350px;
+          padding: 18px;
+        }
+        #custom-title {
+          font-size: 18px;
+        }
+        #custom-body {
+          font-size: 14px;
+        }
+        #menu {
+          max-width: 95%;
+        }
+        button {
+          font-size: 16px;
+          padding: 14px;
+        }
+        .square-menu {
+          width: 50px;
+          height: 50px;
+        }
+        .square-menu .bar {
+          width: 32px;
+          height: 3px;
+        }
+        #sidebar {
+          width: 85%;
+          max-width: 300px;
+          padding: 40px 15px;
+        }
+      }
+
+      #overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(2px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+        z-index: 2000;
+      }
+      #overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      #sidebar {
+        position: fixed;
+        top: 0;
+        left: -380px;
+        width: 350px;
+        height: 100vh;
+        background: linear-gradient(
+          160deg,
+          #1b1b2f,
+          #2f2f50,
+          #1b1b2f
+        ); 
+        backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        color: #f1f5f9;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+        padding: 50px 20px 20px 20px; 
+        transition: left 0.35s ease;
+        z-index: 2501;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #sidebar .menu-top {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      #sidebar .menu-bottom {
+        margin-top: auto;
+        padding: 0;
+        list-style: none;
+        margin-bottom: 0; 
+      }
+
+      @media (max-width: 480px) {
+        #sidebar .menu-bottom {
+          margin-bottom: 100px; 
+        }
+      }
+
+      #sidebar h2 {
+        margin-top: -10px; 
+        margin-bottom: 60px; 
+        margin-left: 50px; 
+        font-size: 24px;
+        font-weight: 600;
+        color: #93c5fd;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      }
+
+      #sidebar.open {
+        left: 0;
+      }
+      #sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #sidebar ul li {
+        margin: 16px 0;
+        margin-left: 50px;
+      }
+      #sidebar ul li a {
+        color: #f1f5f9;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 500;
+        display: block;
+        padding: 10px 14px;
+        border-radius: 10px;
+        transition: background 0.25s, transform 0.2s;
+      }
+
+      .square-menu {
+        position: fixed;
+        left: 18px;
+        top: 18px;
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        background: rgba(30, 41, 59, 0.9);
+        border: 0;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column; 
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 3000;
+        padding: 8px 0;
+      }
+
+      .square-menu .bar {
+        width: 36px; 
+        height: 3px; 
+        background: #f0f0f5; 
+        border-radius: 3px;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+      }
+
+      .square-menu[data-open="true"] .bar1 {
+        transform: translateY(13px) rotate(45deg);
+      }
+      .square-menu[data-open="true"] .bar2 {
+        opacity: 0;
+      }
+      .square-menu[data-open="true"] .bar3 {
+        transform: translateY(-13px) rotate(-45deg);
+      }
+
+       Modal */
+      #custom-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 4000;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 80px;
+        overflow-y: auto;
+      }
+      #custom-modal-content {
+        background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
+        color: #f0f0f5;
+        padding: 24px 20px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 420px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        animation: fadeInScale 0.3s ease;
+        position: relative;
+      }
+      #custom-title {
+        margin-bottom: 15px;
+        font-size: 20px;
+        text-align: center;
+        color: #7dbfff;
+      }
+      #custom-body {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #c0d6ff;
+        text-align: center;
+      }
+      #custom-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+      #custom-actions button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        background: linear-gradient(145deg, #5aaafa, #5a6eff);
+        color: #fff;
+        transition: background 0.2s, transform 0.2s;
+      }
+      #custom-actions button:hover {
+        background: linear-gradient(145deg, #7dbfff, #5aaafa);
+        transform: scale(1.05);
+      }
+      #custom-close {
+        position: absolute;
+        top: 12px;
+        right: 18px;
+        font-size: 28px;
+        cursor: pointer;
+        color: #f0f0f5;
+      }
+      #custom-close:hover {
+        color: #7dbfff;
+      }
+
+      @keyframes fadeInScale {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .suggestion-content {
+        position: relative;  
+        background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
+        color: #f0f0f5;
+        padding: 24px 20px;
+        border-radius: 14px;
+        width: 90%;
+        max-width: 450px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        animation: fadeInScale 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-sizing: border-box;
+      }
+
+      .suggestion-content textarea {
+        max-width: 100%;  
+        min-height: 80px;
+        border-radius: 10px;
+        border: 1px solid #5aaafa;
+        padding: 12px;
+        font-size: 14px;
+        resize: vertical;
+        background: #1e293b;
+        color: #f1f5f9;
+        outline: none;
+        transition: border 0.2s;
+        box-sizing: border-box; 
+        resize: vertical;
+      }
+
+      .suggestion-content textarea:focus {
+        border-color: #7dbfff;
+        box-shadow: 0 0 6px rgba(125, 191, 255, 0.5);
+      }
+
+      .suggestion-content button {
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        background: linear-gradient(145deg, #5aaafa, #5a6eff);
+        color: #fff;
+        transition: background 0.2s, transform 0.2s;
+      }
+
+      .suggestion-content button:hover {
+        background: linear-gradient(145deg, #7dbfff, #5aaafa);
+        transform: scale(1.05);
+      }
+
+      .suggestion-content h2 {
+        font-size: 24px; 
+        font-weight: 700;
+        color: #7dbfff;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .suggestion-content .close {
+        position: absolute;
+        top: 12px;
+        right: 18px;
+        font-size: 28px;
+        cursor: pointer;
+        color: #f0f0f5;
+        transition: color 0.2s;
+      }
+
+      .suggestion-content .close:hover {
+        color: #7dbfff;
+      }
+
+      @media (max-width: 480px) {
+        .suggestion-content h2 {
+          font-size: 16px;
+          text-align: center;
+        }
+
+        .suggestion-content p {
+          font-size: 13px;
+          line-height: 1.4;
+          text-align: center;
+        }
+
+        .suggestion-content {
+          width: 95%;
+          max-width: 95%;
+          padding: 15px;
+          max-height: 80vh; 
+        }
+        .suggestion-content textarea {
+          font-size: 14px;
+          min-height: 60px;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .suggestion-content {
+          width: 95%;
+          max-width: 95%;
+          padding: 12px;
+          max-height: 75vh;
+        }
+        .suggestion-content textarea {
+          min-height: 50px;
+          font-size: 13px;
+        }
+
+        .suggestion-content button {
+          font-size: 13px;
+          padding: 8px;
+        }
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 5000;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 20px;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      #confirmModal .modal-content {
+        background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
+        color: #f0f0f5;
+        padding: 25px 20px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 420px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        animation: fadeInScale 0.3s ease;
+        text-align: center;
+      }
+
+      #confirmModal h2 {
+        font-size: 22px;
+        color: #f87171; 
+        font-weight: bold;
+      }
+
+      #confirmModal p {
+        font-size: 16px;
+        color: #c0c0d0;
+      }
+
+      #confirmModal .buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      #confirmModal .buttons button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #fff;
+        transition: all 0.2s ease;
+      }
+
+      #confirmModal .buttons #yesBtn,
+      #confirmModal .buttons #yesFinalBtn {
+        background: linear-gradient(145deg, #f87171, #ef4444); 
+      }
+
+      #confirmModal .buttons #noBtn,
+      #confirmModal .buttons #noFinalBtn {
+        background: linear-gradient(145deg, #5aaafa, #5a6eff); 
+      }
+
+      #confirmModal .buttons button:hover {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+
+      @media (max-width: 480px) {
+        #confirmModal .modal-content {
+          width: 95%;
+          padding: 18px;
+        }
+        #confirmModal h2 {
+          font-size: 18px;
+        }
+        #confirmModal p {
+          font-size: 14px;
+        }
+        #confirmModal .buttons button {
+          font-size: 14px;
+          padding: 8px 14px;
+        }
+      }
+
+      #sobre-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(2px);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      #sobre-container {
+        background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
+        border-radius: 12px;
+        width: 90%;
+        max-width: 450px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+        animation: fadeInScale 0.4s ease;
+      }
+
+      #sobre-header {
+        background: linear-gradient(145deg, #2f3b57, #1f2743);
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #444466;
+      }
+
+      #sobre-header h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #fff;
+      }
+
+      #sobre-close {
+        font-size: 28px;
+        cursor: pointer;
+        color: #f0f0f5;
+        transition: color 0.2s;
+      }
+
+      #sobre-close:hover {
+        color: #7dbfff;
+      }
+
+      #sobre-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #c0d6ff;
+        white-space: pre-wrap;
+        word-break: break-word;
+        text-align: left;
+        font-style: italic;
+      }
+
+       Scroll elegante */
+      #sobre-body::-webkit-scrollbar {
+        width: 12px;
+      }
+
+      #sobre-body::-webkit-scrollbar-track {
+        background: #1a1a2e;
+        border-radius: 2px;
+      }
+
+      #sobre-body::-webkit-scrollbar-thumb {
+        background: #7dbfff;
+        border-radius: 2px;
+        border: 3px solid #1a1a2e;
+      }
+
+      @keyframes fadeInScale {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      #menu h1 {
+        font-size: 38px; 
+        color: #7dbfff; 
+        margin-bottom: 8px; 
+        font-weight: 800; 
+        text-align: center; 
+        text-shadow: 2px 3px 8px rgba(0, 0, 0, 0.5); 
+        letter-spacing: 1px; 
+      }
+
+      #menu p {
+        font-size: 19px; 
+        color: #c0d6ff; 
+        margin-bottom: 30px; 
+        text-align: center; 
+        line-height: 1.7; 
+      }
+
+      #menu hr {
+        border: none;
+        height: 4px;
+        background: hwb(240 35% 50%); 
+        margin: 12px auto; 
+        width: 60%;
+        border-radius: 2px; 
+      }
+
+      #counter-loading {
+        font-size: 20px;
+        font-weight: bold;
+        color: #7dbfff;
+        margin: 50px auto;
+        text-align: center;
+        animation: blink 1s infinite;
+      }
+
+#word-board {
+  min-height: 220px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 25px;
+  border-radius: 18px;
+  background: radial-gradient(circle at top left, #2a2a40, #1e1e2f);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
+  transition: transform 0.25s ease, background 0.3s ease;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+#word-board:hover {
+  background: radial-gradient(circle at top right, #31315a, #23233b);
+  transform: scale(1.015);
+}
+
+.word-item {
+  font-family: 'Playfair Display', serif;
+
+  background: transparent;   
+  color: #fff;               
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  cursor: default;
+  transition: transform 0.2s ease;
+}
+
+.word-item:hover {
+  transform: scale(1.05);   
+}
+
+
+#Newboard {
+  display: none;
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+}
+
+#Newboard h2 {
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+#word-board {
+  min-height: 220px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #1e1e2f, #2a2a40);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  animation: fadeInScale 0.6s ease;
+}
+
+
+#new-word {
+  padding: 14px;
+  margin-top: 20px;
+  border-radius: 12px;
+  border: 1px solid #5aaafa;
+  width: 75%;
+  background: #1e293b;
+  color: #f0f0f5;
+  text-align: center;
+  font-size: 15px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+#new-word:focus {
+  border-color: #7dbfff;
+  box-shadow: 0 0 10px rgba(125, 191, 255, 0.6);
+}
+
+#add-word,
+#Newboard button:last-child {
+  margin-top: 12px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+  transition: transform 0.25s, box-shadow 0.25s;
+          background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+
+}
+
+#add-word {
+  background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9));
+}
+#Newboard button:last-child {
+  background: linear-gradient(145deg, #7dbfff, #5aaafa);
+}
+
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.today-content {
+  background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
+  color: #f0f0f5;
+  padding: 24px 20px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 85vh;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  animation: fadeInScale 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.today-content h2 {
+  font-size: 22px;
+  color: #fdfeff;
+  margin: 0;
+}
+
+.today-content p {
+  font-size: 16px;
+  color: #c0d6ff;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.today-content .modal-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#today-drawing {
+  background: #1e1e2f;
+  font-style: italic;
+  font-size: 14px;
+}
+</style>
+
+
+  <title>Para Minha Pitufita</title>
+  
+</head>
+
+<body>
+  <div id="menuleft">
+    <button data-descricao="Abrir Menu Lateral" id="square-menu" class="square-menu" aria-expanded="false"
+      aria-label="Abrir menu">
+      <span class="bar bar1"></span>
+      <span class="bar bar2"></span>
+      <span class="bar bar3"></span>
+    </button>
+  </div>
+
+  <div id="overlay"></div>
+
+  <nav id="sidebar">
+    <h2>Menu Principal</h2>
+
+    <ul class="menu-top">
+      <li><a href="#" id="menuSugestao">📬 Sugestões ou Reclamações</a></li>
+    </ul>
+
+    <ul class="menu-bottom">
+      <li><a href="#" id="menuSobre">ℹ️ Sobre este site</a></li>
+      <li><a href="#" id="menuDelete">🗑 Apagar o site</a></li>
+    </ul>
+  </nav>
+
+  <div id="sobre-modal">
+    <div id="sobre-container">
+      <div id="sobre-header">
+        <h2>ℹ️ Sobre este site</h2>
+      </div>
+      <div id="sobre-body">
+📖  Este site foi criado com todo o carinho para minha Pitufita. Cada detalhe é um sussurro do amor que sinto por você, permanece profundo, constante e infinito, mesmo diante de qualquer distância ou obstáculo. 
+
+💌  É um refúgio digital onde guardo nossas memórias, sonhos e promessas, um espaço só nosso, onde cada pixel pulsa com essência do meu amor por você. 
+    
+💖  Este site é mais que um presente; é uma declaração eterna do meu amor por você, um lembrete diário de que, não importa onde estejamos, meu coração sempre estará ao seu lado. 
+    
+☝️🤓  Criado com todo o carinho e dedicação por João / Kal 
+    
+🛠   Versão 0.9
+
+      </div>
+    </div>
+  </div>
+
+  <div id="suggestionModal" class="modal">
+    <div class="modal-content suggestion-content">
+      <span class="close" id="closeSuggestion">&times;</span>
+      <h2>💡 Sugestões ou Reclamações</h2>
+      <p>
+        Escreva abaixo sua sugestão ou reclamação. Ela será enviada
+        diretamente para análise 📲
+      </p>
+      <textarea id="suggestionText" placeholder="Digite sua mensagem..." required></textarea>
+      <button data-descricao="Enviar sugestão" id="sendSuggestion">
+        Enviar
+      </button>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal">
+    <div class="modal-content" id="modalContent"></div>
+  </div>
+
+  <div id="custom-modal">
+    <div id="custom-modal-content">
+      <span id="custom-close">&times;</span>
+      <h2 id="custom-title"></h2>
+      <div id="custom-body"></div>
+      <div id="custom-actions"></div>
+    </div>
+  </div>
+
+
+  <div id="poem-modal">
+    <div id="poem-container">
+      <div id="poem-header">
+        <h2>📜 Poema do Dia</h2>
+        <span id="close-modal">&times;</span>
+      </div>
+      <div id="poem-body">
+        <div id="poem-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="Newboard" style="display: none;">
+    <h2>🧩 Quadro Para Nossas Coisas</h2>
+    <div id="word-board"
+      style="min-height: 200px; border: 2px dashed #5aaafa; border-radius: 10px; padding: 15px; display: none; flex-wrap: wrap; gap: 10px; background: #1e1e2f;">
+    </div>
+    <p style=" margin-top: 20px; margin-bottom: 10px; color: fff;">Falta várias ainda mas vou ir adicionando com o
+      tempo, se vir à querer colocar algo só escrever aqui abaixo e clicar em adicionar.</p>
+    <input type="text" id="new-word" placeholder="Digite uma palavra..."
+      style="padding: 10px; margin-top: 40px; border-radius: 8px; border: 1px solid #5aaafa; width: 80%;" />
+    <button id="add-word" style="margin-top: 40px; padding: 10px 15px; border-radius: 8px; border: none;   background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9));
+ color: #fff; cursor: pointer;">
+      Adicionar Coisas
+    </button>
+    <button id="back-board-btn" style="margin-top: 25px; padding: 10px 15px; border-radius: 8px; border: none;   background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9));
+ color: #fff; cursor: pointer;">
+      Voltar
+    </button>
+  </div>
+  
+<div id="today-modal" class="modal">
+  <div class="modal-content today-content">
+    <div class="modal-header">
+      <h2>🎨 Desenhos </h2>
+    </div>
+    <div class="modal-body">
+      <p>Aqui sempre estarei adicionando desenhos, quando possível ; &#41</p>
+      <div id="today-drawing" style="margin: 20px auto; min-height: 200px; border: 2px dashed #5aaafa; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #7dbfff;">
+        ⌛ Carregando desenho...
+        [ Espaço para o desenho ]
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button data-descricao="Voltar do desenho de hj" id="back-from-today"> Voltar</button>
+    </div>
+  </div>
+</div>
+
+
+    <div id="menu" style="display: flex;">
+      <h1>Bem-vindo!</h1>
+      <hr style="width: 60%; border-color: #5a5a80" />
+
+      <p>Comece explorando uma das opções abaixo!</p>
+
+      <button data-descricao="Abrir para o Calendário" id="calendar-btn">
+        📅 Calendário
+      </button>
+      <button data-descricao="Contadores de Tempo" id="counter-btn">
+        ⏳ Contadores de Tempo
+      </button>
+
+      <button data-descricao="Clicou no Poema do Dia" id="poem-btn" title="Poema do Dia"> 📜 Poema do Dia</button>
+      <button id="btnAbrirQuadro">📌 Quadro</button>
+      <button id="open-today">🎨 Desenhos </button>
+    </div>
+
+    <div id="counters">
+      <h2>Contadores de Tempo</h2>
+      <div id="counter-loading" style="display: none">
+        ⌛ Carregando contadores...
+      </div>
+
+      <div class="counter" id="counter1"></div>
+      <div class="counter" id="counter2"></div>
+      <div class="counter" id="counter3"></div>
+      <button data-descricao="Voltar do contador" id="back-btn">Voltar</button>
+    </div>
+
+ <script> document.addEventListener("DOMContentLoaded", () => {
+  const counters = document.getElementById("counters");
+  document
+    .getElementById("back-board-btn")
+    .addEventListener("click", backToMenuFromBoard);
+  document
+    .getElementById("counter-btn")
+    .addEventListener("click", showCounters);
+  document.getElementById("back-btn").addEventListener("click", backToMenu);
+  document.getElementById("calendar-btn").addEventListener("click", () => {
+    window.location.href = "calendar.html";
+  });
+  document.getElementById("menuSobre").addEventListener("click", abrirSobre);
+  document
+    .getElementById("menuSugestao")
+    .addEventListener("click", abrirSuggestionModal);
+
+  function showSection(section) {
+    menu.style.display = "none";
+    menuleft.style.display = "none";
+    Newboard.style.display = "none";
+    section.style.display = "flex";
+  }
+
+  const btnAbrirQuadro = document.getElementById("btnAbrirQuadro");
+  const backBoardBtn = document.getElementById("back-board-btn");
+  const openTodayBtn = document.getElementById("open-today");
+  const backFromTodayBtn = document.getElementById("back-from-today");
+  const menu = document.getElementById("menu");
+  const menuleft = document.getElementById("menuleft");
+  const Newboard = document.getElementById("Newboard");
+
+  btnAbrirQuadro.addEventListener("click", () => showSection(Newboard));
+  backBoardBtn.addEventListener("click", () => showSection(menu));
+
+  function backToMenu() {
+    counters.style.display = "none";
+    menu.style.display = "flex";
+    menuleft.style.display = "flex";
+    enviarCliqueBotao("Voltar ao Menu Principal contador");
+
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  const counterElems = [
+    document.getElementById("counter1"),
+    document.getElementById("counter2"),
+    document.getElementById("counter3"),
+  ];
+
+  const countersData = [
+    {
+      name: "EU CONHECI A MULHER QUE VIRIA SER O AMOR DA MINHA VIDA",
+      date: new Date("2024-11-27T22:30:00"),
+      image: "1.png",
+    },
+    {
+      name: "EU ADMITI QUE AMAVA ELA",
+      date: new Date("2025-03-10T07:00:00"),
+      image: "1.png",
+    },
+    {
+      name: "ATÉ, MEU AMOR...",
+      date: new Date("2025-08-11T17:15:00"),
+      image: "2.png",
+    },
+  ];
+
+  
+
+  function formatDate(date) {
+    const options = { day: "2-digit", month: "long", year: "numeric" };
+    return date.toLocaleDateString("pt-BR", options);
+  }
+
+  dayjs.extend(dayjs_plugin_duration);
+  dayjs.extend(dayjs_plugin_relativeTime);
+
+  function updateCounter(el, data) {
+    const now = dayjs();
+    const diff = dayjs.duration(now.diff(dayjs(data.date)));
+
+    el.innerHTML = `
+    <div class="counter-header">
+      <img src="${data.image}" />
+      <div class="counter-text">
+        <div class="name">${data.name}</div>
+        <div class="time">
+          ${diff.years()} anos, ${diff.months()} meses, ${diff.days()} dias,
+          ${diff.hours()}h ${diff.minutes()}m 
+        </div>
+      </div>
+    </div>
+  `;
+  }
+
+  function updateCounters() {
+    counterElems.forEach((el, i) => updateCounter(el, countersData[i]));
+  }
+
+  let intervalId = null;
+
+  function startCounters() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = setInterval(updateCounters, 1000);
+  }
+
+  function stopCounters() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+    });
+  }
+
+  async function showCounters() {
+    menu.style.display = "none";
+    menuleft.style.display = "none";
+    counters.style.display = "block";
+
+    const loadingEl = document.getElementById("counter-loading");
+    loadingEl.style.display = "block";
+
+    counterElems.forEach((el) => (el.style.display = "none"));
+
+    try {
+      const imagePromises = countersData.map((data) => loadImage(data.image));
+
+      const loadedImages = await Promise.all(imagePromises);
+
+      counterElems.forEach((el, i) => {
+        el.style.display = "block";
+        updateCounter(el, countersData[i]);
+      });
+    } catch (err) {
+      console.error("Erro ao carregar imagens dos contadores:", err);
+    } finally {
+      loadingEl.style.display = "none";
+      startCounters();
+    }
+  }
+
+  async function enviarCliqueBotao(descricao) {
+    try {
+      const response = await fetch("/api/button-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ descricao }),
+      });
+      const data = await response.json();
+      if (!data.success) console.error("Erro ao enviar clique:", data.error);
+    } catch (err) {
+      console.error("Erro ao enviar clique:", err);
+    }
+  }
+
+  document.querySelectorAll("button[data-descricao]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const descricao = btn.getAttribute("data-descricao");
+      enviarCliqueBotao(descricao);
+    });
+  });
+
+  const poemBtn = document.getElementById("poem-btn");
+  const poemModal = document.getElementById("poem-modal");
+  const poemText = document.getElementById("poem-text");
+  const closeModal = document.getElementById("close-modal");
+
+  poemBtn.addEventListener("click", async () => {
+    menu.style.display = "none";
+    menuleft.style.display = "none";
+    poemText.textContent = "⌛ Carregando poema...";
+    poemModal.style.display = "flex";
+    try {
+      const response = await fetch("/api/poem");
+      const data = await response.json();
+      let poem = data.poem || "💖 Nenhum poema disponível 💖";
+
+      poemText.textContent = poem;
+      poemModal.style.display = "flex";
+    } catch (err) {
+      console.error("Erro ao carregar poema:", err);
+      poemText.textContent = "Erro ao carregar poema 😢";
+      poemModal.style.display = "flex";
+    }
+  });
+
+  closeModal.addEventListener("click", () => {
+    poemModal.style.display = "none";
+    menu.style.display = "flex";
+    menuleft.style.display = "flex";
+    enviarCliqueBotao("Poema do Dia botão Fechar Clicado");
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target == poemModal) {
+      poemModal.style.display = "none";
+      menu.style.display = "flex";
+      menuleft.style.display = "flex";
+    }
+  });
+
+  const btn = document.getElementById("square-menu");
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("custom-modal");
+  const modalTitle = document.getElementById("custom-title");
+  const modalBody = document.getElementById("custom-body");
+  const modalActions = document.getElementById("custom-actions");
+  const modalClose = document.getElementById("custom-close");
+
+  btn.addEventListener("click", () => {
+    const isOpen = btn.getAttribute("data-open") === "true";
+    btn.setAttribute("data-open", (!isOpen).toString());
+    btn.setAttribute("aria-expanded", (!isOpen).toString());
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("active");
+  });
+  overlay.addEventListener("click", fecharTudo);
+  modalClose.addEventListener("click", fecharModal);
+
+  function fecharTudo() {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+    btn.setAttribute("data-open", "false");
+    btn.setAttribute("aria-expanded", "false");
+    fecharModal();
+  }
+
+  function abrirModal(titulo, conteudo, botoes = []) {
+    modalTitle.textContent = titulo;
+    modalBody.textContent = conteudo;
+    modalActions.innerHTML = "";
+    botoes.forEach((b) => {
+      const button = document.createElement("button");
+      button.textContent = b.text;
+      button.onclick = b.onClick;
+      modalActions.appendChild(button);
+    });
+    modal.style.display = "flex";
+    overlay.classList.add("active");
+  }
+  function fecharModal() {
+    modal.style.display = "none";
+
+    overlay.classList.remove("active");
+
+    sidebar.classList.remove("open");
+    btn.setAttribute("data-open", "false");
+    btn.setAttribute("aria-expanded", "false");
+
+    menu.style.display = "flex";
+    menuleft.style.display = "flex";
+
+    enviarCliqueBotao("Menu: Sobre este site botão Fechar Clicado");
+  }
+
+  const sobreModal = document.getElementById("sobre-modal");
+  const sobreClose = document.getElementById("sobre-close");
+
+  function abrirSobre() {
+    enviarCliqueBotao("Menu: Sobre este site clicado");
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+    btn.setAttribute("data-open", "false");
+    btn.setAttribute("aria-expanded", "false");
+    sobreModal.style.display = "flex";
+  }
+  sobreClose.addEventListener("click", () => {
+    sobreModal.style.display = "none";
+    menu.style.display = "flex";
+    menuleft.style.display = "flex";
+    enviarCliqueBotao("Menu: Sobre este site botão Fechar Clicado");
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target == sobreModal) {
+      sobreModal.style.display = "none";
+      menu.style.display = "flex";
+      menuleft.style.display = "flex";
+    }
+  });
+
+  const confirmModal = document.getElementById("confirmModal");
+  const menuDelete = document.getElementById("menuDelete");
+  const modalContent = document.getElementById("modalContent");
+  let sendingAlert = false;
+
+  menuDelete?.addEventListener("click", () => {
+    confirmModal.classList.add("show");
+    modalContent.innerHTML = `
+    <h2>Você deseja apagar este site?</h2>
+    <p>Isso fará tudo ser apagado permanentemente.</p>
+    <div class="buttons">
+      <button id="yesBtn">Sim</button>
+      <button id="noBtn">Não</button>
+    </div>
+  `;
+    addFirstStepEvents();
+    enviarCliqueBotao("Botão Delete (menu lateral) clicado");
+  });
+
+  function addFirstStepEvents() {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+    btn.setAttribute("data-open", "false");
+    btn.setAttribute("aria-expanded", "false");
+    document.getElementById("yesBtn").addEventListener("click", () => {
+      modalContent.innerHTML = `
+      <h2>Confirme novamente sua escolha para acabar com tudo!</h2>
+      <p>Se sim, após 12h ele deixará de existir.</p>
+      <div class="buttons">
+        <button id="yesFinalBtn">Sim</button>
+        <button id="noFinalBtn">Não</button>
+      </div>
+    `;
+      addSecondStepEvents();
+      enviarCliqueBotao("Modal Delete: primeira confirmação 'Sim'");
+    });
+
+    document.getElementById("noBtn").addEventListener("click", async () => {
+      try {
+        await sendTelegramMessage(
+          "✅ Usuário cancelou a ação na primeira etapa."
+        );
+      } catch (err) {
+        console.error("Erro:", err);
+      } finally {
+        confirmModal.classList.remove("show");
+      }
+      enviarCliqueBotao("Modal Delete: primeira confirmação 'Não'");
+    });
+  }
+
+  function addSecondStepEvents() {
+    document
+      .getElementById("yesFinalBtn")
+      .addEventListener("click", async () => {
+        try {
+          await sendTelegramMessage("⚠️ Alerta: site será deletado!");
+          alert("⚠️ Ação confirmada, site será deletado em até 12h! ⚠️");
+        } catch (err) {
+          console.error(err);
+          alert("Erro ao enviar notificação: " + err.message);
+        } finally {
+          confirmModal.classList.remove("show");
+        }
+        enviarCliqueBotao("Modal Delete: segunda confirmação 'Sim'");
+      });
+
+    document
+      .getElementById("noFinalBtn")
+      .addEventListener("click", async () => {
+        try {
+          await sendTelegramMessage("✅ Usuário desistiu de apagar o site.");
+          alert("Você desistiu de deletar o site, qbom!");
+        } catch (err) {
+          console.error(err);
+          alert("Erro ao enviar notificação: " + err.message);
+        } finally {
+          confirmModal.classList.remove("show");
+        }
+        enviarCliqueBotao("Modal Delete: segunda confirmação 'Não'");
+      });
+  }
+
+  async function sendTelegramMessage(message) {
+    if (sendingAlert) return;
+    sendingAlert = true;
+    try {
+      const res = await fetch("/api/send-telegram-alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Erro desconhecido");
+    } finally {
+      sendingAlert = false;
+    }
+  }
+
+  function abrirSuggestionModal() {
+    enviarCliqueBotao("Menu: Sugestões ou Reclamações clicado");
+
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+    btn.setAttribute("data-open", "false");
+    btn.setAttribute("aria-expanded", "false");
+
+    document.getElementById("suggestionModal").classList.add("show");
+  }
+
+  document.getElementById("closeSuggestion").addEventListener("click", () => {
+    enviarCliqueBotao("Menu: Sugestões ou Reclamações Botão Fechar Clicado");
+    document.getElementById("suggestionModal").classList.remove("show");
+  });
+
+  document
+    .getElementById("sendSuggestion")
+    .addEventListener("click", async () => {
+      const text = document.getElementById("suggestionText").value.trim();
+      if (!text) {
+        alert("Por favor, escreva sua sugestão antes de enviar!");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/send-telegram-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: "💡 Nova sugestão/reclamação:\n\n" + text,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert("✅ Sua sugestão foi enviada com sucesso!");
+          document.getElementById("suggestionText").value = "";
+          document.getElementById("suggestionModal").classList.remove("show");
+        } else {
+          alert("❌ Erro ao enviar: " + (data.error || "desconhecido"));
+        }
+      } catch (err) {
+        alert("❌ Erro de conexão: " + err.message);
+      }
+    });
+
+  /**
+   * @param {HTMLElement} element
+   * @param {string} message
+   */
+  function trackScroll(element, message) {
+    let sent = false;
+    element.addEventListener("scroll", () => {
+      const scrollTop = element.scrollTop;
+      const scrollHeight = element.scrollHeight;
+      const clientHeight = element.clientHeight;
+
+      if (!sent && scrollTop + clientHeight >= scrollHeight - 5) {
+        sent = true;
+        console.log(`Scroll completo detectado em: ${element.id}`);
+
+        fetch("/api/send-telegram-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (!data.success)
+              console.error("Erro ao enviar scroll:", data.error);
+          })
+          .catch((err) => console.error("Erro de conexão:", err));
+      }
+    });
+  }
+
+  trackScroll(
+    document.getElementById("poem-body"),
+    "📜 Usuário leu o poema até o final!"
+  );
+  trackScroll(
+    document.getElementById("sobre-body"),
+    "ℹ️ Usuário leu todo o conteúdo do Sobre!"
+  );
+  trackScroll(
+    document.getElementById("suggestionText"),
+    "✏️ Usuário rolou a textarea de sugestão até o fim!"
+  );
+
+  const wordBoard = document.getElementById("word-board");
+  const newWordInput = document.getElementById("new-word");
+  const addWordBtn = document.getElementById("add-word");
+
+  btnAbrirQuadro.addEventListener("click", () => {
+    menu.style.display = "none";
+    menuleft.style.display = "none";
+    counters.style.display = "none";
+    Newboard.style.display = "block";
+
+    enviarCliqueBotao("Quadro botão abrir clicado");
+  });
+
+  function backToMenuFromBoard() {
+    Newboard.style.display = "none";
+    menu.style.display = "flex";
+    menuleft.style.display = "flex";
+
+    enviarCliqueBotao("Voltar ao Menu Principal do Quadro de Palavras");
+  }
+
+  newWordInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") addWordBtn.click();
+  });
+
+  async function loadWords() {
+    const res = await fetch("/api/quadro-palavras");
+    const data = await res.json();
+    console.log(data);
+    wordBoard.innerHTML = "";
+    data.forEach(addWordToBoard);
+    wordBoard.style.display = "flex";
+  }
+
+  async function addWord(word) {
+    const res = await fetch("/api/quadro-palavras", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ palavra: word }),
+    });
+    const result = await res.json();
+    if (result.success) loadWords();
+  }
+
+  function addWordToBoard(wordObj) {
+    const span = document.createElement("span");
+    span.textContent = wordObj.palavra;
+    span.style.padding = "6px 12px";
+    span.style.borderRadius = "8px";
+    span.style.background = "transparent";
+    span.style.color = "#fff";
+    span.style.fontFamily = "'Playfair Display', serif";
+    span.style.fontSize = "14px";
+    span.style.fontWeight = "600";
+    span.style.cursor = "default";
+    span.style.display = "inline-flex";
+    span.style.alignItems = "center";
+    span.style.margin = "4px";
+    wordBoard.appendChild(span);
+  }
+
+  addWordBtn.addEventListener("click", () => {
+    const word = newWordInput.value.trim();
+    if (!word) return alert("Digite uma palavra antes de adicionar!");
+    addWord(word);
+    newWordInput.value = "";
+  });
+
+  loadWords();
+
+  const todayModal = document.getElementById("today-modal");
+  const closeToday = document.getElementById("closeToday");
+
+  openTodayBtn.addEventListener("click", () => {
+    menu.style.display = "none";
+    menuleft.style.display = "none";
+    todayModal.classList.add("show");
+  });
+
+  backFromTodayBtn.addEventListener("click", () => {
+    todayModal.classList.remove("show");
+    menu.style.display = "flex";
+    menuleft.style.display = "flex";
+  });
+
+  async function loadTodayDrawing() {
+    const container = document.getElementById("today-drawing");
+    container.textContent = "⌛ Carregando desenho...";
+
+    try {
+      const res = await fetch("/api/today-drawing");
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.type === "image") {
+          container.innerHTML = `<img src="${data.url}" alt="Desenho do dia" style="max-width:100%; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">`;
+        } else if (data.type === "text") {
+          container.innerHTML = `<p style="font-style:italic; color:#c0d6ff;">${data.content}</p>`;
+        } else {
+          container.textContent =
+            "💖 Desenho recebido, mas formato desconhecido!";
+        }
+      } else {
+        container.textContent =
+          "❌ Não foi possível carregar o desenho de hoje!";
+      }
+    } catch (err) {
+      console.error("Erro ao carregar desenho:", err);
+      container.textContent = "⚠️ Erro de conexão ao buscar o desenho.";
+    }
+  }
+
+  openTodayBtn.addEventListener("click", () => {
+    menu.style.display = "none";
+    menuleft.style.display = "none";
+    todayModal.classList.add("show");
+    loadTodayDrawing();
+  });
+});
+ </script>
+</body>
+
+</html>
