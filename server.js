@@ -129,17 +129,7 @@ app.use(async (req, res, next) => {
     const ignoredPrefixes = ["10.","192.168.","172.16.","127.","66.249.","157.55.","216.144"];
     const isIgnoredIP = ignoredPrefixes.some(prefix => ip.startsWith(prefix));
 
-    if (!isBotUA && !isIgnoredIP) {
-      let location = "Localização desconhecida";
-      try {
-        const ipInfoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-        if (ipInfoRes.ok) {
-          const ipInfo = await ipInfoRes.json();
-          location = `${ipInfo.city || "???"}, ${ipInfo.region || "???"}, ${ipInfo.country_name || "???"}`;
-        }
-      } catch (err) {
-        console.error("Erro ao buscar localização do IP:", err.message);
-      }
+
 
       const token = process.env.TELEGRAM_BOT_TOKEN;
       const chat_id = process.env.TELEGRAM_CHAT_ID;
@@ -655,10 +645,7 @@ app.delete("/api/admin/quadro-palavras/:id", auth, async (req, res) => {
 
 
 
-  // Depois os arquivos estáticos
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/admin", express.static(path.join(__dirname, "admin")));
-app.use("/uploads", express.static(uploadsDir));
+  
 
 
 
