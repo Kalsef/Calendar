@@ -83,44 +83,47 @@ function auth(req, res, next) {
   return res.status(401).json({ error: "Não autorizado" });
 }
 
+
+
+async function sendTelegram(botToken, chatId, message) {
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: message }),
+    });
+  } catch (err) {
+    console.error("Erro ao enviar Telegram:", err.message);
+  }
+}
+
+
 // -------------------- Rota clique botão --------------------
 app.post("/api/button-click", async (req, res) => {
   try {
     const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     const { descricao } = req.body;
-
-    let location = "Desconhecida";
-    try {
-      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-      const geoData = await geoRes.json();
-      if (geoData && !geoData.error) {
-        location = `${geoData.city || "?"}, ${geoData.region || "?"}, ${
-          geoData.country_name || "?"
-        }`;
-      }
-    } catch (err) {
-      console.error("Erro ao buscar localização:", err);
-    }
+    const location = "Localização não disponível";
 
     const mensagem = `👆 Clique detectado:
 🔘 Botão: ${descricao}
 🌐 IP: ${ip}
 📍 Localização: ${location}`;
 
-    const chat_id = process.env.TELEGRAM_CHAT_ID;
-    const token = process.env.TELEGRAM_BOT_TOKEN;
+    // Bot separado só para interações
+    await sendTelegram(
+      process.env.TELEGRAM_BOT_TOKEN_INTERACOES,
+      process.env.TELEGRAM_CHAT_ID_INTERACOES,
+      mensagem
+    );
 
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, text: mensagem }),
-    });
     res.json({ success: true });
   } catch (err) {
     console.error("Erro ao processar clique:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // -------------------- Middlewares --------------------
 app.use(async (req, res, next) => {
@@ -136,44 +139,19 @@ app.use(async (req, res, next) => {
     );
 
     const isBotUA = /bot|crawl|spider|slurp|curl|wget/i.test(userAgent);
-    const ignoredPrefixes = [
-      "10.",
-      "192.168.",
-      "172.16.",
-      "127.",
-      "66.249.",
-      "157.55.",
-      "216.144",
-    ];
+    const ignoredPrefixes = ["::1","10.","192.168.","172.16.","127.","66.249.","157.55.","216.144"];
     const isIgnoredIP = ignoredPrefixes.some((prefix) => ip.startsWith(prefix));
 
     if (!isBotUA && !isIgnoredIP) {
-      let location = "Localização desconhecida";
-      try {
-        const ipInfoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-        if (ipInfoRes.ok) {
-          const ipInfo = await ipInfoRes.json();
-          location = `${ipInfo.city || "???"}, ${ipInfo.region || "???"}, ${
-            ipInfo.country_name || "???"
-          }`;
-        }
-      } catch (err) {
-        console.error("Erro ao buscar localização do IP:", err.message);
-      }
+      const location = "Localização não disponível";
+      const message = `👤 Novo acesso no site!\n📍 IP: ${ip}\n💻 User-Agent: ${userAgent}\n🌍 Localização: ${location}`;
 
-      const token = process.env.TELEGRAM_BOT_TOKEN;
-      const chat_id = process.env.TELEGRAM_CHAT_ID;
-      const message = `👤 Novo acesso no site!\n\n📍 IP: ${ip}\n🌍 Localização: ${location}\n💻 User-Agent: ${userAgent}`;
-
-      try {
-        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id, text: message }),
-        });
-      } catch (err) {
-        console.error("Erro ao enviar notificação Telegram:", err.message);
-      }
+      // Bot separado só para acessos
+      await sendTelegram(
+        process.env.TELEGRAM_BOT_TOKEN_VISITAS,
+        process.env.TELEGRAM_CHAT_ID_VISITAS,
+        message
+      );
     }
   } catch (err) {
     console.error("Erro ao registrar acesso:", err);
@@ -181,6 +159,7 @@ app.use(async (req, res, next) => {
 
   next();
 });
+
 
 // server.js
 app.get("/api/drive-files", async (req, res) => {
@@ -201,6 +180,10 @@ app.get("/api/drive-files", async (req, res) => {
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin", "admin.html"));
+});
+
 app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
 
 // -------------------- Inicialização do DB (criar tabelas) --------------------
@@ -263,6 +246,28 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         content TEXT,       
         url TEXT            
       );
+
+      CREATE TABLE IF NOT EXISTS avisos (
+        id SERIAL PRIMARY KEY,
+        mensagem TEXT NOT NULL,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      
+      CREATE TABLE IF NOT EXISTS polls (
+        id SERIAL PRIMARY KEY,
+        pergunta TEXT NOT NULL,
+        opcoes TEXT[] NOT NULL,       -- array de opções
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS poll_votes (
+        id SERIAL PRIMARY KEY,
+        poll_id INTEGER REFERENCES polls(id) ON DELETE CASCADE,
+        opcao TEXT NOT NULL,
+        ip VARCHAR(100),              -- pra evitar múltiplos votos do mesmo IP
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
 
 
     `);
@@ -511,41 +516,35 @@ app.delete("/api/memories/:id", auth, async (req, res) => {
     res.status(500).json({ error: "Erro ao deletar lembrança" });
   }
 });
-// Telegram
-// POST enviar alerta Telegram
+
 app.post("/api/send-telegram-alert", async (req, res) => {
+  const { message, type } = req.body;
+  if (!message) return res.status(400).json({ success: false, error: "Mensagem não fornecida" });
+
+  let token, chat_id;
+  if (type === "visitas") {
+    token = process.env.TELEGRAM_BOT_TOKEN_VISITAS;
+    chat_id = process.env.TELEGRAM_CHAT_ID_VISITAS;
+  } else {
+    token = process.env.TELEGRAM_BOT_TOKEN_INTERACOES;
+    chat_id = process.env.TELEGRAM_CHAT_ID_INTERACOES;
+  }
+
   try {
-    const chat_id = process.env.TELEGRAM_CHAT_ID;
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const { message } = req.body; // <-- pega a mensagem enviada pelo frontend
-
-    if (!message) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Mensagem não fornecida" });
-    }
-
-    const response = await fetch(
-      `https://api.telegram.org/bot${token}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id, text: message }),
-      }
-    );
-
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id, text: message }),
+    });
     const data = await response.json();
-
-    if (data.ok) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: data.description });
-    }
+    if (data.ok) res.json({ success: true });
+    else res.status(500).json({ success: false, error: data.description });
   } catch (err) {
-    console.error("Erro ao enviar Telegram:", err);
+    console.error("Erro Telegram:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // GET todos os poemas (admin)
 app.get("/api/admin/poems", auth, async (req, res) => {
@@ -765,3 +764,134 @@ app.post("/api/admin/today-drawing", auth, async (req, res) => {
     res.status(500).json({ error: "Erro ao salvar desenho" });
   }
 });
+
+// GET público (todos os avisos)
+app.get("/api/avisos", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM avisos ORDER BY criado_em DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar avisos:", err);
+    res.status(500).json({ error: "Erro ao buscar avisos" });
+  }
+});
+
+// POST admin (adicionar aviso)
+app.post("/api/avisos", auth, async (req, res) => {
+  try {
+    const { mensagem } = req.body;
+    if (!mensagem) return res.status(400).json({ error: "Mensagem obrigatória" });
+
+    await pool.query("INSERT INTO avisos (mensagem) VALUES ($1)", [mensagem]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao salvar aviso:", err);
+    res.status(500).json({ error: "Erro ao salvar aviso" });
+  }
+});
+
+// DELETE admin (remover aviso)
+app.delete("/api/avisos/:id", auth, async (req, res) => {
+  try {
+    await pool.query("DELETE FROM avisos WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao deletar aviso:", err);
+    res.status(500).json({ error: "Erro ao deletar aviso" });
+  }
+});
+
+
+// Criar votação (admin)
+app.post("/api/polls", auth, async (req, res) => {
+  try {
+    const { pergunta, opcoes } = req.body;
+    if (!pergunta || !opcoes || !Array.isArray(opcoes))
+      return res.status(400).json({ error: "Pergunta e opções obrigatórias" });
+
+    const { rows } = await pool.query(
+      "INSERT INTO polls (pergunta, opcoes) VALUES ($1, $2) RETURNING *",
+      [pergunta, opcoes]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("Erro ao criar votação:", err);
+    res.status(500).json({ error: "Erro ao criar votação" });
+  }
+});
+
+// Listar votações ativas (público)
+app.get("/api/polls", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM polls ORDER BY criado_em DESC LIMIT 5");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar votações" });
+  }
+});
+
+// Votar (permite múltiplos votos)
+app.post("/api/polls/:id/vote", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { opcao } = req.body;
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+    const pollRes = await pool.query("SELECT * FROM polls WHERE id = $1", [id]);
+    if (pollRes.rows.length === 0)
+      return res.status(404).json({ error: "Votação não encontrada" });
+
+    const poll = pollRes.rows[0];
+    if (!poll.opcoes.includes(opcao))
+      return res.status(400).json({ error: "Opção inválida" });
+
+    // Agora sempre grava, sem checar IP
+    await pool.query(
+      "INSERT INTO poll_votes (poll_id, opcao, ip) VALUES ($1, $2, $3)",
+      [id, opcao, ip]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao votar:", err);
+    res.status(500).json({ error: "Erro ao votar" });
+  }
+});
+
+// Resultados
+app.get("/api/polls/:id/results", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT opcao, COUNT(*) as votos FROM poll_votes WHERE poll_id=$1 GROUP BY opcao",
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar resultados" });
+  }
+});
+
+// DELETE poll (admin)
+app.delete("/api/polls/:id", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Deleta a poll e todos os votos associados (CASCADE)
+    await pool.query("DELETE FROM polls WHERE id = $1", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao deletar poll:", err);
+    res.status(500).json({ error: "Erro ao deletar votação" });
+  }
+});
+
+// Rota para retornar o IP do cliente
+app.get("/api/get-ip", (req, res) => {
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
+    .split(",")[0]
+    .trim();
+  res.json({ ip });
+});
+
