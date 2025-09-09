@@ -366,7 +366,7 @@
       #sidebar {
         position: fixed;
         top: 0;
-        left: -380px;
+        left: -400px;
         width: 350px;
         height: 100vh;
         background: linear-gradient(
@@ -766,12 +766,12 @@
         display: none;
         position: fixed;
         inset: 0;
-        z-index: 2000;
+        z-index: 5000;
         background: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(2px);
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        padding: 0px;
         overflow-y: auto;
       }
 
@@ -1046,3 +1046,194 @@
   font-style: italic;
   font-size: 14px;
 }
+
+
+
+#polls-modal, #avisos-modal {
+   display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 5000;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(2px);
+        align-items: center;
+        justify-content: center;
+        padding: 0px;
+        overflow-y: auto;
+      }
+
+
+
+/* Caixa do modal */
+.polls-content, .avisos-content {
+  background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
+  color: #f0f0f5;
+  padding: 30px 25px;
+  border-radius: 16px;
+  width: 95%;
+  max-width: 700px;
+  max-height: 85vh; /* altura máxima */
+  overflow-y: auto; /* scroll interno */
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  scroll-behavior: smooth;
+}
+
+/* Scroll customizado */
+.polls-content::-webkit-scrollbar,
+.avisos-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.polls-content::-webkit-scrollbar-track,
+.avisos-content::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+}
+
+.polls-content::-webkit-scrollbar-thumb,
+.avisos-content::-webkit-scrollbar-thumb {
+  background: rgba(125,191,255,0.4);
+  border-radius: 8px;
+  border: 2px solid rgba(0,0,0,0.1);
+}
+
+.polls-content::-webkit-scrollbar-thumb:hover,
+.avisos-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(125,191,255,0.7);
+}
+
+/* Título */
+.polls-content h2, .avisos-content h2 {
+  margin: 0 0 20px 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #7dbfff;
+  text-align: center;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+}
+
+/* Lista de votos ou avisos */
+#polls-list, #avisos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Cada votação ou aviso */
+.poll-item, #avisos-list p {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: inset 0 1px 6px rgba(0,0,0,0.35), 0 3px 8px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.15s, background 0.2s;
+}
+#avisos-list p::before {
+  content: "🔔 ";
+  margin-right: 6px;
+}
+
+
+.poll-item:hover {
+  background: rgba(125,191,255,0.08);
+  transform: translateY(-2px);
+}
+
+/* Pergunta */
+.poll-item h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #7dbfff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+/* Opções */
+.poll-item button {
+  background: rgba(255,255,255,0.05);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #c0d6ff;
+  border: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.3);
+  transition: background 0.2s, transform 0.15s;
+}
+
+.poll-item button:hover {
+  background: rgba(125,191,255,0.15);
+  transform: translateY(-1px);
+}
+.poll-item button:focus {
+  outline: 2px solid #7dbfff;
+  outline-offset: 2px;
+}
+
+
+/* Botão voltar */
+#polls-back, #avisos-back {
+  margin-top: 20px;
+  align-self: center;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #5aaafa, #1e1e2f);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  transition: transform 0.15s, background 0.2s;
+}
+
+#polls-back:hover, #avisos-back:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(145deg, #7dbfff, #2e2e4a);
+}
+
+/* Notification container */
+#notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #1e1e2f; /* cor padrão */
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 10000;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  font-family: "Arial", sans-serif;
+  max-width: 300px;
+  pointer-events: none;
+}
+
+/* Quando mostrar */
+#notification.show {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+/* Tipos de notificação */
+#notification.success {
+  background-color: #4caf50; /* verde */        
+}
+#notification.error {
+  background-color: #f44336; /* vermelho */
+}
+#notification.info {
+  background-color: #2196f3; /* azul */
+}
+#notification.warning {
+  background-color: #ff9800; /* laranja */
+}
+
