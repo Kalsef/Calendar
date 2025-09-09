@@ -34,6 +34,8 @@
           carregarMemories();
           carregarLogs();
           carregarPoemas(); 
+          carregarPolls();
+          carregarAvisos();
         } else {
           const json = await res.json();
           alert(json?.error || "Erro no login");
@@ -401,9 +403,137 @@ async function salvar(payload) {
   .then(res => res.json())
   .then(data => console.log(data));
 
+const avisoForm = document.getElementById("avisoForm");
+const listaAvisos = document.getElementById("listaAvisos");
 
-   
+avisoForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = new FormData(avisoForm);
+  const body = { mensagem: fd.get("mensagem") };
 
+  const res = await fetch("/api/avisos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
+  if (res.ok) {
+    alert("Aviso adicionado!");
+    avisoForm.reset();
+    carregarAvisos();
+  } else {
+    alert("Erro ao adicionar aviso");
+  }
+};
 
+async function carregarAvisos() {
+  const res = await fetch("/api/avisos");
+  if (!res.ok) return;
+  const rows = await res.json();
 
+  listaAvisos.innerHTML = rows
+    .map(
+      (a) => `
+    <div class="list-item">
+      <strong>${a.mensagem}</strong>
+      <div>
+        <button onclick="deletarAviso(${a.id})" class="danger">Remover</button>
+      </div>
+    </div>
+  `
+    )
+    .join("");
+}
+
+window.deletarAviso = async (id) => {
+  if (!confirm("Deseja remover este aviso?")) return;
+  const res = await fetch(`/api/avisos/${id}`, { method: "DELETE" });
+  if (res.ok) {
+    alert("Aviso removido!");
+    carregarAvisos();
+  } else alert("Erro ao remover aviso");
+};
+
+const pollForm = document.getElementById("pollForm");
+const listaPolls = document.getElementById("listaPolls");
+
+pollForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = new FormData(pollForm);
+  const body = {
+    pergunta: fd.get("pergunta"),
+    opcoes: fd.get("opcoes").split(",").map((o) => o.trim()),
+  };
+
+  const res = await fetch("/api/polls", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (res.ok) {
+    alert("Votação criada!");
+    pollForm.reset();
+    carregarPolls();
+  } else {
+    alert("Erro ao criar votação");
+  }
+};
+
+async function carregarPolls() {
+  const res = await fetch("/api/polls");
+  if (!res.ok) return;
+  const polls = await res.json();
+
+  listaPolls.innerHTML = "";
+
+  for (const p of polls) {
+    const pollDiv = document.createElement("div");
+    pollDiv.classList.add("list-item");
+
+    const title = document.createElement("strong");
+    title.textContent = p.pergunta;
+
+    const optionsDiv = document.createElement("div");
+    optionsDiv.textContent = "Opções: " + p.opcoes.join(", ");
+
+    const votesDiv = document.createElement("div");
+    votesDiv.textContent = "Carregando votos...";
+
+    // Botão deletar
+    const actionsDiv = document.createElement("div");
+    actionsDiv.style.marginTop = "6px";
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "Deletar Poll";
+    delBtn.className = "danger";
+    delBtn.onclick = async () => {
+      if (!confirm("Deseja realmente deletar esta votação?")) return;
+      const resDel = await fetch(`/api/polls/${p.id}`, { method: "DELETE" });
+      if (resDel.ok) {
+        alert("Votação deletada!");
+        carregarPolls();
+      } else alert("Erro ao deletar votação");
+    };
+    actionsDiv.appendChild(delBtn);
+
+    pollDiv.appendChild(title);
+    pollDiv.appendChild(optionsDiv);
+    pollDiv.appendChild(votesDiv);
+    pollDiv.appendChild(actionsDiv);
+    listaPolls.appendChild(pollDiv);
+
+    // Buscar votos
+    try {
+      const votesRes = await fetch(`/api/polls/${p.id}/results`);
+      const votes = await votesRes.json();
+      if (votes.length === 0) {
+        votesDiv.textContent = "Sem votos ainda";
+      } else {
+        votesDiv.textContent = "Votos: " + votes.map(v => `${v.opcao}: ${v.votos}`).join(", ");
+      }
+    } catch (err) {
+      votesDiv.textContent = "Erro ao carregar votos";
+      console.error(err);
+    }
+  }
+}
