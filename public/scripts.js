@@ -890,8 +890,9 @@ logInteracaoTelegram("📊 Usuário abriu votações", userip);
 
 document.getElementById("counter-btn").addEventListener("click", showCounters);
   document.getElementById("back-btn").addEventListener("click", backToMenu);
-  document.getElementById("calendar-btn").addEventListener("click", () => { 
+ document.getElementById("calendar-btn").addEventListener("click", () => { 
     logInteracaoTelegram("📅 Usuário abriu Calendário", userip)
     window.location.href = "calendar.html"; 
-    
-  });
+});  
+
+}); 
