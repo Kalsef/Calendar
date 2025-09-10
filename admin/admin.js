@@ -103,9 +103,11 @@ async function carregarMusicas() {
   try {
     const res = await fetch('/api/musicas');
     const data = await res.json();
-    
+
     // Garante que musicasArray seja sempre um array
     const musicasArray = Array.isArray(data) ? data : data.musicas || [];
+
+    console.log(musicasArray); // <-- agora funciona
 
     musicasArray.forEach(m => {
       const li = document.createElement('li');
@@ -116,6 +118,9 @@ async function carregarMusicas() {
     console.error('Erro ao carregar músicas:', error);
   }
 }
+
+carregarMusicas();
+
 
 
 
