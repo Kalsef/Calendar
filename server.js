@@ -37,7 +37,8 @@ if (!process.env.DATABASE_URL) {
   console.error("ERRO: defina a variável de ambiente DATABASE_URL");
   process.exit(1);
 }
-// -------------------- Config session store --------------------
+
+
 const pgSessionStore = pgSession(session);
 
 app.use(
