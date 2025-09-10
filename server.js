@@ -448,7 +448,7 @@ app.post("/api/musicas", auth, async (req, res) => {
   }
 });
 
-// DELETE música
+
 app.delete("/api/musicas/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
