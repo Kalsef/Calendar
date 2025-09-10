@@ -900,3 +900,15 @@ app.get("/api/get-ip", (req, res) => {
   res.json({ ip });
 });
 
+// Servir arquivos estáticos do painel
+app.use(express.static('public'));
+
+// Endpoint para retornar lista de músicas
+app.get('/api/musicas', (req, res) => {
+  const musicasPath = path.join(__dirname, 'musicas.json');
+  const musicas = JSON.parse(fs.readFileSync(musicasPath, 'utf-8'));
+  res.json(musicas);
+});
+
+
+
