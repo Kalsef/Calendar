@@ -98,13 +98,16 @@
           alert(j?.error || "Erro ao salvar");
         }
       };
+
+
 async function carregarMusicas() {
   try {
     const res = await fetch('https://calendarm.onrender.com/api/musicas');
     const data = await res.json();
-    console.log('Resposta da API de músicas:', data); // veja exatamente o que está chegando
+    console.log('Resposta da API de músicas:', data);
 
-    const musicasArray = Array.isArray(data) ? data : data.musicas || [];
+    // Pega o primeiro array dentro do objeto
+    const musicasArray = Object.values(data)[0] || [];
     console.log('Array de músicas:', musicasArray);
 
     const ul = document.getElementById('lista-musicas');
