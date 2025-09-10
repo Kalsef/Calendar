@@ -903,12 +903,14 @@ app.get("/api/get-ip", (req, res) => {
 // Servir arquivos estáticos do painel
 app.use(express.static('public'));
 
-// Endpoint para retornar lista de músicas
 app.get('/api/musicas', (req, res) => {
   const musicasPath = path.join(__dirname, 'musicas.json');
   const musicas = JSON.parse(fs.readFileSync(musicasPath, 'utf-8'));
+  
+  // Certifique-se de enviar um array, não um objeto
   res.json(musicas);
 });
+
 
 
 
