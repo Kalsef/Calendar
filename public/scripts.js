@@ -345,16 +345,17 @@ poemBtn.addEventListener("click", async () => {
   }
 });
 
-  const closePoemBtn = document.getElementById("close-poem"); // seu botão X do poema
+const closePoemBtn = document.getElementById("close-poem"); // seu botão X do poema
 
-
-closePoemBtn.addEventListener("click", () => {
-  if (!poemModal) return;
-  poemModal.style.display = "none"; // fecha apenas o modal do poema
-  poemModal.classList.remove("show"); // remove classe show, se estiver usando
-  overlay.classList.remove("active"); // remove overlay se você quiser
-  logInteracaoTelegram("📜 Usuário fechou Poema do Dia", userip);
-});
+if (closePoemBtn) {
+  closePoemBtn.addEventListener("click", () => {
+    if (!poemModal) return;
+    poemModal.style.display = "none"; // fecha apenas o modal do poema
+    poemModal.classList.remove("show"); // remove classe show, se estiver usando
+    overlay.classList.remove("active"); // remove overlay se quiser
+    logInteracaoTelegram("📜 Usuário fechou Poema do Dia", userip);
+  });
+}
 
 avisosBackBtn?.addEventListener("click", () => {
   fecharTodosModais();
