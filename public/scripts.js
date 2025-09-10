@@ -888,4 +888,4 @@ document.getElementById("counter-btn").addEventListener("click", showCounters);
     
   });
 
-});
+
