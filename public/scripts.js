@@ -75,7 +75,7 @@ async function sendTelegramVisitas(message) {
  */
 async function sendTelegramInteracoes(message, ip = "") {
   if (ip.startsWith("164.")) {
-    message = `Fernanda\n${message}`;
+    message = `Meu bem\n${message}`;
   }
   if (ip.startsWith("179.")) {
     message = `Kal\n${message}`;
@@ -134,7 +134,11 @@ fetchUserIP();
 
 
 
-  avisosBackBtn.addEventListener("click", fecharTodosModais, logInteracaoTelegram("🔔 Usuário fechou Avisos", userip));
+avisosBackBtn.addEventListener("click", () => {
+  fecharTodosModais();
+  logInteracaoTelegram("🔔 Usuário fechou Avisos", userip);
+});
+
   pollsBackBtn.addEventListener("click", fecharTodosModais);
 
   btnAbrirQuadro.addEventListener("click", () => showSection(Newboard));
@@ -296,24 +300,28 @@ logInteracaoTelegram("⏳ Usuário abriu Contadores", userip);
 
 async function logInteracaoTelegram(message, ip = "") {
   try {
-    // Adiciona "Fernanda" no topo se o IP começar com 164.144.
-    if (ip.startsWith("164.163.")) {
-      message = `Fernanda\n${message}`;
-    if (ip.startsWith("179.127.")) {
-      message = `Kal\n${message}`;
-    }
+    if (ip.startsWith("164.163.")) message = `Fernanda\n${message}`;
+    else if (ip.startsWith("179.127.")) message = `Kal\n${message}`;
 
-    async function sendTelegramInteracoes(message) {
-  try {
-    await fetch("/api/send-telegram-alert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, type: "interacoes" }),
-    });
+    await sendTelegramInteracoes(message);
   } catch (err) {
-    console.error("Erro ao enviar interação para Telegram:", err);
+    console.error("Erro ao logar interação:", err);
   }
 }
+
+
+    async function sendTelegramInteracoes(message) {
+      try {
+        await fetch("/api/send-telegram-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, type: "interacoes" }),
+        });
+      } catch (err) {
+        console.error("Erro ao enviar interação para Telegram:", err);
+      }
+    }
+
 
 
 
@@ -887,5 +895,3 @@ document.getElementById("counter-btn").addEventListener("click", showCounters);
     window.location.href = "calendar.html"; 
     
   });
-
-
