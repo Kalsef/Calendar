@@ -346,7 +346,7 @@ poemBtn.addEventListener("click", async () => {
 });
 
   const closePoemBtn = document.getElementById("close-poem"); // seu botão X do poema
-const poemModal = document.getElementById("poem-modal");
+
 
 closePoemBtn.addEventListener("click", () => {
   if (!poemModal) return;
