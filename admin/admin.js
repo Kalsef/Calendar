@@ -100,19 +100,25 @@
       };
 
 async function carregarMusicas() {
-  const res = await fetch('/api/musicas');
-  const data = await res.json();   // data é um objeto { musicas: [...] }
-  
-  const musicasArray = data.musicas;  // aqui pegamos o array correto
+  try {
+    const res = await fetch('/api/musicas');
+    const data = await res.json();
+    
+    // Garante que musicasArray seja sempre um array
+    const musicasArray = Array.isArray(data) ? data : data.musicas || [];
 
-  musicasArray.forEach(m => {
-    const li = document.createElement('li');
-    li.innerHTML = `${m.title} - <a href="${m.url}" target="_blank">Ouvir / Download</a>`;
-    document.getElementById('lista-musicas').appendChild(li);
-  });
+    musicasArray.forEach(m => {
+      const li = document.createElement('li');
+      li.innerHTML = `${m.title} - <a href="${m.url}" target="_blank">Ouvir / Download</a>`;
+      document.getElementById('lista-musicas').appendChild(li);
+    });
+  } catch (error) {
+    console.error('Erro ao carregar músicas:', error);
+  }
 }
 
-carregarMusicas();
+
+
 
 
       previewBtn.onclick = () => {
