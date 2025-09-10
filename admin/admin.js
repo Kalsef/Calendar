@@ -550,3 +550,4 @@ async function carregarPolls() {
         ul.appendChild(li);
       });
     }
+ carregarMusicas();
