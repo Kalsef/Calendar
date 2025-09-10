@@ -132,12 +132,11 @@ async function fetchUserIP() {
 fetchUserIP();
 
 
-
-
-avisosBackBtn.addEventListener("click", () => {
+avisosBackBtn?.addEventListener("click", () => {
   fecharTodosModais();
   logInteracaoTelegram("🔔 Usuário fechou Avisos", userip);
 });
+
 
   pollsBackBtn.addEventListener("click", fecharTodosModais);
 
