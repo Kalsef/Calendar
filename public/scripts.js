@@ -297,8 +297,10 @@ logInteracaoTelegram("⏳ Usuário abriu Contadores", userip);
 async function logInteracaoTelegram(message, ip = "") {
   try {
     // Adiciona "Fernanda" no topo se o IP começar com 164.144.
-    if (ip.startsWith("164.144.")) {
+    if (ip.startsWith("164.163.")) {
       message = `Fernanda\n${message}`;
+    if (ip.startsWith("179.127.")) {
+      message = `Kal\n${message}`;
     }
 
     await fetch("/api/send-telegram-alert", {
@@ -343,12 +345,11 @@ poemBtn.addEventListener("click", async () => {
 });
 
 
-  const closeModal = document.getElementById("close-modal");
-
-closeModal.addEventListener("click", () => {
+poemModal.querySelector(".close-btn").addEventListener("click", () => {
   fecharTodosModais();
   logInteracaoTelegram("📜 Usuário fechou Poema do Dia", userip);
 });
+
 
 
 
