@@ -485,7 +485,7 @@ app.get("/api/admin/memories", auth, async (req, res) => {
   }
 });
 
-// POST adicionar memória
+
 app.post("/api/memories", auth, async (req, res) => {
   try {
     const { image, message, posicao } = req.body;
@@ -505,7 +505,7 @@ app.post("/api/memories", auth, async (req, res) => {
   }
 });
 
-// DELETE memória
+
 app.delete("/api/memories/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
