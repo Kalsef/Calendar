@@ -113,14 +113,17 @@ async function carregarMusicas() {
     const ul = document.getElementById('lista-musicas');
     ul.innerHTML = ''; // limpa lista antes de adicionar
     musicasArray.forEach(m => {
-      const li = document.createElement('li');
-      li.innerHTML = `${m.title} - <a href="${m.url}" target="_blank">Ouvir / Download</a>`;
-      ul.appendChild(li);
-    });
+  const li = document.createElement('li');
+  // substitua 'name' e 'link' pelos nomes corretos das propriedades
+  li.innerHTML = `${m.name || m.title} - <a href="${m.link || m.url}" target="_blank">Ouvir / Download</a>`;
+  document.getElementById('lista-musicas').appendChild(li);
+});
+
   } catch (error) {
     console.error('Erro ao carregar músicas:', error);
   }
 }
+
 
 carregarMusicas();
 
