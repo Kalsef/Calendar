@@ -43,6 +43,7 @@ app.use(
     store: new pgSessionStore({
       pool: pool,
       tableName: "session",
+      createTableIfMissing: true // <- adiciona esta linha
     }),
     secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
     resave: false,
@@ -50,6 +51,7 @@ app.use(
     cookie: { maxAge: 24 * 3600 * 1000 }, // 1 dia
   })
 );
+
 
 // -------------------- Ensure uploads folder --------------------
 const uploadsDir = path.join(__dirname, "uploads");
@@ -268,6 +270,8 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         ip VARCHAR(100),              -- pra evitar múltiplos votos do mesmo IP
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      
 
 
 
