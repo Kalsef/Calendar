@@ -345,7 +345,7 @@ poemBtn.addEventListener("click", async () => {
   }
 });
 
-const closePoemBtn = document.getElementById("close-poem"); // seu botão X do poema
+const closePoemBtn = document.getElementById("close-modal"); // seu botão X do poema
 
 if (closePoemBtn) {
   closePoemBtn.addEventListener("click", () => {
@@ -434,7 +434,6 @@ overlay.addEventListener("click", () => {
     menu.style.display = "flex";
     menuleft.style.display = "flex";
 
-    enviarCliqueBotao("Menu: Sobre este site botão Fechar Clicado");
   }
 
   const sobreClose = document.getElementById("sobre-close");
