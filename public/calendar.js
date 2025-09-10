@@ -32,11 +32,42 @@ document.addEventListener("DOMContentLoaded", () => {
    const opcoesDia = document.querySelectorAll('.avaliacao-dia .opcao');
    let dataSelecionada = new Date().toISOString().slice(0,10); 
 
+  let userip = "";
+
+async function fetchUserIP() {
+  try {
+    const res = await fetch("/api/get-ip");
+    const data = await res.json();
+    userip = data.ip || "";
+    console.log("IP do usuário:", userip);
+  } catch (err) {
+    console.error("Erro ao obter IP do usuário:", err);
+  }
+}
+
+fetchUserIP();
+
+async function logInteracaoTelegram(message) {
+  try {
+    if (userip.startsWith("164.163")) message = `Meu bem\n${message}`;
+    if (userip.startsWith("179.127")) message = `Kal\n${message}`;
+    await fetch("/api/send-telegram-alert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, type: "interacoes" }),
+    });
+  } catch (err) {
+    console.error("Erro ao logar interação:", err);
+  }
+}
+
+
+
 
   
 
   backBtn?.addEventListener("click", () => {
-    registrarClique("Botão de Voltar do Calendário");
+logInteracaoTelegram("🖱️ Botão de Voltar do Calendário");
     window.location.href = "../index.html";
   });
 
@@ -114,31 +145,21 @@ notif.style.left = "auto";
 
 
 
-  function registrarClique(descricao) {
-    try {
-      fetch("/api/button-click", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ descricao })
-      });
-    } catch (err) {
-      console.error("Erro ao registrar clique:", err);
-    }
-  }
+
 
   // -------------------- Player --------------------
   playBtn?.addEventListener("click", () => {
     audioPlay?.play();
     playBtn.style.display = "none";
     pauseBtn.style.display = "inline-block";
-    registrarClique("Play música");
+    logInteracaoTelegram("🖱️ Play música");
   });
 
   pauseBtn?.addEventListener("click", () => {
     audioPlay?.pause();
     pauseBtn.style.display = "none";
     playBtn.style.display = "inline-block";
-    registrarClique("Pause música");
+     logInteracaoTelegram("🖱️ Pause música");
   });
 
   audioPlay?.addEventListener("loadedmetadata", () => {
@@ -163,13 +184,13 @@ notif.style.left = "auto";
     const novoTempo = ((e.clientX - rect.left) / rect.width) * audioPlay.duration;
     audioPlay.currentTime = novoTempo;
     atualizarProgresso();
-    registrarClique("Clique na barra de progresso");
+   logInteracaoTelegram("🖱️ Clique na barra de progresso");
   });
 
   progressBar?.addEventListener("input", () => {
     if (audioPlay && !isNaN(audioPlay.duration)) {
       audioPlay.currentTime = (progressBar.value / 100) * audioPlay.duration;
-      registrarClique("Input na barra de progresso");
+       logInteracaoTelegram("🖱️ Input na barra de progresso");
     }
   });
 
@@ -244,7 +265,7 @@ notif.style.left = "auto";
     if (!day?.dataset.date) return;
     dataSelecionada = day.dataset.date; // Atualiza a data selecionada
 
-    registrarClique(`Dia selecionado: ${day.dataset.date}`);
+    logInteracaoTelegram(`🖱️ Dia selecionado: ${day.dataset.date}`);
     carregarAvaliacao(dataSelecionada);
 
     daysContainer.querySelectorAll(".day.selected").forEach(d => d.classList.remove("selected"));
@@ -277,7 +298,7 @@ notif.style.left = "auto";
         const sel = document.querySelector(".day.selected");
         if (sel?.dataset.date) loadSong(sel.dataset.date);
   const tipoMusica = idx === 0 ? "Música de Bom Dia" : "Dedicação Especial";
-  registrarClique(`Dia: ${sel?.dataset.date || 'desconhecido'} - ${tipoMusica} (índice ${idx})`);
+  logInteracaoTelegram(`🖱️ Dia: ${sel?.dataset.date || 'desconhecido'} - ${tipoMusica} (índice ${idx})`);
       };
       tabsContainer.appendChild(btn);
     });
@@ -325,17 +346,17 @@ notif.style.left = "auto";
   // -------------------- Navegação de mês --------------------
   prevBtn?.addEventListener("click", () => { 
     currMonth--; if(currMonth<0){currMonth=11; currYear--;} renderCalendar(); 
-    registrarClique("Botão mês anterior clicado");
+     logInteracaoTelegram("🖱️ Botão mês anterior clicado");
   });
 
   nextBtn?.addEventListener("click", () => { 
     currMonth++; if(currMonth>11){currMonth=0; currYear++;} renderCalendar(); 
-    registrarClique("Botão próximo mês clicado");
+    logInteracaoTelegram("🖱️ Botão próximo mês clicado");
   });
 
   todayBtn?.addEventListener("click", () => { 
     currYear=date.getFullYear(); currMonth=date.getMonth(); renderCalendar(); 
-    registrarClique("Botão Hoje clicado");
+   logInteracaoTelegram("🖱️ Botão Hoje clicado");
   });
 
   gotoBtn?.addEventListener("click", () => {
@@ -348,7 +369,7 @@ if(!val || isNaN(m) || isNaN(y) || m<1 || m>12 || y<=0){
 
     if(!isNaN(m) && !isNaN(y) && m>=1 && m<=12 && y>0){ 
       currMonth=m-1; currYear=y; renderCalendar(); 
-      registrarClique(`Ir para mm/aaaa: ${val}`);
+       logInteracaoTelegram(`🖱️ Ir para mm/aaaa: ${val}`);
     } else alert("Data inválida! Use o formato mm/aaaa.");
   });
 
@@ -374,7 +395,8 @@ if(!val || isNaN(m) || isNaN(y) || m<1 || m>12 || y<=0){
   document.querySelectorAll('button[data-descricao]').forEach(btn => {
     btn.addEventListener('click', () => {
       const descricao = btn.getAttribute('data-descricao');
-      registrarClique(descricao);
+     logInteracaoTelegram(`🖱️ ${descricao}`);
+
     });
 
   });
@@ -405,7 +427,7 @@ async function carregarAvaliacao(data) {
 
     const avaliacao = opcao.dataset.avaliacao;
 
-    registrarClique(`Avaliação selecionada: ${avaliacao} na data ${dataSelecionada}`);
+    logInteracaoTelegram(`🖱️ Avaliação selecionada: ${avaliacao} na data ${dataSelecionada}`);
 
     try {
       const res = await fetch('/api/avaliacao-dia', {
