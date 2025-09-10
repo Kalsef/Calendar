@@ -14,6 +14,18 @@
       const poemForm = document.getElementById("poemForm");
       const listaPoems = document.getElementById("listaPoems");
 
+async function carregarMusicas() {
+  const res = await fetch('/api/musicas');
+  const musicas = await res.json(); // deve ser um array
+
+  musicas.forEach(m => {
+    const li = document.createElement('li');
+    li.innerHTML = `${m.title} - <a href="${m.url}" target="_blank">Ouvir / Download</a>`;
+    document.getElementById('lista-musicas').appendChild(li);
+  });
+}
+
+
       loginForm.onsubmit = async (e) => {
         e.preventDefault();
         const fd = new FormData(loginForm);
@@ -539,15 +551,3 @@ async function carregarPolls() {
   }
 }
 
- async function carregarMusicas() {
-      const res = await fetch('/api/musicas');
-      const musicas = await res.json();
-      const ul = document.getElementById('lista-musicas');
-
-      musicas.forEach(m => {
-        const li = document.createElement('li');
-        li.innerHTML = `${m.title} - <a href="${m.url}" target="_blank">Ouvir / Download</a>`;
-        ul.appendChild(li);
-      });
-    }
- carregarMusicas();
