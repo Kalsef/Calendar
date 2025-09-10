@@ -132,16 +132,8 @@ async function fetchUserIP() {
 fetchUserIP();
 
 
-avisosBackBtn?.addEventListener("click", () => {
-  fecharTodosModais();
-  logInteracaoTelegram("🔔 Usuário fechou Avisos", userip);
-});
 
-
-  pollsBackBtn.addEventListener("click", fecharTodosModais);
-
-  btnAbrirQuadro.addEventListener("click", () => showSection(Newboard));
-  backBoardBtn.addEventListener("click", () => showSection(menu));
+ 
 
   function showSection(section) {
     const sections = [menu, menuleft, Newboard, counters];
@@ -355,11 +347,14 @@ poemBtn.addEventListener("click", async () => {
 });
 
 
-poemModal.querySelector(".close-btn").addEventListener("click", () => {
+avisosBackBtn?.addEventListener("click", () => {
   fecharTodosModais();
-  logInteracaoTelegram("📜 Usuário fechou Poema do Dia", userip);
+  logInteracaoTelegram("🔔 Usuário fechou Avisos", userip);
 });
 
+pollsBackBtn?.addEventListener("click", fecharTodosModais);
+btnAbrirQuadro?.addEventListener("click", () => showSection(Newboard));
+backBoardBtn?.addEventListener("click", () => showSection(menu));
 
 
 
