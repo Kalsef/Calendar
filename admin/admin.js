@@ -36,6 +36,7 @@
           carregarPoemas(); 
           carregarPolls();
           carregarAvisos();
+          carregarMusicas();
         } else {
           const json = await res.json();
           alert(json?.error || "Erro no login");
@@ -537,3 +538,15 @@ async function carregarPolls() {
     }
   }
 }
+
+ async function carregarMusicas() {
+      const res = await fetch('/api/musicas');
+      const musicas = await res.json();
+      const ul = document.getElementById('lista-musicas');
+
+      musicas.forEach(m => {
+        const li = document.createElement('li');
+        li.innerHTML = `${m.title} - <a href="${m.url}" target="_blank">Ouvir / Download</a>`;
+        ul.appendChild(li);
+      });
+    }
