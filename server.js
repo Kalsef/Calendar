@@ -24,6 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // -------------------- Config DB (Postgres) --------------------
+// -------------------- Pool Postgres --------------------
 if (!process.env.DATABASE_URL) {
   console.error("ERRO: defina a variável de ambiente DATABASE_URL");
   process.exit(1);
@@ -31,7 +32,7 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: false }
 });
 
 // -------------------- Config session store --------------------
