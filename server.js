@@ -19,6 +19,15 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false } // Neon exige SSL
+});
+
+export default pool;
+
+
 // -------------------- Middlewares --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,12 +37,6 @@ if (!process.env.DATABASE_URL) {
   console.error("ERRO: defina a variável de ambiente DATABASE_URL");
   process.exit(1);
 }
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-
 // -------------------- Config session store --------------------
 const pgSessionStore = pgSession(session);
 
