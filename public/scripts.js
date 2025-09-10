@@ -303,6 +303,8 @@ async function logInteracaoTelegram(message, ip = "") {
       message = `Kal\n${message}`;
     }
 
+    async function sendTelegramInteracoes(message) {
+  try {
     await fetch("/api/send-telegram-alert", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -312,6 +314,7 @@ async function logInteracaoTelegram(message, ip = "") {
     console.error("Erro ao enviar interação para Telegram:", err);
   }
 }
+
 
 
   document.querySelectorAll("button[data-descricao]").forEach((btn) => {
