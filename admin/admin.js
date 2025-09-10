@@ -98,21 +98,21 @@
           alert(j?.error || "Erro ao salvar");
         }
       };
-
 async function carregarMusicas() {
   try {
-    const res = await fetch('/api/musicas');
+    const res = await fetch('https://calendarm.onrender.com/api/musicas');
     const data = await res.json();
+    console.log('Resposta da API de músicas:', data); // veja exatamente o que está chegando
 
-    // Garante que musicasArray seja sempre um array
     const musicasArray = Array.isArray(data) ? data : data.musicas || [];
+    console.log('Array de músicas:', musicasArray);
 
-    console.log(musicasArray); // <-- agora funciona
-
+    const ul = document.getElementById('lista-musicas');
+    ul.innerHTML = ''; // limpa lista antes de adicionar
     musicasArray.forEach(m => {
       const li = document.createElement('li');
       li.innerHTML = `${m.title} - <a href="${m.url}" target="_blank">Ouvir / Download</a>`;
-      document.getElementById('lista-musicas').appendChild(li);
+      ul.appendChild(li);
     });
   } catch (error) {
     console.error('Erro ao carregar músicas:', error);
@@ -120,6 +120,7 @@ async function carregarMusicas() {
 }
 
 carregarMusicas();
+
 
 
 
