@@ -342,10 +342,14 @@ poemBtn.addEventListener("click", async () => {
   }
 });
 
+
+  const closeModal = document.getElementById("close-modal");
+
 closeModal.addEventListener("click", () => {
   fecharTodosModais();
   logInteracaoTelegram("📜 Usuário fechou Poema do Dia", userip);
 });
+
 
 
 function closeModalClickOutside(modal) {
