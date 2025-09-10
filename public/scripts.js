@@ -21,12 +21,7 @@ const menuSugestao = document.getElementById("menuSugestao");
   let sendingAlertVisitas = false;
   let sendingAlertInteracoes = false;
 
-  function enviarCliqueBotao(descricao) {
-  console.log("🖱️ Botão clicado:", descricao);
-  sendTelegramInteracoes(`🖱️ Clique: ${descricao}`).catch(err =>
-    console.error("Erro ao enviar clique:", err)
-  );
-}
+  
 
 function mostrarModal(modal) {
   if (!modal) return;
@@ -319,7 +314,7 @@ async function logInteracaoTelegram(message, ip = "") {
   document.querySelectorAll("button[data-descricao]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const descricao = btn.getAttribute("data-descricao");
-      enviarCliqueBotao(descricao);
+      logInteracaoTelegram(`🖱️ Clique no botão: ${descricao}`, userip);
     });
   });
 
@@ -474,7 +469,7 @@ overlay.addEventListener("click", () => {
     </div>
   `;
     addFirstStepEvents();
-    enviarCliqueBotao("Botão Delete (menu lateral) clicado");
+    logInteracaoTelegram("🖱️ Usuário Clicou Botão Delete (menu laateral)", userip);
   });
 
   function addFirstStepEvents() {
@@ -492,7 +487,7 @@ overlay.addEventListener("click", () => {
       </div>
     `;
       addSecondStepEvents();
-      enviarCliqueBotao("Modal Delete: primeira confirmação 'Sim'");
+      logInteracaoTelegram("🖱️ Modal Delete: primeira confirmação'sim'", userip);
     });
 
     document.getElementById("noBtn").addEventListener("click", async () => {
@@ -504,7 +499,7 @@ overlay.addEventListener("click", () => {
       } finally {
         confirmModal.classList.remove("show");
       }
-      enviarCliqueBotao("Modal Delete: primeira confirmação 'Não'");
+      logInteracaoTelegram("🖱️ Modal Delete: primeira confirmação 'Não'", userip);
     });
   }
 
@@ -524,7 +519,7 @@ overlay.addEventListener("click", () => {
         } finally {
           confirmModal.classList.remove("show");
         }
-        enviarCliqueBotao("Modal Delete: segunda confirmação 'Sim'");
+        logInteracaoTelegram("🖱️ Modal Delete: segunda confirmação 'Sim'", userip);
       });
 
     document
@@ -539,7 +534,7 @@ overlay.addEventListener("click", () => {
         } finally {
           confirmModal.classList.remove("show");
         }
-        enviarCliqueBotao("Modal Delete: segunda confirmação 'Não'");
+         logInteracaoTelegram("🖱️ Modal Delete: segundaa confirmação 'Não'", userip);
       });
   }
 
@@ -726,7 +721,7 @@ trackContinuousScroll(document.getElementById("custom-body"), "🧩 Usuário rol
         showNotification(`✅ Palavra "${word}" adicionada!`, "success");
         loadWords(); 
         newWordInput.value = "";
-        enviarCliqueBotao("Adicionou uma nova palavra");
+                logInteracaoTelegram("🖱️ Usuário clicou: Adicionou uma nova palavra", userip)
       } else {
         showNotification(
           `❌ Erro ao adicionar: ${result.error || "desconhecido"}`,
