@@ -225,7 +225,8 @@ notif.style.left = "auto";
     }
   }
 
-  function renderCalendar() {
+  // -------------------- Calendário --------------------
+function renderCalendar() {
     const firstDay = new Date(currYear, currMonth, 1).getDay();
     const lastDate = new Date(currYear, currMonth + 1, 0).getDate();
     const lastDay = new Date(currYear, currMonth, lastDate).getDay();
@@ -233,17 +234,17 @@ notif.style.left = "auto";
     let days = "";
 
     for (let i = firstDay; i > 0; i--)
-      days += `<div class="day prev-date">${prevLastDate - i + 1}</div>`;
+        days += `<div class="day prev-date">${prevLastDate - i + 1}</div>`;
 
     for (let i = 1; i <= lastDate; i++) {
-      const fullDate = `${currYear}-${String(currMonth + 1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
-      const hasEvent = songs[fullDate] ? "event" : "";
-      const todayCheck = (i === date.getDate() && currMonth === date.getMonth() && currYear === date.getFullYear()) ? "today" : "";
-      days += `<div class="day ${hasEvent} ${todayCheck}" data-date="${fullDate}">${i}</div>`;
+        const fullDate = `${currYear}-${String(currMonth + 1).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
+        const hasEvent = songs[fullDate] && songs[fullDate].length ? "event" : "";
+        const todayCheck = (i === date.getDate() && currMonth === date.getMonth() && currYear === date.getFullYear()) ? "today" : "";
+        days += `<div class="day ${hasEvent} ${todayCheck}" data-date="${fullDate}">${i}</div>`;
     }
 
     for (let i = lastDay; i < 6; i++)
-      days += `<div class="day next-date">${i - lastDay + 1}</div>`;
+        days += `<div class="day next-date">${i - lastDay + 1}</div>`;
 
     daysContainer.innerHTML = days;
     monthElement.textContent = `${months[currMonth]} ${currYear}`;
@@ -251,15 +252,15 @@ notif.style.left = "auto";
     const todayStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
     const todayEl = document.querySelector(`.day[data-date="${todayStr}"]`);
     if (todayEl) {
-      todayEl.classList.add("selected");
+        todayEl.classList.add("selected");
 
-      carregarAvaliacao(todayStr);
+        carregarAvaliacao(todayStr);
 
-      musicaAtualIndex = 0;
-      loadSong(todayStr);
+        // garante que a música do dia seja carregada corretamente
+        musicaAtualIndex = 0;
+        loadSong(todayStr);
     }
-  }
-
+}
   daysContainer?.addEventListener("click", (e) => {
     const day = e.target.closest(".day");
     if (!day?.dataset.date) return;
@@ -311,9 +312,24 @@ notif.style.left = "auto";
     });
   }
 
-  function loadSong(dateStr) {
+  // -------------------- Load música --------------------
+function loadSong(dateStr) {
     const musicasDoDia = songs[dateStr] || [];
     const song = musicasDoDia[musicaAtualIndex];
+
+    if (!song) {
+        songTitle.textContent = "Sem música para esta data/posição.";
+        lyrics.textContent = "Sem letra.";
+        audioPlay.src = "";
+        audioPlay.load();
+        eventTitle.textContent = "Nenhuma música selecionada";
+        eventTime.textContent = "00:00";
+        if (progressBar) progressBar.value = 0;
+        if (currentTime) currentTime.textContent = "00:00";
+        if (totalTime) totalTime.textContent = "00:00";
+        tabsContainer.innerHTML = "<button disabled>Sem músicas</button>";
+        return;
+    }
 
     const [year, month, day] = dateStr.split("-");
     if (eventDay) eventDay.textContent = String(parseInt(day,10));
@@ -321,27 +337,15 @@ notif.style.left = "auto";
 
     updateTabsForDate(dateStr);
 
-    if (song?.audio) {
-      songTitle.textContent = song.titulo || "Título desconhecido";
-      lyrics.textContent = song.letra || "Letra indisponível.";
-      audioPlay.src = song.audio;
-      audioPlay.load();
-      eventTitle.textContent = `Tocando: ${song.titulo || "—"}`;
-      eventTime.textContent = "00:00";
-      playBtn.style.display = "inline-block";
-      pauseBtn.style.display = "none";
-    } else {
-      songTitle.textContent = "Sem música para esta data/posição.";
-      lyrics.textContent = "Sem letra.";
-      audioPlay.src = "";
-      audioPlay.load();
-      eventTitle.textContent = "Nenhuma música selecionada";
-      eventTime.textContent = "00:00";
-      if (progressBar) progressBar.value = 0;
-      if (currentTime) currentTime.textContent = "00:00";
-      if (totalTime) totalTime.textContent = "00:00";
-    }
-  }
+    songTitle.textContent = song.titulo || "Título desconhecido";
+    lyrics.textContent = song.letra || "Letra indisponível.";
+    audioPlay.src = song.audio;
+    audioPlay.load();
+    eventTitle.textContent = `Tocando: ${song.titulo || "—"}`;
+    eventTime.textContent = "00:00";
+    playBtn.style.display = "inline-block";
+    pauseBtn.style.display = "none";
+}
 
   // -------------------- Navegação de mês --------------------
   prevBtn?.addEventListener("click", () => { 
