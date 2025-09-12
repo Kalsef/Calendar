@@ -803,16 +803,25 @@ logInteracaoTelegram("🔔 Usuário abriu avisos", userip);
     avisosList.innerHTML = "⌛ Carregando avisos...";
 
     try {
-      const res = await fetch("/api/avisos");
-      const avisos = await res.json();
-      avisosList.innerHTML = avisos.length
-        ? avisos.map(a => `<p>${a.mensagem}</p>`).join("")
-        : "<p>✅ Nenhum aviso no momento</p>";
-    } catch (err) {
-      avisosList.innerHTML = "<p>Erro ao carregar avisos 😢</p>";
-      logInteracaoTelegram("❌ Erro ao carregar avisos", userip);
-    }
-  });
+  const res = await fetch("/api/avisos");
+  let avisos = await res.json();
+
+  if (avisos.length) {
+    // Ordena do mais antigo para o mais novo
+   avisos.sort((a, b) => new Date(a.criado_em || a.data) - new Date(b.criado_em || b.data));
+
+    avisosList.innerHTML = avisos
+  .sort((a, b) => new Date(a.criado_em || a.data) - new Date(b.criado_em || b.data))
+  .map(a => `<p>${a.mensagem}</p>`)
+  .join("");
+  } else {
+    avisosList.innerHTML = "<p>✅ Nenhum aviso no momento</p>";
+  }
+} catch (err) {
+  avisosList.innerHTML = "<p>Erro ao carregar avisos 😢</p>";
+  logInteracaoTelegram("❌ Erro ao carregar avisos", userip);
+}
+});
 
   const menuPolls = document.getElementById("menuPolls");
   const pollsList = document.getElementById("polls-list");
