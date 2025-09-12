@@ -271,7 +271,9 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      
+      ALTER TABLE musicas
+        ALTER COLUMN data TYPE DATE
+        USING data::date;
 
 
 
@@ -353,22 +355,32 @@ app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
 // GET músicas públicas
 app.get("/api/musicas", async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      "SELECT * FROM musicas ORDER BY data, posicao"
-    );
+     const { rows } = await pool.query(`
+       SELECT id,
+         TO_CHAR("data", 'YYYY-MM-DD') as data,
+         titulo,
+         posicao,
+         audio,
+         capa,
+         letra
+  FROM musicas
+  ORDER BY "data", posicao
+    `);
     const out = {};
-    for (const r of rows) {
-      if (!out[r.data]) out[r.data] = [];
-      out[r.data][r.posicao - 1] = {
-        id: r.id,
-        titulo: r.titulo,
-        audio: r.audio,
-        letra: r.letra,
-        capa: r.capa,
-        posicao: r.posicao,
-      };
-    }
-    res.json(out);
+for (const r of rows) {
+  if (!out[r.data]) out[r.data] = [];
+  out[r.data][r.posicao - 1] = {
+    id: r.id,
+    data: r.data,       // <- adiciona isso
+    titulo: r.titulo,
+    audio: r.audio,
+    letra: r.letra,
+    capa: r.capa,
+    posicao: r.posicao,
+  };
+}
+res.json(out);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao buscar músicas" });
@@ -378,15 +390,24 @@ app.get("/api/musicas", async (req, res) => {
 // GET admin raw
 app.get("/api/admin/musicas", auth, async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      "SELECT * FROM musicas ORDER BY data DESC, posicao"
-    );
+    const { rows } = await pool.query(`
+      SELECT id,
+             TO_CHAR(data, 'YYYY-MM-DD') as data,
+             posicao,
+             titulo,
+             audio,
+             capa,
+             letra
+      FROM musicas
+      ORDER BY data DESC, posicao
+    `);
     res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro" });
   }
 });
+
 
 // GET logs admin
 app.get("/api/admin/logs", auth, async (req, res) => {
@@ -716,7 +737,7 @@ app.delete("/api/admin/quadro-palavras/:id", auth, async (req, res) => {
 });
 
 // Depois os arquivos estáticos
-app.use(express.static(path.join(__dirname, "public")));
+
 app.use("/admin", express.static(path.join(__dirname, "admin")));
 app.use("/uploads", express.static(uploadsDir));
 
@@ -903,13 +924,6 @@ app.get("/api/get-ip", (req, res) => {
 // Servir arquivos estáticos do painel
 app.use(express.static('public'));
 
-app.get('/api/musicas', (req, res) => {
-  const musicasPath = path.join(__dirname, 'musicas.json');
-  const musicas = JSON.parse(fs.readFileSync(musicasPath, 'utf-8'));
-  
-  // Certifique-se de enviar um array, não um objeto
-  res.json(musicas);
-});
 
 
 
