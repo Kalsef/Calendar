@@ -51,6 +51,7 @@ async function logInteracaoTelegram(message) {
   try {
     if (userip.startsWith("164.163")) message = `Meu bem\n${message}`;
     if (userip.startsWith("179.127")) message = `Kal\n${message}`;
+    else if (ip.startsWith("186.")) message = `Fer\n${message}`;
     await fetch("/api/send-telegram-alert", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
