@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Painel Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+
+  <section id="loginArea" class="secao login-area">
+    <h3>Login</h3>
+    <form id="loginForm">
+      <input name="username" placeholder="Usuário" required />
+      <input name="password" type="password" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+    </form>
+  </section>
+
+  <div id="adminArea" class="admin-area" style="display:none">
+
+    <button class="toggle-sidebar">☰ Menu</button>
+
+    <aside class="sidebar" id="sidebar">
+      <h2>⚙️ Painel</h2>
+      <button onclick="abrirSecao('musicas')">🎵 Músicas</button>
+      <button onclick="abrirSecao('memories')">📸 Lembranças</button>
+      <button onclick="abrirSecao('poemas')">✍️ Poemas</button>
+      <button onclick="abrirSecao('avisos')">📢 Avisos</button>
+      <button onclick="abrirSecao('polls')">📊 Votações</button>
+      <button onclick="abrirSecao('quadro-palavras')">📋 Quadro de Palavras</button>
+      <button onclick="abrirSecao('desenho-dia')">🎨 Desenho do Dia</button>
+      <button onclick="abrirSecao('logs')">📜 Logs</button>
+      <button id="logoutBtn">🚪 Sair</button>
+    </aside>
+
+    <main class="conteudo">
+
+      <section id="musicas" class="secao" style="display:none">
+        <h3>🎵 Gerenciar Músicas</h3>
+        <form id="musicForm">
+          <input name="data" type="date" required />
+          <input name="posicao" type="number" placeholder="Posição (opcional)" />
+          <input name="titulo" placeholder="Título" required />
+          <input id="audioFile" type="file" accept="audio/*" />
+          <button type="button" id="uploadBtn">Fazer upload</button>
+          <input id="audioUrl" name="audio" placeholder="URL do áudio" value="https://musicas1.vercel.app/" />
+          <input name="capa" placeholder="URL da capa (opcional)" />
+          <textarea name="letra" placeholder="Letra da música"></textarea>
+          <button type="submit">Salvar Música</button>
+          <button type="button" id="previewBtn">Pré-visualizar Áudio</button>
+        </form>
+        <input type="text" id="musicSearch" placeholder="🔍 Buscar por título ou data..." />
+        <div id="listaMusicas"></div>
+      </section>
+
+      <section id="memories" class="secao" style="display:none">
+        <h3>📸 Gerenciar Lembranças</h3>
+        <form id="memoryForm">
+          <input name="message" placeholder="Mensagem" required />
+          <input name="image" placeholder="URL da imagem" />
+          <input name="posicao" type="number" placeholder="Posição (opcional)" />
+          <button type="submit">Salvar Lembrança</button>
+        </form>
+        <div id="listaMemories"></div>
+      </section>
+
+      <section id="poemas" class="secao" style="display:none">
+        <h3>✍️ Poemas</h3>
+        <form id="poemForm">
+          <input name="date" type="date" required />
+          <textarea name="content" placeholder="Conteúdo do poema" required></textarea>
+          <button type="submit">Salvar Poema</button>
+        </form>
+        <div id="listaPoems"></div>
+      </section>
+
+      <section id="avisos" class="secao" style="display:none">
+        <h3>📢 Avisos</h3>
+        <form id="avisoForm">
+          <input name="mensagem" placeholder="Mensagem do aviso" required />
+          <button type="submit">Adicionar Aviso</button>
+        </form>
+        <div id="listaAvisos"></div>
+      </section>
+
+      <section id="polls" class="secao" style="display:none">
+        <h3>📊 Votações</h3>
+        <form id="pollForm">
+          <input name="pergunta" placeholder="Pergunta" required />
+          <input name="opcoes" placeholder="Opções separadas por vírgula" required />
+          <button type="submit">Criar Votação</button>
+        </form>
+        <div id="listaPolls"></div>
+      </section>
+
+      <section id="quadro-palavras" class="secao">
+        <h3>📋 Quadro de Palavras</h3>
+        <table>
+          <thead>
+
+          <tbody id="words-table-body"></tbody>
+        </table>
+      </section>
+
+      <section id="desenho-dia" class="secao">
+        <h3>🎨 Desenho do Dia</h3>
+        <form id="formImage">
+          <h4>Imagem (URL)</h4>
+          <input type="date" id="dateImage" required />
+          <input type="url" id="urlImage" placeholder="Cole a URL da imagem" required />
+          <div style="display: flex; gap: 8px">
+            <button type="submit">Salvar Imagem</button>
+            <button type="button" id="previewImageBtn">Abrir Imagem</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="logs" class="secao" style="display:none">
+        <h3>📜 Últimos Acessos</h3>
+        <input id="logSearch" placeholder="Buscar logs por data/IP/UA..." />
+        <div id="listaLogs"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/music.js"></script>
+  <script src="js/memories.js"></script>
+  <script src="js/poems.js"></script>
+  <script src="js/avisos.js"></script>
+  <script src="js/polls.js"></script>
+  <script src="js/quadro.js"></script>
+  <script src="js/desenho.js"></script>
+  <script src="js/logs.js"></script>
+
+  <script>
+    const toggleBtn = document.querySelector(".toggle-sidebar");
+    const sidebar = document.getElementById("sidebar");
+    toggleBtn.addEventListener("click", () => sidebar.classList.toggle("open"));
+  </script>
+
+</body>
+
+</html>
