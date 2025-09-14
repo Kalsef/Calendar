@@ -18,6 +18,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const menuSobre = document.getElementById("menuSobre");
 const menuSugestao = document.getElementById("menuSugestao");
 
+    const wordBoard = document.getElementById("word-board");
+const newWordInput = document.getElementById("new-word");
+const addWordBtn = document.getElementById("add-word");
+const imageInput = document.getElementById("new-image");
+
+
   let sendingAlertVisitas = false;
   let sendingAlertInteracoes = false;
 
@@ -43,29 +49,7 @@ function abrirModalDinamico(titulo, conteudo, botoes = []) {
   overlay.classList.add("active");
 }
 
-
   /**
- * @param {string} message
- */
-async function sendTelegramVisitas(message) {
-  if (sendingAlertVisitas) return;
-  sendingAlertVisitas = true;
-
-  try {
-    const res = await fetch("/api/send-telegram-alert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, type: "visitas" }), // apenas a mensagem e tipo
-    });
-
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || "Erro desconhecido");
-  } finally {
-    sendingAlertVisitas = false;
-  }
-}
-
-/**
  * @param {string} message
  */
 async function sendTelegramInteracoes(message, ip = "") {
@@ -92,6 +76,29 @@ async function sendTelegramInteracoes(message, ip = "") {
     sendingAlertInteracoes = false;
   }
 }
+
+  /**
+ * @param {string} message
+ */
+async function sendTelegramVisitas(message) {
+  if (sendingAlertVisitas) return;
+  sendingAlertVisitas = true;
+
+  try {
+    const res = await fetch("/api/send-telegram-alert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, type: "visitas" }), // apenas a mensagem e tipo
+    });
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Erro desconhecido");
+  } finally {
+    sendingAlertVisitas = false;
+  }
+}
+
+
 
 
 
@@ -450,6 +457,45 @@ overlay.addEventListener("click", () => {
 });
 
 
+
+function addWordToBoard(item) {
+  const card = document.createElement("div");
+  card.className = "word-card";
+
+  const imgUrl = item.imagem || item.image; // aceita os dois nomes
+
+  if (imgUrl) {
+    const img = document.createElement("img");
+    img.src = getGithubRawUrl(imgUrl); // garante URL certa
+    img.alt = item.palavra || "Imagem";
+    img.className = "word-card-img";
+    card.appendChild(img);
+  }
+
+  if (item.palavra) {
+    const text = document.createElement("p");
+    text.textContent = item.palavra;
+    text.className = "word-card-text";
+    card.appendChild(text);
+  }
+
+  wordBoard.appendChild(card);
+}
+
+
+async function loadWords() {
+  const res = await fetch("/api/quadro-palavras");
+  const data = await res.json();
+  data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  wordBoard.innerHTML = "";
+  data.forEach(addWordToBoard);
+  wordBoard.style.display = "flex";
+}
+
+// Depois disso, pode chamar:
+loadWords();
+window.addWordToBoard = addWordToBoard;
+
  
 
 
@@ -574,6 +620,7 @@ document.getElementById("sendSuggestion").addEventListener("click", async () => 
     showNotification("✅ Sugestão enviada com sucesso!", "success");
     textEl.value = "";
     fecharTodosModais();
+    logInteracaoTelegram("✏️ Usuário enviou uma sugestão com sucesso", userip);
   } catch (err) {
     if (err.name === "AbortError") {
       console.log("Envio de sugestão abortado pelo fechamento do modal");
@@ -612,96 +659,21 @@ function trackContinuousScroll(element, message, interval = 250) {
   });
 }
 
-/**
- * Rastreia scroll da página inteira e envia alerta ao Telegram
- * @param {string} message
- * @param {number} interval
- */
-function trackPageScroll(message, interval = 250) {
-  let lastSent = 0;
-
-  window.addEventListener("scroll", () => {
-    const now = Date.now();
-    if (now - lastSent < interval) return;
-    lastSent = now;
-
-    sendTelegramInteracoes(message).catch((err) =>
-      console.error("Erro ao enviar scroll (interações):", err)
-    );
-  });
+function getGithubRawUrl(filename) {
+  if (!filename) return "";
+  if (filename.startsWith("http")) return filename; // já é URL completa
+  return `https://raw.githubusercontent.com/Kalsef/UploadQuadro/main/images/${filename}`;
 }
-trackPageScroll("ℹ️ Usuário rolou a página!");
 
-// Chamadas separadas, **fora da função**:
-trackContinuousScroll(document.getElementById("poem-body"), "📜 Usuário rolou o poema!");
-trackContinuousScroll(document.getElementById("sobre-body"), "ℹ️ Usuário rolou conteúdo do Sobre!");
-trackContinuousScroll(document.getElementById("suggestionText"), "✏️ Usuário rolou a textarea de sugestão!");
-trackContinuousScroll(document.getElementById("avisos-list"), "🔔 Usuário rolou a lista de avisos!");
-trackContinuousScroll(document.getElementById("polls-list"), "📊 Usuário rolou a lista de votações!");
-trackContinuousScroll(document.getElementById("today-drawing"), "🎨 Usuário rolou o desenho do dia!");
-trackContinuousScroll(document.getElementById("word-board"), "📝 Usuário rolou o quadro de palavras!");
-trackContinuousScroll(document.getElementById("custom-body"), "🧩 Usuário rolou o modal customizado!");
-
-
-  
-  const wordBoard = document.getElementById("word-board");
-  const newWordInput = document.getElementById("new-word");
-  const addWordBtn = document.getElementById("add-word");
-
-  btnAbrirQuadro.addEventListener("click", () => {
-    [menu, menuleft, counters].forEach(el => el.style.display = "none");
-    Newboard.style.display = "block";
-    logInteracaoTelegram("📝 Usuário abriu Quadro de Palavras", userip);
-  });
-
-  backBoardBtn.addEventListener("click", () => {
-    Newboard.style.display = "none";
-    menu.style.display = "flex";
-    menuleft.style.display = "flex";
-    logInteracaoTelegram("📝 Usuário voltou ao menu do Quadro de Palavras", userip);
-  });
-
-
-
-  newWordInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") addWordBtn.click();
-  });
-
-  async function loadWords() {
-    const res = await fetch("/api/quadro-palavras");
-    const data = await res.json();
-    console.log(data);
-    wordBoard.innerHTML = "";
-    data.forEach(addWordToBoard);
-    wordBoard.style.display = "flex";
+// Quando o usuário selecionar uma imagem
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if (!file) {
+    return; // nada selecionado
   }
-
-  async function addWord(word) {
-    const res = await fetch("/api/quadro-palavras", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ palavra: word }),
-    });
-    const result = await res.json();
-    if (result.success) loadWords();
-  }
-
-  function addWordToBoard(wordObj) {
-    const span = document.createElement("span");
-    span.textContent = wordObj.palavra;
-    span.style.padding = "6px 12px";
-    span.style.borderRadius = "8px";
-    span.style.background = "transparent";
-    span.style.color = "#fff";
-    span.style.fontFamily = "'Playfair Display', serif";
-    span.style.fontSize = "14px";
-    span.style.fontWeight = "600";
-    span.style.cursor = "default";
-    span.style.display = "inline-flex";
-    span.style.alignItems = "center";
-    span.style.margin = "4px";
-    wordBoard.appendChild(span);
-  }
+  addImage(file); // chama sua função que já trata o upload
+  imageInput.value = ""; // limpa para poder selecionar a mesma imagem de novo se quiser
+});
 
   addWordBtn.addEventListener("click", async () => {
     const word = newWordInput.value.trim();
@@ -736,37 +708,169 @@ trackContinuousScroll(document.getElementById("custom-body"), "🧩 Usuário rol
     }
   });
 
-  loadWords();
 
 
+
+
+
+
+
+/**
+ * Rastreia scroll da página inteira e envia alerta ao Telegram
+ * @param {string} message
+ * @param {number} interval
+ */
+function trackPageScroll(message, interval = 250) {
+  let lastSent = 0;
+
+  window.addEventListener("scroll", () => {
+    const now = Date.now();
+    if (now - lastSent < interval) return;
+    lastSent = now;
+
+    sendTelegramInteracoes(message).catch((err) =>
+      console.error("Erro ao enviar scroll (interações):", err)
+    );
+})};
+
+trackPageScroll("ℹ️ Usuário rolou a página!");
+
+// Chamadas separadas, **fora da função**:
+trackContinuousScroll(document.getElementById("poem-body"), "📜 Usuário rolou o poema!");
+trackContinuousScroll(document.getElementById("sobre-body"), "ℹ️ Usuário rolou conteúdo do Sobre!");
+trackContinuousScroll(document.getElementById("suggestionText"), "✏️ Usuário rolou a textarea de sugestão!");
+trackContinuousScroll(document.getElementById("avisos-list"), "🔔 Usuário rolou a lista de avisos!");
+trackContinuousScroll(document.getElementById("polls-list"), "📊 Usuário rolou a lista de votações!");
+trackContinuousScroll(document.getElementById("today-drawing"), "🎨 Usuário rolou o desenho do dia!");
+trackContinuousScroll(document.getElementById("word-board"), "📝 Usuário rolou o quadro de palavras!");
+trackContinuousScroll(document.getElementById("custom-body"), "🧩 Usuário rolou o modal customizado!");
+
+
+  
+
+
+// Abrir e voltar do Quadro de Palavras
+btnAbrirQuadro?.addEventListener("click", () => {
+  [menu, menuleft, counters].forEach(el => el.style.display = "none");
+  Newboard.style.display = "block";
+  logInteracaoTelegram("📝 Usuário abriu Quadro de Palavras", userip);
+});
+
+backBoardBtn?.addEventListener("click", () => {
+  Newboard.style.display = "none";
+  menu.style.display = "flex";
+  menuleft.style.display = "flex";
+  logInteracaoTelegram("📝 Usuário voltou ao menu do Quadro de Palavras", userip);
+});
+
+// Enter no input adiciona a palavra
+newWordInput?.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") addWordBtn.click();
+});
+
+
+
+
+
+async function addWord(word) {
+  if (!word) return;
+
+  const formData = new FormData();
+  formData.append("palavra", word);
+
+  try {
+    const res = await fetch("/api/quadro-palavras", {
+      method: "POST",
+      body: formData,
+    });
+    const result = await res.json();
+    if (result.success) {
+      showNotification("✅ Palavra adicionada!", "success");
+      loadWords();
+      newWordInput.value = "";
+      logInteracaoTelegram(`📝 Usuário adicionou palavra: ${word}`, userip);
+    } else {
+      showNotification(`❌ Erro ao adicionar palavra: ${result.error || "desconhecido"}`, "error");
+    }
+  } catch (err) {
+    showNotification(`❌ Erro de rede: ${err.message}`, "error");
+  }
+}
+
+
+
+// Adiciona imagem
+async function addImage(imageFile) {
+  if (!imageFile) return;
+
+  const formData = new FormData();
+  formData.append("image", imageFile);
+
+  try {
+    const res = await fetch("/api/quadro-palavras", {
+      method: "POST",
+      body: formData,
+    });
+    const result = await res.json();
+    if (result.success) {
+      showNotification("✅ Imagem adicionada!", "success");
+      loadWords();
+      imageInput.value = "";
+      logInteracaoTelegram(`🖼️ Usuário adicionou imagem: ${imageFile.name}`, userip);
+    } else {
+      showNotification(`❌ Erro ao adicionar imagem: ${result.error || "desconhecido"}`, "error");
+    }
+  } catch (err) {
+    showNotification(`❌ Erro de rede: ${err.message}`, "error");
+  }
+}
+
+
+// depois 
+
+
+
+
+
+  if (openTodayBtn && todayModal) {
   openTodayBtn.addEventListener("click", async () => {
-mostrarModal(todayModal);
-logInteracaoTelegram("🎨 Usuário abriu Desenhos", userip);
+    mostrarModal(todayModal);
+    logInteracaoTelegram("🎨 Usuário abriu Desenhos", userip);
+
     const container = document.getElementById("today-drawing");
-    container.textContent = "⌛ Carregando desenho...";
+    if (container) container.textContent = "⌛ Carregando desenho...";
 
     try {
       const res = await fetch("/api/today-drawing");
       const data = await res.json();
-      if (data.success) {
-        container.innerHTML = data.type === "image"
-          ? `<img src="${data.url}" style="max-width:100%; border-radius:12px;">`
-          : `<p style="font-style:italic;">${data.content}</p>`;
-      } else {
-        container.textContent = "❌ Não foi possível carregar o desenho de hoje!";
-        logInteracaoTelegram("❌ Erro ao carregar desenho do dia", userip);
+
+      if (container) {
+        if (data.success) {
+          container.innerHTML = data.type === "image"
+            ? `<img src="${data.url}" style="max-width:100%; border-radius:12px;">`
+            : `<p style="font-style:italic;">${data.content}</p>`;
+        } else {
+          container.textContent = "❌ Não foi possível carregar o desenho de hoje!";
+          logInteracaoTelegram("❌ Erro ao carregar desenho do dia", userip);
+        }
       }
     } catch (err) {
-      container.textContent = "⚠️ Erro de conexão ao buscar o desenho.";
+      if (container) container.textContent = "⚠️ Erro de conexão ao buscar o desenho.";
       logInteracaoTelegram("❌ Erro de conexão ao buscar desenho do dia", userip);
     }
   });
+}
 
-  backFromTodayBtn.addEventListener("click", () => fecharTodosModais());
+
+backFromTodayBtn.addEventListener("click", () => {
+  fecharTodosModais();
+  logInteracaoTelegram("🎨 Usuário fechou Desenho do Dia", userip);
+});
+
 
   async function loadTodayDrawing() {
     const container = document.getElementById("today-drawing");
-    container.textContent = "⌛ Carregando desenho...";
+    if (container) container.textContent = "⌛ Carregando desenho...";
 
     try {
       const res = await fetch("/api/today-drawing");
@@ -902,4 +1006,148 @@ document.getElementById("counter-btn").addEventListener("click", showCounters);
     window.location.href = "calendar.html"; 
 });  
 
-}); 
+
+   
+
+
+const githubRepo = "Kalsef/galeria-desenhos";
+const githubPath = "images";
+const galleryContainer = document.getElementById("github-gallery");
+const featuredContainer = document.getElementById("featured-image");
+
+// Pega arquivos com a data do último commit
+async function getFilesWithDate() {
+  try {
+    const res = await fetch("/api/github-images");
+    const files = await res.json();
+
+
+    if (!Array.isArray(files)) return [];
+
+    const filesWithDate = await Promise.all(files.map(async file => {
+      if (!/\.(png|jpg|jpeg|gif)$/i.test(file.name)) return null;
+
+      const commitRes = await fetch(`https://api.github.com/repos/${githubRepo}/commits?path=${githubPath}/${file.name}&per_page=1`);
+      const commits = await commitRes.json();
+      const date = commits[0]?.commit?.committer?.date || new Date().toISOString();
+
+      return {
+        name: file.name,
+        download_url: file.download_url,
+        date: new Date(date)
+      };
+    }));
+
+    return filesWithDate.filter(Boolean);
+  } catch (err) {
+    console.error("Erro ao buscar arquivos do GitHub:", err);
+    return [];
+  }
+}
+
+async function loadGithubImages() {
+  galleryContainer.innerHTML = "<p>⌛ Carregando imagens...</p>";
+
+  const files = await getFilesWithDate();
+  if (!files.length) {
+    galleryContainer.innerHTML = "<p>❌ Nenhuma imagem encontrada</p>";
+    return;
+  }
+  logInteracaoTelegram("🖼️ Usuário abriu Galeria do GitHub", userip);
+  // Ordena do mais antigo para o mais novo
+  files.sort((a, b) => a.date - b.date);
+
+  // Inicializa destaque
+  let featuredIndex = 0;
+  renderFeatured(files[featuredIndex]);
+  renderGallery(files.filter((_, i) => i !== featuredIndex), files, featuredIndex);
+}
+
+function downloadImage(url, filename) {
+  fetch(url)
+    .then(res => res.blob())
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    })
+    .catch(err => console.error("Erro ao baixar imagem:", err));
+}
+
+
+function renderFeatured(file) {
+  featuredContainer.innerHTML = `
+    <div class="featured-wrapper" style="position: relative; display: inline-block; width: 100%;">
+      <img src="${file.download_url}" alt="${file.name}" style="width: 100%; border-radius:12px;">
+      <button class="download-btn" onclick="downloadImage('${file.download_url}', '${file.name}')"
+        style="
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          width: 50px;
+          height: 50px;
+          border: none;
+          border-radius: 8px;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" viewBox="0 0 24 24">
+          <path d="M12 16v-8M8 12l4 4 4-4M4 20h16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  `;
+
+  // Seleciona o botão recém-criado e adiciona listener
+  const btn = featuredContainer.querySelector(".download-btn");
+btn.addEventListener("click", () => {
+  downloadImage(file.download_url, file.name);
+  logInteracaoTelegram(`⬇️ Usuário baixou imagem: ${file.name}`, userip);
+});
+}
+
+
+
+
+function renderGallery(thumbnails, allImages, featuredIndex) {
+  galleryContainer.innerHTML = "";
+  thumbnails.forEach((imgFile, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const imgEl = document.createElement("img");
+    imgEl.src = imgFile.download_url;
+    imgEl.alt = imgFile.name;
+
+    // Clique na miniatura troca com o destaque
+    card.addEventListener("click", () => {
+      const newFeatured = imgFile;
+      thumbnails[i] = allImages[featuredIndex]; // troca miniatura
+      featuredIndex = allImages.indexOf(newFeatured);
+      renderFeatured(newFeatured);  // botão de download é gerado aqui
+      renderGallery(thumbnails, allImages, featuredIndex);
+      logInteracaoTelegram(`🖼️ Usuário trocou destaque para: ${imgFile.name}`, userip);
+    });
+
+    card.appendChild(imgEl);
+    galleryContainer.appendChild(card);
+  });
+}
+
+
+
+
+// Chama ao carregar a página
+loadGithubImages();
+
+
+
+}); // fim

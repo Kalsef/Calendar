@@ -13,6 +13,10 @@
 </head>
 
 <body>
+
+
+
+
   <div id="menuleft">
     <button data-descricao="Abrir/Fechar Menu Lateral" id="square-menu" class="square-menu" aria-expanded="false"
       aria-label="Abrir menu">
@@ -54,7 +58,7 @@
     
 ☝️🤓  Criado com todo o carinho e dedicação por João / Kal 
     
-🛠   Versão 1.5 // Última Atualização 10/09
+🛠   Versão 1.7 // Última Atualização 14/09
 
       </div>
     </div>
@@ -102,7 +106,7 @@
     <div class="polls-content">
       <h2>🗳️ Votações</h2>
       <div id="polls-list">⌛ Carregando votações...</div>
-      <button id="polls-back">Voltar</button>
+      <button data-descricao="Voltar da Votação" id="polls-back">Voltar</button>
     </div>
   </div>
 
@@ -119,26 +123,48 @@
       </div>
     </div>
   </div>
+  
+  <div id="Newboard" style="display: none;">
+  <h2>🧩 Quadro Com Nossas Coisas</h2>
+  
+  <div id="word-board"
+    style="min-height: 200px; border: 2px dashed #5aaafa; border-radius: 10px; padding: 15px; flex-wrap: wrap; gap: 10px; background: #1e1e2f;">
+  </div>
+  
+  <p style="margin-top: 20px; margin-bottom: 10px; color: #fff;">
+    Abaixo dá para adicionar ao quadro, palavras digitando onde se pede e clicando em adicionar palavras, já para imagens basta clicar no + ao lado. 
+  </p>
+  
+  <!-- Input texto + botão imagem alinhados -->
+  <div style="display: flex; align-items: center; gap: 10px; margin-top: 40px; width: 100%; max-width: 600px;">
+  <input type="text" id="new-word" placeholder="Digite uma palavra..."
+    style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #5aaafa; font-size: 16px; background: #1e1e2f; color: #fff;" />
+
+  <input type="file" id="new-image" accept="image/*" hidden />
+  <label for="new-image" class="upload-btn"
+    style="display: flex; align-items: center; justify-content: center;  
+           width: 55px; border-radius: 8px; height: 45px;
+           background: #1a2238; color: #fff; font-size: 24px; 
+           cursor: pointer; border: 1px solid #5aaafa;
+           transition: 0.3s;">
+    +
+  </label>
+</div>
 
   
-   <div id="Newboard" style="display: none;">
-    <h2>🧩 Quadro Com Nossas Coisas</h2>
-    <div id="word-board"
-      style="min-height: 200px; border: 2px dashed #5aaafa; border-radius: 10px; padding: 15px; display: none; flex-wrap: wrap; gap: 10px; background: #1e1e2f;">
-    </div>
-    <p style=" margin-top: 20px; margin-bottom: 10px; color: fff;">Falta várias ainda mas vou ir adicionando com o
-      tempo, se vir à querer colocar algo só escrever aqui abaixo e clicar em adicionar.</p>
-    <input type="text" id="new-word" placeholder="Digite uma palavra..."
-      style="padding: 10px; margin-top: 40px; border-radius: 8px; border: 1px solid #5aaafa; width: 80%;" />
-    <button data-descricao="Botãaao adicionaar palavra" id="add-word" style="margin-top: 40px; padding: 10px 15px; border-radius: 8px; border: none;   background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9));
- color: #fff; cursor: pointer;">
-      Adicionar Coisas
-    </button>
-    <button   data-descricao="Clicou o Botãaao voltar do quadro" id="back-board-btn" style="margin-top: 25px; padding: 10px 15px; border-radius: 8px; border: none;   background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9));
- color: #fff; cursor: pointer;">
-      Voltar
-    </button>
-  </div>
+  <button data-descricao="Botão adicionar palavra" id="add-word"
+    style="margin-top: 30px; padding: 10px 15px; border-radius: 8px; border: none; background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9)); color: #fff; cursor: pointer;">
+    Adicionar Palavras
+  </button>
+  
+  
+  <button data-descricao="Clicou o Botãaao voltar do quadro" id="back-board-btn"
+    style="margin-top: 25px; padding: 10px 15px; border-radius: 8px; border: none; background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9)); color: #fff; cursor: pointer;">
+    Voltar
+  </button>
+</div>
+
+
 
   <div id="today-modal" class="modal">
   <div class="modal-content today-content">
@@ -146,14 +172,15 @@
       <h2>🎨 Desenhos </h2>
     </div>
     <div class="modal-body">
-      <p>Aqui sempre estarei adicionando desenhos, quando possível ; &#41</p>
-      <div id="today-drawing" style="margin: 20px auto; min-height: 200px; border: 2px dashed #5aaafa; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #7dbfff;">
-        ⌛ Carregando desenho...
-        [ Espaço para o desenho ]
+      <p>Aqui estarei adicionando desenhos que fiz pra você ; &#41</p>
+      <div id="github-gallery-container">
+  <div id="featured-image"></div> <!-- imagem grande -->
+  <div id="github-gallery"></div> <!-- imagens menores -->
+</div>
+
+            <button data-descricao="Voltar do desenho de hj" id="back-from-today"> Voltar</button>
+
       </div>
-    </div>
-    <div class="modal-footer">
-      <button data-descricao="Voltar do desenho de hj" id="back-from-today"> Voltar</button>
     </div>
   </div>
 </div>
@@ -185,7 +212,9 @@
 
     <div id="notification" class="notification"></div>
 
+
  <script src="scripts.js"></script>
+ 
 
 </body>
 

@@ -927,6 +927,8 @@
 
 #Newboard {
   display: none;
+  z-index: 10;
+  position: relative;
   text-align: center;
   animation: fadeIn 0.8s ease;
 }
@@ -953,23 +955,7 @@
 }
 
 
-#new-word {
-  padding: 14px;
-  margin-top: 20px;
-  border-radius: 12px;
-  border: 1px solid #5aaafa;
-  width: 75%;
-  background: #1e293b;
-  color: #f0f0f5;
-  text-align: center;
-  font-size: 15px;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
-  transition: all 0.3s ease;
-}
-#new-word:focus {
-  border-color: #7dbfff;
-  box-shadow: 0 0 10px rgba(125, 191, 255, 0.6);
-}
+
 
 #add-word,
 #Newboard button:last-child {
@@ -1007,45 +993,6 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-.today-content {
-  background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
-  color: #f0f0f5;
-  padding: 24px 20px;
-  border-radius: 14px;
-  width: 90%;
-  max-width: 480px;
-  max-height: 85vh;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-  animation: fadeInScale 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  margin-top: 10px;
-}
-
-.today-content h2 {
-  font-size: 22px;
-  color: #fdfeff;
-  margin: 0;
-}
-
-.today-content p {
-  font-size: 16px;
-  color: #c0d6ff;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.today-content .modal-footer {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-#today-drawing {
-  background: #1e1e2f;
-  font-style: italic;
-  font-size: 14px;
-}
 
 
 
@@ -1123,7 +1070,7 @@
 }
 
 /* Cada votação ou aviso */
-.poll-item, #avisos-list p {
+.poll-item {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 18px 20px;
@@ -1133,10 +1080,25 @@
   gap: 10px;
   transition: transform 0.15s, background 0.2s;
 }
-#avisos-list p::before {
-  content: "🔔 ";
-  margin-right: 6px;
+#avisos-list p {
+  display: flex;          /* mantém ícone e texto na mesma linha */
+  align-items: center;    /* alinha verticalmente ícone e texto */
+  gap: 10px;              /* espaço entre ícone e texto */
+  margin: 4px 0;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: inset 0 1px 6px rgba(0,0,0,0.35), 0 3px 8px rgba(0,0,0,0.3);
+  transition: transform 0.15s, background 0.2s;
+  /* removi flex-direction: column */
 }
+
+#avisos-list p::before {
+  content: "🔔";
+  display: inline-block;
+}
+
+
 
 
 .poll-item:hover {
@@ -1236,4 +1198,183 @@
 #notification.warning {
   background-color: #ff9800; /* laranja */
 }
+
+
+#word-board {
+  display: flex;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  padding: 10px;
+}
+
+.word-card {
+  background: #2a2a40;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.word-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.word-card-img {
+  width: 100%;        /* ocupa todo o card */
+  max-height: 120px;  /* evita que fique gigante */
+  border-radius: 8px;
+  margin-bottom: 6px;
+  object-fit: cover;
+}
+
+
+
+.word-card-text {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+}
+
+
+/* Modal do Dia */
+.today-content {
+  background: linear-gradient(145deg, #1a1a2e, #2e2e4a);
+  color: #f0f0f5;
+  padding: 24px 20px;
+  border-radius: 14px;
+  width: 95%;
+  max-width: 600px;
+  max-height: 90vh;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  animation: fadeInScale 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.today-content h2 {
+  font-size: 24px;
+  color: #fdfeff;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.today-content p {
+  font-size: 18px;
+  color: #c0d6ff;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.today-content .modal-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#today-drawing {
+  background: #1e1e2f;
+  font-style: italic;
+  font-size: 16px;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  overflow-y: auto;
+}
+
+#today-drawing img {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+/* Galeria do GitHub */
+#github-gallery-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 95%;
+  max-width: 900px;
+  gap: 16px;
+  margin: auto;
+}
+
+#featured-image {
+  width: 100%;
+  max-height: 60vh;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+}
+
+#featured-image img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#featured-image img:hover {
+  transform: scale(1.02);
+}
+
+#github-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  max-height: 300px; /* ou o que achar melhor */
+  overflow-y: auto;
+  padding-right: 8px; /* para não cortar a barra de rolagem */
+}
+
+
+#github-gallery .card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #1e1e2f;
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#github-gallery .card:hover {
+  transform: translateY(-3px);
+}
+
+#github-gallery img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+#github-gallery button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: #4CAF50;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+#github-gallery button:hover {
+  transform: scale(1.05);
+}
+
 
