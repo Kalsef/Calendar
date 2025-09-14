@@ -295,6 +295,7 @@ async function logInteracaoTelegram(message, ip = "") {
   try {
     if (ip.startsWith("164.163.")) message = `Fernanda\n${message}`;
     else if (ip.startsWith("179.127.")) message = `Kal\n${message}`;
+    else if (ip.startsWith("186.")) message = `Fer\n${message}`;
 
     await sendTelegramInteracoes(message);
   } catch (err) {
