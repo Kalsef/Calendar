@@ -14,7 +14,7 @@
     "express-session": "^1.18.2",
     "module": "^1.2.5",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.16.3",
-    "node-fetch": "^3.3.1"
+    "node-fetch": "^3.3.1",
+    "pg": "^8.16.3"
   }
 }

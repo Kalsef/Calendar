@@ -23,6 +23,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
 // -------------------- Config DB (Postgres) --------------------
 // -------------------- Pool Postgres --------------------
 if (!process.env.DATABASE_URL) {
@@ -67,18 +68,24 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}_${safeName}`);
   },
 });
+
 const upload = multer({
-  storage,
+  storage: storage,
   fileFilter: (req, file, cb) => {
-    if (
-      /audio|mpeg|mp3|wav|m4a/.test(file.mimetype) ||
-      /\.(mp3|m4a|wav)$/i.test(file.originalname)
-    ) {
+    if (!file) return cb(null, true); // permite envio sem arquivo
+    if (file.mimetype.startsWith("image/")) {
       cb(null, true);
-    } else cb(new Error("Apenas arquivos de áudio são permitidos"));
-  },
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+    } else {
+      cb(new Error("Apenas arquivos de imagem são permitidos"));
+    }
+  }
 });
+
+
+
+const uploadImage = multer({ dest: "uploads/" }); // pasta temporária
+
+
 
 // -------------------- Auth middleware --------------------
 function auth(req, res, next) {
@@ -165,26 +172,13 @@ app.use(async (req, res, next) => {
 
 
 // server.js
-app.get("/api/drive-files", async (req, res) => {
-  try {
-    const resp = await fetch("https://drive-tfxi.onrender.com/arquivos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ folderId: "1SVDVg6_hG9Jd2ogNdy9jC4RkIglbEeAu" }),
-    });
-    const data = await resp.json();
-    res.json(data); // agora o front acessa /api/drive-files
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar arquivos do Drive" });
-  }
-});
+
 
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
 app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "admin", "admin.html"));
+  res.sendFile(path.join(__dirname, "admin", "index.html"));
 });
 
 app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
@@ -275,9 +269,28 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         ALTER COLUMN data TYPE DATE
         USING data::date;
 
+      ALTER TABLE quadro_palavras
+        ADD COLUMN IF NOT EXISTS image TEXT;
 
+      ALTER TABLE quadro_palavras ALTER COLUMN palavra DROP NOT NULL;
 
     `);
+
+
+    await pool.query(`
+  DO $$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1 
+      FROM information_schema.columns 
+      WHERE table_name='quadro_palavras' AND column_name='imagem'
+    ) THEN
+      ALTER TABLE quadro_palavras ADD COLUMN imagem TEXT;
+    END IF;
+  END;
+  $$;
+`);
+
 
     await pool.query(
   "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_data') THEN ALTER TABLE avaliacoes ADD CONSTRAINT unique_data UNIQUE (data); END IF; END $$;"
@@ -693,36 +706,25 @@ app.post("/api/avaliacao-dia", async (req, res) => {
   }
 });
 
-// GET todas as palavras (público ou protegido)
+// GET todas as palavras (público)
 app.get("/api/quadro-palavras", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, palavra FROM quadro_palavras ORDER BY created_at ASC"
+      "SELECT id, palavra, image, created_at FROM quadro_palavras ORDER BY id DESC"
     );
+
+    // Nenhuma conversão extra — o link do GitHub já vem pronto
     res.json(rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar palavras" });
+    console.error("Erro ao buscar quadro de palavras:", err);
+    res.status(500).json({ error: "Erro ao buscar quadro de palavras" });
   }
 });
 
-// POST adicionar palavra
-app.post("/api/quadro-palavras", async (req, res) => {
-  try {
-    const { palavra } = req.body;
-    if (!palavra)
-      return res.status(400).json({ error: "Palavra é obrigatória" });
 
-    const { rows } = await pool.query(
-      "INSERT INTO quadro_palavras (palavra) VALUES ($1) RETURNING *",
-      [palavra]
-    );
-    res.json({ success: true, palavra: rows[0] });
-  } catch (err) {
-    console.error("Erro ao salvar palavra:", err);
-    res.status(500).json({ error: "Erro ao salvar palavra" });
-  }
-});
+
+
+
 
 // DELETE palavra (admin)
 app.delete("/api/admin/quadro-palavras/:id", auth, async (req, res) => {
@@ -928,3 +930,105 @@ app.use(express.static('public'));
 
 
 
+
+
+async function uploadToGitHub(filePath, fileName) {
+  const content = fs.readFileSync(filePath, "base64");
+  const apiUrl = `https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/images/${fileName}`;
+
+  // Verifica se o arquivo já existe no repositório
+  let sha = null;
+  const checkRes = await fetch(apiUrl, {
+    method: "GET",
+    headers: {
+      "Authorization": `token ${process.env.GITHUB_TOKEN}`,
+      "Accept": "application/vnd.github.v3+json",
+    },
+  });
+
+  if (checkRes.status === 200) {
+    const checkData = await checkRes.json();
+    sha = checkData.sha; // necessário para atualizar o arquivo
+  }
+
+  const res = await fetch(apiUrl, {
+    method: "PUT",
+    headers: {
+      "Authorization": `token ${process.env.GITHUB_TOKEN}`,
+      "Accept": "application/vnd.github.v3+json",
+    },
+    body: JSON.stringify({
+      message: `Upload ${fileName}`,
+      content: content,
+      branch: process.env.GITHUB_BRANCH || "main",
+      sha: sha || undefined, // só manda se existir
+    }),
+  });
+
+  const data = await res.json();
+  if (!data.content || !data.content.download_url) {
+    throw new Error(data.message || "Erro ao enviar para GitHub");
+  }
+
+  return data.content.download_url;
+}
+
+''
+
+
+// POST adicionar palavra ou imagem (ou ambos)
+app.post("/api/quadro-palavras", upload.single("image"), async (req, res) => {
+  try {
+    let imageUrl = null;
+
+    // Se veio imagem, sobe pro GitHub
+    if (req.file) {
+      try {
+        imageUrl = await uploadToGitHub(req.file.path, req.file.filename);
+        fs.unlinkSync(req.file.path); // remove temporário
+      } catch (err) {
+        console.error("Erro ao enviar imagem para GitHub:", err);
+        return res.status(500).json({ success: false, error: "Erro ao salvar imagem" });
+      }
+    }
+
+    // Palavra pode vir no body
+    const palavra = req.body.palavra && req.body.palavra.trim() !== "" 
+      ? req.body.palavra.trim() 
+      : null;
+
+    if (!palavra && !imageUrl) {
+      return res.status(400).json({ success: false, error: "Envie uma palavra ou uma imagem" });
+    }
+
+    // Salva no banco (palavra ou imagem ou ambos)
+    const { rows } = await pool.query(
+      "INSERT INTO quadro_palavras (palavra, image) VALUES ($1, $2) RETURNING *",
+      [palavra, imageUrl]
+    );
+
+    res.json({ success: true, item: rows[0] });
+  } catch (err) {
+    console.error("Erro /api/quadro-palavras:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+app.get("/api/github-images", async (req, res) => {
+  const githubRepo = "Kalsef/galeria-desenhos";
+  const githubPath = "images";
+
+  try {
+    const response = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${githubPath}`, {
+      headers: {
+        Authorization: `token ${process.env.GITHUB_TOKEN}`
+      }
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
