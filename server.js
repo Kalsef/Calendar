@@ -11,6 +11,7 @@ import pgSession from "connect-pg-simple";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 
+
 dotenv.config();
 
 const { Pool } = pkg;
@@ -22,6 +23,19 @@ const PORT = process.env.PORT || 3000;
 // -------------------- Middlewares --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+function auth(req, res, next) {
+  if (req.session && req.session.userId) return next();
+  return res.status(401).json({ error: "Não autorizado" });
+}
+
+function authAdmin(req, res, next) {
+  if (req.session && req.session.userId && req.session.role === "admin") {
+    return next();
+  }
+  return res.status(403).json({ error: "Acesso negado: apenas admins" });
+}
+
 
 
 // -------------------- Config DB (Postgres) --------------------
@@ -49,7 +63,7 @@ app.use(
     secret: process.env.SESSION_SECRET || "troque_essa_chave_para_producao",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 3600 * 1000 }, // 1 dia
+    cookie: { maxAge: 7 * 24 * 3600 * 1000 } 
   })
 );
 
@@ -86,12 +100,6 @@ const upload = multer({
 const uploadImage = multer({ dest: "uploads/" }); // pasta temporária
 
 
-
-// -------------------- Auth middleware --------------------
-function auth(req, res, next) {
-  if (req.session && req.session.userId) return next();
-  return res.status(401).json({ error: "Não autorizado" });
-}
 
 
 
@@ -136,39 +144,71 @@ app.post("/api/button-click", async (req, res) => {
 
 
 // -------------------- Middlewares --------------------
+
+// Guardar timers por sessionId
+const heartbeatTimers = new Map();
+
 app.use(async (req, res, next) => {
-  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
-    .split(",")[0]
-    .trim();
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
   const userAgent = req.headers["user-agent"] || "desconhecido";
 
   try {
-    await pool.query(
-      "INSERT INTO access_logs (ip, user_agent) VALUES ($1, $2)",
-      [ip, userAgent]
-    );
-
     const isBotUA = /bot|crawl|spider|slurp|curl|wget/i.test(userAgent);
     const ignoredPrefixes = ["::1","10.","192.168.","172.16.","127.","66.249.","157.55.","216.144"];
     const isIgnoredIP = ignoredPrefixes.some((prefix) => ip.startsWith(prefix));
 
     if (!isBotUA && !isIgnoredIP) {
-      const location = "Localização não disponível";
-      const message = `👤 Novo acesso no site!\n📍 IP: ${ip}\n💻 User-Agent: ${userAgent}\n🌍 Localização: ${location}`;
+      const username = req.session?.username || "visitante";
 
-      // Bot separado só para acessos
-      await sendTelegram(
-        process.env.TELEGRAM_BOT_TOKEN_VISITAS,
-        process.env.TELEGRAM_CHAT_ID_VISITAS,
-        message
-      );
+      // Envia notificação de "usuário entrou" apenas uma vez por sessão
+      if (!req.session.telegramNotified) {
+        const message = `👤 Usuário entrou:
+👤 Usuário: ${username}
+🌐 IP: ${ip}
+💻 User-Agent: ${userAgent}
+📍 Localização: Localização não disponível`;
+
+        await sendTelegram(
+          process.env.TELEGRAM_BOT_TOKEN_VISITAS,
+          process.env.TELEGRAM_CHAT_ID_VISITAS,
+          message
+        );
+
+        req.session.telegramNotified = true;
+      }
+
+      // Configura heartbeat a cada 10 min
+      if (req.session.userId && !heartbeatTimers.has(req.sessionID)) {
+        const timer = setInterval(() => {
+          sendTelegram(
+            process.env.TELEGRAM_BOT_TOKEN_VISITAS,
+            process.env.TELEGRAM_CHAT_ID_VISITAS,
+            `⏱ Usuário ativo: ${username} (${ip})`
+          );
+        }, 10 * 60 * 1000); // 10 minutos
+
+        heartbeatTimers.set(req.sessionID, timer);
+      }
     }
   } catch (err) {
-    console.error("Erro ao registrar acesso:", err);
+    console.error("Erro ao processar acesso:", err);
   }
 
   next();
 });
+
+// Limpa heartbeat quando o usuário fizer logout ou sessão expirar
+app.post("/api/logout", (req, res) => {
+  if (heartbeatTimers.has(req.sessionID)) {
+    clearInterval(heartbeatTimers.get(req.sessionID));
+    heartbeatTimers.delete(req.sessionID);
+  }
+
+  req.session.destroy(() => res.json({ success: true }));
+});
+
+
+
 
 
 // server.js
@@ -176,10 +216,11 @@ app.use(async (req, res, next) => {
 
 // -------------------- Static --------------------
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/admin", express.static(path.join(__dirname, "admin")));
-app.get("/admin", (req, res) => {
+app.use("/admin", authAdmin, express.static(path.join(__dirname, "admin")));
+app.get("/admin", authAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin", "index.html"));
 });
+
 
 app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
 
@@ -191,6 +232,19 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         id SERIAL PRIMARY KEY,
         username TEXT UNIQUE,
         password TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS user_activity (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        action TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+
+      CREATE TABLE IF NOT EXISTS config (
+        key TEXT PRIMARY KEY,
+        value TEXT
       );
 
       CREATE TABLE IF NOT EXISTS musicas (
@@ -209,13 +263,6 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         image TEXT NOT NULL,
         message TEXT NOT NULL,
         posicao INTEGER
-      );
-
-      CREATE TABLE IF NOT EXISTS access_logs (
-        id SERIAL PRIMARY KEY,
-        ip VARCHAR(100),
-        user_agent TEXT,
-        accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS poems (
@@ -273,6 +320,16 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         ADD COLUMN IF NOT EXISTS image TEXT;
 
       ALTER TABLE quadro_palavras ALTER COLUMN palavra DROP NOT NULL;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';
+
+      INSERT INTO config (key, value) VALUES ('allow_registration', 'true')
+      ON CONFLICT (key) DO NOTHING;
+
+      ALTER TABLE access_logs
+      DROP CONSTRAINT access_logs_user_id_fkey,
+      ADD CONSTRAINT access_logs_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
 
     `);
 
@@ -298,19 +355,18 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
 
 
     const adminRes = await pool.query(
-      "SELECT * FROM users WHERE username = $1",
-      ["admin"]
-    );
-    if (adminRes.rows.length === 0) {
-      const hash = await bcrypt.hash("F1003J", 10);
-      await pool.query(
-        "INSERT INTO users (username, password) VALUES ($1, $2)",
-        ["admin", hash]
-      );
-      console.log(
-        "Usuário admin criado -> usuário: admin / senha: 1234 (altere depois)"
-      );
-    }
+  "SELECT * FROM users WHERE username = $1",
+  ["admin"]
+);
+if (adminRes.rows.length === 0) {
+  const hash = await bcrypt.hash("F1003J", 10);
+  await pool.query(
+    "INSERT INTO users (username, password, role) VALUES ($1, $2, $3)",
+    ["admin", hash, "admin"]
+  );
+  console.log("Usuário admin criado -> usuário: admin / senha: 1234 (altere depois)");
+}
+
 
     app.listen(PORT, () =>
       console.log(`Servidor rodando em http://localhost:${PORT}`)
@@ -323,34 +379,13 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
 
 // -------------------- Routes --------------------
 
-// LOGIN
-app.post("/api/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password)
-      return res.status(400).json({ error: "Dados incompletos" });
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
-      username,
-    ]);
-    const user = result.rows[0];
-    if (!user)
-      return res.status(401).json({ error: "Usuário ou senha inválidos" });
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid)
-      return res.status(401).json({ error: "Usuário ou senha inválidos" });
-    req.session.userId = user.id;
-    req.session.username = user.username;
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro interno" });
-  }
-});
 
 // LOGOUT
 app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
+
+
 
 // UPLOAD (admin)
 app.post("/api/upload", auth, upload.single("audio"), (req, res) => {
@@ -401,7 +436,7 @@ res.json(out);
 });
 
 // GET admin raw
-app.get("/api/admin/musicas", auth, async (req, res) => {
+app.get("/api/admin/musicas", authAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT id,
@@ -422,18 +457,6 @@ app.get("/api/admin/musicas", auth, async (req, res) => {
 });
 
 
-// GET logs admin
-app.get("/api/admin/logs", auth, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      "SELECT * FROM access_logs ORDER BY accessed_at DESC LIMIT 100"
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error("Erro ao buscar logs:", err);
-    res.status(500).json({ error: "Erro ao buscar logs" });
-  }
-});
 
 // POST adicionar/editar música
 app.post("/api/musicas", auth, async (req, res) => {
@@ -512,7 +535,7 @@ app.get("/api/memories", async (req, res) => {
 });
 
 // GET admin
-app.get("/api/admin/memories", auth, async (req, res) => {
+app.get("/api/admin/memories", authAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT * FROM memories ORDER BY posicao, id"
@@ -586,7 +609,7 @@ app.post("/api/send-telegram-alert", async (req, res) => {
 
 
 // GET todos os poemas (admin)
-app.get("/api/admin/poems", auth, async (req, res) => {
+app.get("/api/admin/poems", authAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM poems ORDER BY date DESC");
     res.json(rows);
@@ -617,7 +640,7 @@ app.get("/api/poem", async (req, res) => {
 });
 
 // POST adicionar/editar poema diário (admin)
-app.post("/api/admin/poem", auth, async (req, res) => {
+app.post("/api/admin/poem", authAdmin, async (req, res) => {
   try {
     const { content, date } = req.body;
     if (!content || !date) {
@@ -644,7 +667,7 @@ app.post("/api/admin/poem", auth, async (req, res) => {
   }
 });
 
-app.delete("/api/admin/poems/:id", auth, async (req, res) => {
+app.delete("/api/admin/poems/:id", authAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query("DELETE FROM poems WHERE id = $1", [id]);
@@ -727,7 +750,7 @@ app.get("/api/quadro-palavras", async (req, res) => {
 
 
 // DELETE palavra (admin)
-app.delete("/api/admin/quadro-palavras/:id", auth, async (req, res) => {
+app.delete("/api/admin/quadro-palavras/:id", authAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query("DELETE FROM quadro_palavras WHERE id = $1", [id]);
@@ -738,10 +761,6 @@ app.delete("/api/admin/quadro-palavras/:id", auth, async (req, res) => {
   }
 });
 
-// Depois os arquivos estáticos
-
-app.use("/admin", express.static(path.join(__dirname, "admin")));
-app.use("/uploads", express.static(uploadsDir));
 
 // GET Desenho do Dia
 app.get("/api/today-drawing", async (req, res) => {
@@ -767,7 +786,7 @@ app.get("/api/today-drawing", async (req, res) => {
 });
 
 // POST adicionar/editar desenho do dia
-app.post("/api/admin/today-drawing", auth, async (req, res) => {
+app.post("/api/admin/today-drawing", authAdmin, async (req, res) => {
   try {
     const { date, type, content, url } = req.body;
     if (!date || !type) {
@@ -923,8 +942,6 @@ app.get("/api/get-ip", (req, res) => {
   res.json({ ip });
 });
 
-// Servir arquivos estáticos do painel
-app.use(express.static('public'));
 
 
 
@@ -1031,4 +1048,207 @@ app.get("/api/github-images", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+
+// -------------------- REGISTER --------------------
+app.post("/api/register", async (req, res) => {
+  try {
+    // Checa configuração
+    const configRes = await pool.query(
+      "SELECT value FROM config WHERE key = 'allow_registration'"
+    );
+    const allowRegistration = configRes.rows[0]?.value === "true";
+
+    if (!allowRegistration) {
+      return res.status(403).json({ error: "Registro desabilitado pelo admin" });
+    }
+
+    const { username, password } = req.body;
+
+    // Validação básica
+    if (!username || !password) {
+      return res.status(400).json({ error: "Usuário e senha são obrigatórios" });
+    }
+    if (username.length < 3) {
+      return res.status(400).json({ error: "Usuário deve ter pelo menos 3 caracteres" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Senha deve ter pelo menos 6 caracteres" });
+    }
+
+    const existing = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: "Usuário já existe" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username",
+      [username, hashedPassword]
+    );
+
+    req.session.userId = result.rows[0].id;
+    req.session.username = result.rows[0].username;
+
+    res.json({ success: true, message: "Usuário criado com sucesso", user: result.rows[0] });
+  } catch (err) {
+    console.error("Erro no registro:", err);
+    res.status(500).json({ error: "Erro interno ao registrar usuário" });
+  }
+});
+
+// -------------------- LOGIN --------------------
+app.post("/api/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: "Usuário e senha são obrigatórios" });
+    }
+
+    const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+    const user = result.rows[0];
+
+    if (!user) {
+      return res.status(401).json({ error: "Usuário ou senha inválidos" });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: "Usuário ou senha inválidos" });
+    }
+
+    // Cria sessão
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.role = user.role;
+
+    // Retorna informações do usuário
+    res.json({ 
+      success: true, 
+      user: { id: user.id, username: user.username } 
+    });
+  } catch (err) {
+    console.error("Erro no login:", err);
+    res.status(500).json({ error: "Erro interno ao fazer login" });
+  }
+});
+
+app.get("/api/me", (req, res) => {
+  if (req.session && req.session.userId) {
+    res.json({ loggedIn: true, user: { id: req.session.userId, username: req.session.username } });
+  } else {
+    res.json({ loggedIn: false });
+  }
+});
+
+
+// GET todos os usuários (admin)
+app.get("/api/admin/users", authAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, username, role FROM users ORDER BY id ASC"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar usuários:", err);
+    res.status(500).json({ error: "Erro ao buscar usuários" });
+  }
+});
+
+// POST alterar papel do usuário
+app.post("/api/admin/users/:id/role", authAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body; // "user" ou "admin"
+
+    if (!["user", "admin"].includes(role)) {
+      return res.status(400).json({ error: "Papel inválido" });
+    }
+
+    await pool.query("UPDATE users SET role = $1 WHERE id = $2", [role, id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao atualizar papel:", err);
+    res.status(500).json({ error: "Erro ao atualizar papel" });
+  }
+});
+
+// DELETE usuário
+app.delete("/api/admin/users/:id", authAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // evita deletar o próprio admin logado
+    if (parseInt(id) === req.session.userId) {
+      return res.status(400).json({ error: "Não é possível deletar você mesmo" });
+    }
+
+    await pool.query("DELETE FROM users WHERE id = $1", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao deletar usuário:", err);
+    res.status(500).json({ error: "Erro ao deletar usuário" });
+  }
+});
+
+
+app.post("/api/admin/registration", authAdmin, async (req, res) => {
+  try {
+    const { allow } = req.body; // true ou false
+
+    if (typeof allow !== "boolean") {
+      return res.status(400).json({ error: "Campo 'allow' deve ser booleano" });
+    }
+
+    await pool.query(
+      `INSERT INTO config (key, value) VALUES ('allow_registration', $1)
+       ON CONFLICT (key) DO UPDATE SET value = $1`,
+      [allow.toString()]
+    );
+
+    res.json({ success: true, allow_registration: allow });
+  } catch (err) {
+    console.error("Erro ao atualizar configuração de registro:", err);
+    res.status(500).json({ error: "Erro interno" });
+  }
+});
+
+app.get("/api/admin/registration", authAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT value FROM config WHERE key = 'allow_registration'"
+    );
+    res.json({ allow_registration: result.rows[0]?.value === "true" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro interno" });
+  }
+});
+
+
+
+app.post("/api/send-help", async (req, res) => {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ success: false, error: "Mensagem vazia" });
+
+    try {
+        const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN_INTERACOES}/sendMessage`;
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chat_id: process.env.TELEGRAM_CHAT_ID_INTERACOES,
+                text: message
+            })
+        });
+        const data = await response.json();
+        if (!data.ok) throw new Error(JSON.stringify(data));
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Erro ao enviar mensagem de ajuda:", err);
+        res.status(500).json({ success: false, error: "Erro ao enviar mensagem" });
+    }
 });
