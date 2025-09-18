@@ -1422,36 +1422,57 @@ const helpClose = document.getElementById("help-close");
 const helpSend = document.getElementById("help-send");
 const helpText = document.getElementById("help-text");
 
-helpBtn.addEventListener("click", () => helpModal.style.display = "flex");
-helpClose.addEventListener("click", () => helpModal.style.display = "none");
-helpModal.addEventListener("click", e => { if(e.target === helpModal) helpModal.style.display = "none"; });
+  helpBtn.addEventListener("click", () => {
+    helpModal.style.display = "flex";
+    enqueueLog("🆘 Usuário abriu o modal de Ajuda");
+});
+helpClose.addEventListener("click", () => {
+    helpModal.style.display = "none";
+    enqueueLog("❌ Usuário fechou o modal de Ajuda");
+});
+helpModal.addEventListener("click", e => {
+    if (e.target === helpModal) {
+        helpModal.style.display = "none";
+        enqueueLog("❌ Usuário fechou o modal de Ajuda clicando fora");
+    }
+});
+
+helpText.addEventListener("input", () => {
+    enqueueLog(`✏️ Usuário digitou no campo de Ajuda: ${helpText.value}`);
+});
 
 helpSend.addEventListener("click", async () => {
     const message = helpText.value.trim();
-    if(!message) return alert("Digite uma mensagem antes de enviar.");
+    if (!message) return alert("Digite uma mensagem antes de enviar.");
+
+    const username = usernameSpan?.textContent || "usuário não preenchido";
+    const fullMessage = `🆘 Ajuda do usuário: ${username}\n\nMensagem: ${message}`;
 
     try {
-        const username = document.getElementById("login-username")?.value || "usuário não preenchido";
-        const fullMessage = `🆘 Ajuda do usuário: ${username}\n\nMensagem: ${message}`;
-
         const res = await fetch("/api/send-help", {
             method: "POST",
             headers: {"Content-Type":"application/json"},
             body: JSON.stringify({message: fullMessage})
         });
-
         const data = await res.json();
-        if(data.success) {
+
+        if (data.success) {
             alert("Mensagem enviada com sucesso!");
             helpText.value = "";
             helpModal.style.display = "none";
-        } else alert("Falha ao enviar mensagem.");
+
+            enqueueLog(`✅ Usuário enviou mensagem de Ajuda: ${message}`);
+            sendTelegramVisitas(fullMessage);
+        } else {
+            alert("Falha ao enviar mensagem.");
+            enqueueLog(`❌ Erro ao enviar mensagem de Ajuda: ${data.error || "desconhecido"}`);
+        }
     } catch(err) {
         console.error(err);
         alert("Erro de conexão ao enviar mensagem.");
+        enqueueLog(`❌ Erro de rede ao enviar mensagem de Ajuda: ${err.message}`);
     }
 });
-
 
 // Conecta o botão de login ao checkLogin
 document.getElementById("login-btn").addEventListener("click", checkLogin);
