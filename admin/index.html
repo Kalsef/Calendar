@@ -33,6 +33,7 @@
       <button onclick="abrirSecao('quadro-palavras')">📋 Quadro de Palavras</button>
       <button onclick="abrirSecao('desenho-dia')">🎨 Desenho do Dia</button>
       <button onclick="abrirSecao('logs')">📜 Logs</button>
+      <button onclick="abrirSecao('usuarios')">👥 Usuários</button>
       <button id="logoutBtn">🚪 Sair</button>
     </aside>
 
@@ -124,7 +125,38 @@
         <div id="listaLogs"></div>
       </section>
 
+    <section id="usuarios" class="secao" style="display:none">
+  <h3>👤 Gerenciar Usuários</h3>
+
+  <div style="margin-bottom: 1em;">
+    <label>
+      <input type="checkbox" id="toggleRegistration" />
+      Permitir novos registros
+    </label>
+    <span id="regStatus" style="margin-left: 8px; font-weight: bold;"></span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Usuário</th>
+        <th>Papel</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="users-table-body"></tbody>
+  </table>
+</section>
     </main>
+
+<div id="user-panel" class="user-panel" style="display:none">
+  <div class="user-panel-header">
+    <h3 id="userName">👤 Usuário</h3>
+    <button id="closeUserPanel">✖</button>
+  </div>
+
+
   </div>
 
   <script src="js/main.js"></script>
@@ -135,7 +167,7 @@
   <script src="js/polls.js"></script>
   <script src="js/quadro.js"></script>
   <script src="js/desenho.js"></script>
-  <script src="js/logs.js"></script>
+  <script src="js/users.js"></script>
 
   <script>
     const toggleBtn = document.querySelector(".toggle-sidebar");

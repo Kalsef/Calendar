@@ -50,7 +50,6 @@ function initAdminPanel() {
   if (typeof initPoems === "function") initPoems();
   if (typeof initAvisos === "function") initAvisos();
   if (typeof initPolls === "function") initPolls();
-  if (typeof carregarLogs === "function") carregarLogs();
   if (typeof initQuadro === "function") initQuadro();
   if (typeof initDesenho === "function") initDesenho();
 }
@@ -61,7 +60,6 @@ function initAdminPanel() {
   initPoems();
   initAvisos();
   initPolls();
-  initLogs();
   initQuadro();
   initDesenho();
 }

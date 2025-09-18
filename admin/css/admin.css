@@ -305,3 +305,116 @@ button.danger:hover {
     font-size: 24px;
   }
 }
+
+/* Container da seção de usuários */
+#usuarios {
+  padding: 24px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  backdrop-filter: blur(6px);
+  margin-bottom: 28px;
+}
+
+/* Título */
+#usuarios h3 {
+  font-size: 22px;
+  margin-bottom: 18px;
+  color: #fff;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(255,255,255,0.2);
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Área do toggle */
+#usuarios label {
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 6px;
+  color: #e5e7eb;
+}
+
+#toggleRegistration {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #4caf50; /* verde moderno */
+}
+
+#regStatus {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* Tabela */
+#usuarios table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+
+#usuarios th,
+#usuarios td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+#usuarios th {
+  background: rgba(255,255,255,0.12);
+  font-weight: 600;
+  color: #f9fafb;
+  font-size: 15px;
+}
+
+#usuarios td {
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+#usuarios tr:hover td {
+  background: rgba(255,255,255,0.05);
+}
+
+/* Botões de ações na tabela */
+#usuarios td button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+#usuarios td button:hover {
+  transform: translateY(-2px);
+}
+
+#usuarios td button.edit {
+  background: #3b82f6;
+  color: white;
+}
+
+#usuarios td button.edit:hover {
+  background: #2563eb;
+}
+
+#usuarios td button.delete {
+  background: #ef4444;
+  color: white;
+}
+
+#usuarios td button.delete:hover {
+  background: #dc2626;
+}
+
