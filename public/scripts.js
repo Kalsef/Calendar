@@ -129,25 +129,30 @@ function formatTimestampBR(ts) {
   return `🕒 *${day}/${month}/${year} ${hour}:${minute}:${second} BRT*`;
 }
 
+function formatGroupedLogs(logs) {
+  const groups = {};
 
-// Formata cada log como cartão cinematográfico
-function formatLogMessage(log, index = null) {
-  const idx = index !== null ? `#${index + 1} ` : "";
-  const emoji = getActionEmoji(log.actionType);
-  const graph = getMiniGraph(index);
+  logs.forEach(log => {
+    const key = `${log.user}-${log.ip}`;
+    if (!groups[key]) {
+      groups[key] = { user: log.user, ip: log.ip, actions: [] };
+    }
+    groups[key].actions.push(log);
+  });
 
-  return `
-${graph} *${emoji} LOG ${idx}* ${graph}
-┏━━━━━━━━━━━━━━━━━━━━━━━┓
-👤 Usuário: ${escapeMarkdown(log.user)}
-🌐 IP: ${escapeMarkdown(log.ip)}
-⚡ Ação: ${escapeMarkdown(log.actionType)}
-🎯 Alvo: ${escapeMarkdown(log.target || "")}
-🔎Tamanho: ${escapeMarkdown(log.tamanho || "Nada Encontrado")}
-📝 Descrição: ${escapeMarkdown(log.description || "Nada Encontrado")}
-⏱️ Data: ${escapeMarkdown(log.timestamp)}
-┗━━━━━━━━━━━━━━━━━━━━━━━┛`;
+  return Object.values(groups).map(group => {
+    const header = `👤 Usuário: ${escapeMarkdown(group.user)}\n🌐 IP: ${escapeMarkdown(group.ip)}\n`;
+    const actions = group.actions.map(l => {
+      const emoji = getActionEmoji(l.actionType);
+      const time = new Date(l.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      return `${emoji} ${time} - ${escapeMarkdown(l.actionType)} ${l.target ? "(" + escapeMarkdown(l.target) + ")" : ""}`;
+    }).join("\n");
+
+    return `${header}\n${actions}`;
+  }).join("\n\n---\n\n");
 }
+
+
 function getUserEnvironment() {
   const ua = navigator.userAgent;
 
@@ -218,27 +223,19 @@ setInterval(async () => {
 
   try {
     logsToSend.forEach((log, i) => {
-      const msg = formatLogMessage(log, i);
+     
+      const groupedMessage = formatGroupedLogs(logsToSend);
 
-      if (currentLength + msg.length > maxLength) {
-        const batchMessage = `✨ *📋 Batch de Logs* (${currentBatch.length} itens)\n` +
-                             currentBatch.join("\n\n") +
-                             `\n💫 Fim do Batch`;
-        sendBatch(batchMessage);
-        currentBatch = [];
-        currentLength = 0;
-      }
-
-      currentBatch.push(msg);
-      currentLength += msg.length;
-    });
-
-    if (currentBatch.length) {
-      const batchMessage = `✨ *📋 Batch de Logs* (${currentBatch.length} itens)\n` +
-                           currentBatch.join("\n\n") +
-                           `\n💫 Fim do Batch`;
-      sendBatch(batchMessage);
-    }
+if (groupedMessage.length > maxLength) {
+  let start = 0;
+  while (start < groupedMessage.length) {
+    const chunk = groupedMessage.slice(start, start + maxLength);
+    sendBatch(`✨ *📋 Batch de Logs* \n\n${chunk}\n\n💫 Fim do Batch`);
+    start += maxLength;
+  }
+} else {
+  sendBatch(`✨ *📋 Batch de Logs* \n\n${groupedMessage}\n\n💫 Fim do Batch`);
+}
 
   } catch (err) {
     console.error("Erro ao enviar logs em batches:", err);
