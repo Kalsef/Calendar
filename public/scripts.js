@@ -33,11 +33,16 @@ document.getElementById("register-btn").addEventListener("click", register);
   let sendingAlertVisitas = false;
   let sendingAlertInteracoes = false;
 
-  
+fetch("/get-ip")
+  .then(res => res.json())
+  .then(data => {
+    window.userip = data.ip; 
+  });
+
 
 function mostrarModal(modal) {
   if (!modal) return;
-  modal.style.display = "flex"; // flex garante centralização
+  modal.style.display = "flex";
 }
 
 
@@ -56,32 +61,18 @@ function abrirModalDinamico(titulo, conteudo, botoes = []) {
 }
 
 // ---------- INICIO DO SISTEMA DE LOGS EM FILA ----------
+// ---------- SISTEMA DE LOGS EM FILA ----------
 
-const userLogsQueue = [];
+// Fila de logs e flag de envio
+window.userLogsQueue = window.userLogsQueue || [];
 let sendingLogs = false;
+const BATCH_INTERVAL = 20000; // 20 segundos
+const MAX_BACKOFF = 32000; // tempo máximo de retry exponencial
 
-// Escapa caracteres especiais do MarkdownV2
+// Função para escapar Markdown
 function escapeMarkdown(text) {
   if (!text) return "";
-  return text
-    .replace(/_/g, "\\_")
-    .replace(/\*/g, "\\*")
-    .replace(/\[/g, "\\[")
-    .replace(/\]/g, "\\]")
-    .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)")
-    .replace(/~/g, "\\~")
-    .replace(/`/g, "\\`")
-    .replace(/>/g, "\\>")
-    .replace(/#/g, "\\#")
-    .replace(/\+/g, "\\+")
-    .replace(/-/g, "\\-")
-    .replace(/=/g, "\\=")
-    .replace(/\|/g, "\\|")
-    .replace(/\{/g, "\\{")
-    .replace(/\}/g, "\\}")
-    .replace(/\./g, "\\.")
-    .replace(/!/g, "\\!");
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
 }
 
 // Emoji por tipo de ação
@@ -94,104 +85,27 @@ function getActionEmoji(action) {
   return "🟣";
 }
 
-// Mini gráfico de status com emojis
-function getMiniGraph(index) {
-  const blocks = ["⬛","🟩","🟨","🟧","🟥"];
-  return blocks[index % blocks.length].repeat(5);
-}
-
-function formatTimestampBR(ts) {
-  const date = new Date(ts);
-
-  // Opções para horário de Brasília
-  const options = {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  };
-
-  // Formata com Intl.DateTimeFormat
-  const formatter = new Intl.DateTimeFormat("pt-BR", options);
-  const [
-    { value: day },,
-    { value: month },,
-    { value: year },,
-    { value: hour },,
-    { value: minute },,
-    { value: second }
-  ] = formatter.formatToParts(date);
-
-  return `🕒 *${day}/${month}/${year} ${hour}:${minute}:${second} BRT*`;
-}
-
-
-// Formata cada log como cartão cinematográfico
-function formatLogMessage(log, index = null) {
-  const idx = index !== null ? `#${index + 1} ` : "";
-  const emoji = getActionEmoji(log.actionType);
-  const graph = getMiniGraph(index);
-
-  return `
-${graph} *${emoji} LOG ${idx}* ${graph}
-┏━━━━━━━━━━━━━━━━━━━━━━━┓
-👤 Usuário: ${escapeMarkdown(log.user)}
-🌐 IP: ${escapeMarkdown(log.ip)}
-⚡ Ação: ${escapeMarkdown(log.actionType)}
-🎯 Alvo: ${escapeMarkdown(log.target || "")}
-🔎Tamanho: ${escapeMarkdown(log.tamanho || "Nada Encontrado")}
-📝 Descrição: ${escapeMarkdown(log.description || "Nada Encontrado")}
-⏱️ Data: ${escapeMarkdown(log.timestamp)}
-┗━━━━━━━━━━━━━━━━━━━━━━━┛`;
-}
-function getUserEnvironment() {
-  const ua = navigator.userAgent;
-
-  let browser = "Desconhecido";
-  if (ua.includes("Firefox")) browser = "Firefox";
-  else if (ua.includes("Chrome") && !ua.includes("Edge")) browser = "Chrome";
-  else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
-  else if (ua.includes("Edge")) browser = "Edge";
-  else if (ua.includes("OPR") || ua.includes("Opera")) browser = "Opera";
-
-  let os = "Desconhecido";
-  if (ua.includes("Windows")) os = "Windows";
-  else if (ua.includes("Macintosh")) os = "Mac";
-  else if (ua.includes("Linux")) os = "Linux";
-  else if (/Android/.test(ua)) os = "Android";
-  else if (/iPhone|iPad|iPod/.test(ua)) os = "iOS";
-
-  return `${browser} / ${os}`;
-}
-
-function getScreenInfo() {
-  const screenWidth = window.screen.width;
-  const screenHeight = window.screen.height;
-  const innerWidth = window.innerWidth;
-  const innerHeight = window.innerHeight;
-
-  return `🖥️ Tela: ${screenWidth}x${screenHeight} | 🪟 Área visível: ${innerWidth}x${innerHeight}`;
-}
-
-// Adiciona log à fila
-function enqueueLog(action, target = "", extra = "") {
-  const username = usernameSpan?.textContent || "guest";
-  userLogsQueue.push({
-    timestamp: new Date().toISOString(),
-    user: username,
-    ip: userip,
-    actionType: action,
-    target: getUserEnvironment(),
-    tamanho: getScreenInfo(),
-    description: extra
+// Formata logs agrupando por usuário/IP
+function formatGroupedLogs(logs) {
+  const groups = {};
+  logs.forEach(log => {
+    const key = `${log.user}-${log.ip}`;
+    if (!groups[key]) groups[key] = { user: log.user, ip: log.ip, actions: [] };
+    groups[key].actions.push(log);
   });
+
+  return Object.values(groups).map(group => {
+    const header = `👤 Usuário: ${escapeMarkdown(group.user)}\n🌐 IP: ${escapeMarkdown(group.ip)}\n📐 Tela: ${escapeMarkdown(group.actions[0].tamanho || "N/A")}\n🎯 Alvo: ${escapeMarkdown(group.actions[0].target || "N/A")}\n`;
+    const actions = group.actions.map(l => {
+      const emoji = getActionEmoji(l.actionType);
+      const time = new Date(l.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      return `${emoji} ${time} - ${escapeMarkdown(l.actionType)} ${l.target ? "(" + escapeMarkdown(l.target) + ")" : ""}`;
+    }).join("\n\n");
+    return `${header}\n${actions}`;
+  }).join("\n\n---\n\n");
 }
 
-// Envia batch de logs para Telegram
+// Envia batch para o backend
 async function sendBatch(message) {
   try {
     await fetch("/api/send-telegram-alert", {
@@ -204,72 +118,145 @@ async function sendBatch(message) {
   }
 }
 
-// Envio periódico em batches (máx 4000 chars)
-setInterval(async () => {
-  if (sendingLogs || userLogsQueue.length === 0) return;
+let backoffTime = 1000;
+
+// Envio da fila
+async function sendLogsBatch() {
+  if (sendingLogs || window.userLogsQueue.length === 0) return;
   sendingLogs = true;
 
-  const logsToSend = [...userLogsQueue];
-  userLogsQueue.length = 0;
+  const logsToSend = [...window.userLogsQueue];
+  window.userLogsQueue.length = 0;
+
+  logsToSend.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   const maxLength = 4000;
-  let currentBatch = [];
-  let currentLength = 0;
-
   try {
-    logsToSend.forEach((log, i) => {
-      const msg = formatLogMessage(log, i);
-
-      if (currentLength + msg.length > maxLength) {
-        const batchMessage = `✨ *📋 Batch de Logs* (${currentBatch.length} itens)\n` +
-                             currentBatch.join("\n\n") +
-                             `\n💫 Fim do Batch`;
-        sendBatch(batchMessage);
-        currentBatch = [];
-        currentLength = 0;
+    const groupedMessage = formatGroupedLogs(logsToSend);
+    if (groupedMessage.length > maxLength) {
+      let start = 0;
+      while (start < groupedMessage.length) {
+        const chunk = groupedMessage.slice(start, start + maxLength);
+        await sendBatch(`✨ *📋 Batch de Logs* \n\n${chunk}\n\n💫 Fim do Batch`);
+        start += maxLength;
       }
-
-      currentBatch.push(msg);
-      currentLength += msg.length;
-    });
-
-    if (currentBatch.length) {
-      const batchMessage = `✨ *📋 Batch de Logs* (${currentBatch.length} itens)\n` +
-                           currentBatch.join("\n\n") +
-                           `\n💫 Fim do Batch`;
-      sendBatch(batchMessage);
+    } else {
+      await sendBatch(`✨ *📋 Batch de Logs* \n\n${groupedMessage}\n\n💫 Fim do Batch`);
     }
-
+    backoffTime = 1000;
   } catch (err) {
-    console.error("Erro ao enviar logs em batches:", err);
-    userLogsQueue.unshift(...logsToSend);
+    console.error("Erro ao enviar logs:", err);
+    window.userLogsQueue.unshift(...logsToSend);
+    backoffTime = Math.min(backoffTime * 2, MAX_BACKOFF);
   } finally {
     sendingLogs = false;
   }
-}, 30000);
+}
 
+// Inicializa envio periódico
+setInterval(sendLogsBatch, BATCH_INTERVAL);
 
-window.addEventListener("beforeunload", () => {
-  if (userLogsQueue.length > 0) {
-    localStorage.setItem("pendingLogs", JSON.stringify(userLogsQueue));
-  }
-});
+// Função principal de enfileiramento
+function enqueueLog(action, extra = "") {
+  const username = document.querySelector("#username")?.textContent || "guest";
+  const ip = window.userip || "Desconhecido";
+  const target = navigator.userAgent || "Desconhecido";
+  const tamanho = `${window.innerWidth || "N/A"}x${window.innerHeight || "N/A"}`;
 
-// Recupera logs salvos do localStorage
-const pending = localStorage.getItem("pendingLogs");
-if (pending) {
-  try {
-    const recovered = JSON.parse(pending);
-    if (Array.isArray(recovered) && recovered.length > 0) {
-      userLogsQueue.push(...recovered);
-      console.log("📥 Logs recuperados do localStorage:", recovered.length);
-    }
-    localStorage.removeItem("pendingLogs"); // limpa após recuperar
-  } catch (err) {
-    console.error("Erro ao recuperar logs pendentes:", err);
-    localStorage.removeItem("pendingLogs");
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    user: username,
+    ip: ip,
+    actionType: action,
+    target: target,
+    tamanho: tamanho,
+    description: extra
+  };
+
+  window.userLogsQueue.push(logEntry);
+
+  // Se for log crítico, envia imediatamente
+  if (action.toLowerCase().includes("erro") || action.toLowerCase().includes("fail") || action.toLowerCase().includes("❌")) {
+    sendLogsBatch();
   }
 }
+
+window.enqueueLog = enqueueLog;
+window.sendLogsBatch = sendLogsBatch;
+
+// Formata logs agrupando por usuário/IP
+function formatGroupedLogs(logs) {
+  const groups = {};
+
+  logs.forEach(log => {
+    const key = `${log.user}-${log.ip}`;
+    if (!groups[key]) groups[key] = { user: log.user, ip: log.ip, actions: [] };
+    groups[key].actions.push(log);
+  });
+
+  return Object.values(groups).map(group => {
+    const header = 
+      `👤 Usuário: ${escapeMarkdown(group.user)}\n` +
+      `🌐 IP: ${escapeMarkdown(group.ip)}\n` +
+      `📐 Tela: ${escapeMarkdown(group.actions[0].tamanho || "N/A")}\n` +
+      `🎯 Alvo: ${escapeMarkdown(group.actions[0].target || "N/A")}\n`;
+    const actions = group.actions.map(l => {
+      const emoji = getActionEmoji(l.actionType);
+      const time = new Date(l.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      return `${emoji} ${time} - ${escapeMarkdown(l.actionType)} ${l.description ? "(" + escapeMarkdown(l.description) + ")" : ""}`;
+    }).join("\n");
+
+    return `${header}\n${actions}`;
+  }).join("\n\n---\n\n");
+}
+
+// Envia batch para Telegram
+async function sendBatch(message) {
+  await fetch("/api/send-telegram-alert", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, type: "interacoes" }),
+  });
+}
+
+// Função principal de envio em lote
+async function sendLogsBatch() {
+  if (sendingLogs || !window.userLogsQueue.length) return;
+  sendingLogs = true;
+
+  const logsToSend = [...window.userLogsQueue];
+  window.userLogsQueue.length = 0;
+
+  logsToSend.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  try {
+    const groupedMessage = formatGroupedLogs(logsToSend);
+    const maxLength = 4000; // tamanho máximo da mensagem para o Telegram
+      if (groupedMessage.length > maxLength) {
+        let start = 0;
+        while (start < groupedMessage.length) {
+          const chunk = groupedMessage.slice(start, start + maxLength); // usar maxLength aqui
+          await sendBatch(`✨ *📋 Batch de Logs* \n\n${chunk}\n\n💫 Fim do Batch`);
+          start += maxLength;
+        }
+      } else {
+        await sendBatch(`✨ *📋 Batch de Logs* \n\n${groupedMessage}\n\n💫 Fim do Batch`);
+      }
+    backoffTime = 1000;
+  } catch (err) {
+    console.error("Erro ao enviar logs:", err);
+    // retorna logs à fila
+    window.userLogsQueue.unshift(...logsToSend);
+    backoffTime = Math.min(backoffTime * 2, MAX_BACKOFF);
+  } finally {
+    sendingLogs = false;
+    setTimeout(sendLogsBatch, backoffTime);
+  }
+}
+
+// Chamada inicial
+sendLogsBatch();
+
 
 
 
@@ -784,11 +771,10 @@ imageInput.addEventListener("change", () => {
   });  
 
 
-// Abrir e voltar do Quadro de Palavras
 btnAbrirQuadro?.addEventListener("click", () => {
   [menu, menuleft, counters].forEach(el => el.style.display = "none");
   Newboard.style.display = "block";
-enqueueLog("section_open", "Newboard", "Usuário abriu Quadro de Palavras");
+enqueueLog("📝 Usuário abriu Quadro de Palavras");
 });
 
 backBoardBtn?.addEventListener("click", () => {
@@ -798,7 +784,6 @@ backBoardBtn?.addEventListener("click", () => {
   enqueueLog("📝 Usuário voltou ao menu do Quadro de Palavras");
 });
 
-// Enter no input adiciona a palavra
 newWordInput?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") addWordBtn.click();
 });
@@ -1281,30 +1266,36 @@ checkLogin();
 loadGithubImages();
 
 
-function trackScrollMobile(element, message, interval = 300) {
+function trackTouchScroll(element, message, interval = 300) {
   if (!element) return;
   let lastSent = 0;
-  let lastScrollTop = element.scrollTop || window.scrollY || 0;
+  let startY = 0;
 
-  element.addEventListener("scroll", () => {
+  element.addEventListener("touchstart", e => {
+    startY = e.touches[0].clientY;
+  });
+
+  element.addEventListener("touchmove", e => {
     const now = Date.now();
     if (now - lastSent < interval) return;
-    lastSent = now;
 
-    const currentScrollTop = element.scrollTop || window.scrollY || 0;
-    const direction = currentScrollTop > lastScrollTop ? "⬇️ para baixo" : "⬆️ para cima";
-    lastScrollTop = currentScrollTop;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY;
 
-    enqueueLog(`${message} (${direction})`);
+    if (Math.abs(diff) > 5) { 
+      const direction = diff > 0 ? "⬆️ para cima" : "⬇️ para baixo";
+      enqueueLog(`${message} (${direction})`);
+      lastSent = now;
+      startY = currentY; 
+    }
   });
 }
 
-// Exemplo de uso:
-trackScrollMobile(window, "ℹ️ Usuário rolou a página");
-trackScrollMobile(document.getElementById("poem-body"), "📜 Usuário rolou o poema!");
-trackScrollMobile(document.getElementById("sobre-body"), "ℹ️ Usuário rolou conteúdo do Sobre!");
-trackScrollMobile(document.getElementById("suggestionText"), "✏️ Usuário rolou textarea de sugestão!");
-trackScrollMobile(document.getElementById("word-board"), "📝 Usuário rolou quadro de palavras!");
+trackTouchScroll(window, "ℹ️ Usuário rolou a página");
+trackTouchScroll(document.getElementById("poem-body"), "📜 Usuário rolou o poema!");
+trackTouchScroll(document.getElementById("sobre-body"), "ℹ️ Usuário rolou conteúdo do Sobre!");
+trackTouchScroll(document.getElementById("suggestionText"), "✏️ Usuário rolou textarea de sugestão!");
+trackTouchScroll(document.getElementById("word-board"), "📝 Usuário rolou quadro de palavras!");
 
 window.addEventListener("orientationchange", () => {
   enqueueLog("orientation_change", "", `Mudança de orientação: ${screen.orientation.type}`);
@@ -1474,8 +1465,11 @@ helpSend.addEventListener("click", async () => {
     }
 });
 
-// Conecta o botão de login ao checkLogin
 document.getElementById("login-btn").addEventListener("click", checkLogin);
 
 
-}); // fim
+window.sendLogsBatch = sendLogsBatch;
+
+
+}); 
+
