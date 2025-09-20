@@ -36,7 +36,10 @@ function authAdmin(req, res, next) {
   return res.status(403).json({ error: "Acesso negado: apenas admins" });
 }
 
-
+app.get("/get-ip", (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  res.json({ ip });
+});
 
 // -------------------- Config DB (Postgres) --------------------
 // -------------------- Pool Postgres --------------------
@@ -555,7 +558,12 @@ app.get("/api/admin/poems", authAdmin, async (req, res) => {
 // GET poema do dia
 app.get("/api/poem", async (req, res) => {
   try {
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const now = new Date();
+    const brTime = new Date(
+      now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+    );
+    const today = brTime.toISOString().split("T")[0]; 
+
     const result = await pool.query(
       "SELECT content FROM poems WHERE date = $1",
       [today]
