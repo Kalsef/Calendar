@@ -1097,26 +1097,11 @@ function downloadImage(url, filename) {
     .catch(err => console.error("Erro ao baixar imagem:", err));
 }
 
-
 function renderFeatured(file) {
   featuredContainer.innerHTML = `
     <div class="featured-wrapper" style="position: relative; display: inline-block; width: 100%;">
       <img src="${file.download_url}" alt="${file.name}" style="width: 100%; border-radius:12px;">
-      <button class="download-btn" onclick="downloadImage('${file.download_url}', '${file.name}')"
-        style="
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          width: 50px;
-          height: 50px;
-          border: none;
-          border-radius: 8px;
-          background: rgba(0,0,0,0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        ">
+      <button class="download-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" viewBox="0 0 24 24">
           <path d="M12 16v-8M8 12l4 4 4-4M4 20h16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -1124,13 +1109,13 @@ function renderFeatured(file) {
     </div>
   `;
 
-  // Seleciona o botão recém-criado e adiciona listener
   const btn = featuredContainer.querySelector(".download-btn");
-btn.addEventListener("click", () => {
-  downloadImage(file.download_url, file.name);
-  enqueueLog(`⬇️ Usuário baixou imagem: ${file.name}`);
-});
+  btn.addEventListener("click", () => {
+    downloadImage(file.download_url, file.name);
+    enqueueLog(`⬇️ Usuário baixou imagem: ${file.name}`);
+  });
 }
+
 
 
 
