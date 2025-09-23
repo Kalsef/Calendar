@@ -1313,11 +1313,7 @@ button:hover {
 #github-gallery-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 95%;
-  max-width: 900px;
-  gap: 16px;
-  margin: auto;
+  gap: 12px;
 }
 
 #featured-image {
@@ -1333,10 +1329,8 @@ button:hover {
 
 #featured-image img {
   width: 100%;
-  height: auto;
-  object-fit: contain;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  border-radius: 8px;
+  display: block;
 }
 
 #featured-image img:hover {
@@ -1344,13 +1338,11 @@ button:hover {
 }
 
 #github-gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  max-height: 300px; /* ou o que achar melhor */
-  overflow-y: auto;
-  padding-right: 8px; /* para não cortar a barra de rolagem */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* sempre 3 por linha */
+  gap: 10px;
 }
+
 
 
 #github-gallery .card {
@@ -1370,11 +1362,10 @@ button:hover {
 }
 
 #github-gallery img {
-  width: 90px;
-  height: 90px;
+  width: 100%;
+  border-radius: 6px;
   object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 4px;
+  aspect-ratio: 1 / 1; /* garante quadradinho */
 }
 
 #github-gallery button {
