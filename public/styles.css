@@ -1754,16 +1754,23 @@ button:hover {
     max-height: 40vh;
   }
 
-  #github-gallery {
-    grid-template-columns: repeat(2, 1fr); /* em 400px, 2 colunas */
-    gap: 8px;
-  }
+ /* Galeria sempre com 3 colunas */
+#github-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* sempre 3 por linha */
+  gap: 10px;
+}
 
-  #github-gallery img {
-    width: 100%;
-    height: auto;
-    max-height: 80px;
-  }
+/* Miniaturas sem cortar */
+#github-gallery img {
+  width: 100%;
+  height: auto;           /* mantém proporção */
+  border-radius: 6px;
+  object-fit: contain;    /* mostra a imagem inteira */
+  background: #f9f9f9;    /* fundo claro para imagens com transparência */
+  aspect-ratio: auto;     /* remove quadrado fixo */
+}
+
 
   #github-gallery .card {
     padding: 4px;
