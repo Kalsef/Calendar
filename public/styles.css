@@ -1684,7 +1684,22 @@ button:hover {
 
 
 
-/* estilo padrão (desktop/tablet) */
+/* container da imagem destacada */
+.featured-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* imagem */
+.featured-wrapper img {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+
+/* botão de download */
 .download-btn {
   position: absolute;
   top: 12px;
@@ -1693,19 +1708,11 @@ button:hover {
   height: 50px;
   border: none;
   border-radius: 8px;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  z-index: 10;
 }
 
-/* sobrescreve no mobile */
-@media (max-width: 768px) {
-  .download-btn {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    z-index: 9999; /* garante que fique acima da imagem */
-  }
-}
