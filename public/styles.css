@@ -1313,6 +1313,11 @@ button:hover {
 #github-gallery-container {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  width: 95%;
+  max-width: 900px;
+  gap: 16px;
+  margin: auto;
   gap: 12px;
 }
 
@@ -1337,7 +1342,13 @@ button:hover {
   transform: scale(1.02);
 }
 
+
 #github-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 300px; /* ou o que achar melhor */
+  overflow-y: auto;
+  padding-right: 8px; /* para não cortar a barra de rolagem */
   display: grid;
   grid-template-columns: repeat(3, 1fr); /* sempre 3 por linha */
   gap: 10px;
@@ -1361,10 +1372,15 @@ button:hover {
   transform: translateY(-3px);
 }
 
+
 #github-gallery img {
+  width: 90px;
+  height: 90px;
   width: 100%;
   border-radius: 6px;
   object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 4px;
   aspect-ratio: 1 / 1; /* garante quadradinho */
 }
 
@@ -1724,5 +1740,3 @@ button:hover {
   #back-from-today {
     font-size: 14px;
     padding: 10px;
-  }
-}
