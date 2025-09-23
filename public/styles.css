@@ -1722,21 +1722,55 @@ button:hover {
   z-index: 10;
 }
 
-
+/* Responsividade da aba de desenhos */
 @media (max-width: 400px) {
-  .modal-content {
-    border-radius: 10px;
-    max-width: 100%;
+  /* Modal do dia (desenho de hoje) */
+  .today-content {
+    width: 95%; 
+    max-width: 360px;  /* limite menor */
+    padding: 15px;
   }
 
-  .modal-header h2 {
-    font-size: 16px;
+  .today-content h2 {
+    font-size: 18px;
+  }
+
+  .today-content p {
+    font-size: 14px;
+  }
+
+  #today-drawing img {
+    max-height: 55vh; /* reduz para caber melhor */
+  }
+
+  /* Galeria GitHub */
+  #github-gallery-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+  }
+
+  #featured-image {
+    max-height: 40vh;
   }
 
   #github-gallery {
-    grid-template-columns: repeat(2, 1fr); /* 2 colunas no celular */
+    grid-template-columns: repeat(2, 1fr); /* em 400px, 2 colunas */
+    gap: 8px;
   }
 
-  #back-from-today {
-    font-size: 14px;
-    padding: 10px;
+  #github-gallery img {
+    width: 100%;
+    height: auto;
+    max-height: 80px;
+  }
+
+  #github-gallery .card {
+    padding: 4px;
+  }
+
+  #github-gallery button {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
