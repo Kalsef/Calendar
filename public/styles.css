@@ -1687,23 +1687,22 @@ button:hover {
 /* container da imagem destacada */
 .featured-wrapper {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
   max-width: 100%;
 }
 
-/* imagem */
 .featured-wrapper img {
   width: 100%;
   border-radius: 12px;
   display: block;
 }
 
-/* botão de download */
+/* botão "grudado" no topo direito da imagem */
 .download-btn {
-  position: absolute;
+  position: sticky;
   top: 12px;
-  right: 12px;
+  margin-left: auto; /* empurra pra direita */
   width: 50px;
   height: 50px;
   border: none;
@@ -1715,4 +1714,3 @@ button:hover {
   cursor: pointer;
   z-index: 10;
 }
-
