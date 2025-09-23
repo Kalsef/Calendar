@@ -1764,11 +1764,8 @@ button:hover {
 /* Miniaturas sem cortar */
 #github-gallery img {
   width: 100%;
-  height: auto;           /* mantém proporção */
+   /* mantém proporção */
   border-radius: 6px;
-  object-fit: contain;    /* mostra a imagem inteira */
-  background: #f9f9f9;    /* fundo claro para imagens com transparência */
-  aspect-ratio: auto;     /* remove quadrado fixo */
 }
 
 
@@ -1780,4 +1777,29 @@ button:hover {
     font-size: 11px;
     padding: 3px 6px;
   }
+}
+
+
+/* Galeria geral */
+#github-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 miniaturas por linha */
+  gap: 10px;
+}
+
+/* Miniaturas (não destaque) */
+#github-gallery .thumb {
+  width: 100%;
+  aspect-ratio: 1/1;     /* quadradinhas */
+  object-fit: cover;     /* preenche o quadrado */
+  border-radius: 6px;
+}
+
+/* Imagem em destaque */
+#github-gallery .highlight {
+  grid-column: span 3;    /* ocupa linha inteira */
+  width: 100%;
+  height: auto;           /* mantém proporção */
+  object-fit: contain;    /* mostra inteira, sem cortar */
+  border-radius: 6px;
 }
