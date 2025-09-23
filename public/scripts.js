@@ -1099,13 +1099,15 @@ function downloadImage(url, filename) {
 
 function renderFeatured(file) {
   featuredContainer.innerHTML = `
-    <div class="featured-wrapper" style="position: relative; display: inline-block; width: 100%;">
-      <img src="${file.download_url}" alt="${file.name}" style="width: 100%; border-radius:12px;">
+    <div class="featured-wrapper">
       <button class="download-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" viewBox="0 0 24 24">
-          <path d="M12 16v-8M8 12l4 4 4-4M4 20h16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 16v-8M8 12l4 4 4-4M4 20h16" 
+                stroke="white" stroke-width="2" 
+                stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+      <img src="${file.download_url}" alt="${file.name}">
     </div>
   `;
 
@@ -1115,6 +1117,7 @@ function renderFeatured(file) {
     enqueueLog(`⬇️ Usuário baixou imagem: ${file.name}`);
   });
 }
+
 
 
 
