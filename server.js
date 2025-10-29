@@ -10,8 +10,7 @@ import pkg from "pg";
 import pgSession from "connect-pg-simple";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
-
-
+import axios from "axios";
 dotenv.config();
 
 const { Pool } = pkg;
@@ -247,6 +246,17 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         ip VARCHAR(100),              -- pra evitar múltiplos votos do mesmo IP
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS notes (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT,
+        content TEXT,
+        pinned BOOLEAN DEFAULT FALSE,
+        highlighted BOOLEAN DEFAULT FALSE,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
 
       ALTER TABLE musicas
         ALTER COLUMN data TYPE DATE
@@ -670,20 +680,28 @@ app.post("/api/avaliacao-dia", async (req, res) => {
   }
 });
 
-// GET todas as palavras (público)
 app.get("/api/quadro-palavras", async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, palavra, image, created_at FROM quadro_palavras ORDER BY id DESC"
     );
 
-    // Nenhuma conversão extra — o link do GitHub já vem pronto
-    res.json(rows);
+    // Converte GitHub URL para Vercel
+    const memories = rows.map(item => {
+      if (item.image && item.image.includes("raw.githubusercontent.com")) {
+        const fileName = item.image.split("/").pop();
+        item.image = `https://quadro-jet.vercel.app/images/${fileName}`;
+      }
+      return item;
+    });
+
+    res.json(memories);
   } catch (err) {
     console.error("Erro ao buscar quadro de palavras:", err);
     res.status(500).json({ error: "Erro ao buscar quadro de palavras" });
   }
 });
+
 
 
 
@@ -892,46 +910,46 @@ app.get("/api/get-ip", (req, res) => {
 
 async function uploadToGitHub(filePath, fileName) {
   const content = fs.readFileSync(filePath, "base64");
-  const apiUrl = `https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/images/${fileName}`;
+  const repo = process.env.GITHUB_REPO;
+  const branch = process.env.GITHUB_BRANCH || "main";
+  const token = process.env.GITHUB_TOKEN;
 
-  // Verifica se o arquivo já existe no repositório
+  if (!repo || !token) throw new Error("GITHUB_REPO ou GITHUB_TOKEN ausente.");
+
+  const apiUrl = `https://api.github.com/repos/${repo}/contents/images/${fileName}`;
+
+  // Verifica se o arquivo já existe (para pegar o SHA)
   let sha = null;
   const checkRes = await fetch(apiUrl, {
     method: "GET",
-    headers: {
-      "Authorization": `token ${process.env.GITHUB_TOKEN}`,
-      "Accept": "application/vnd.github.v3+json",
-    },
+    headers: { Authorization: `token ${token}` },
   });
+  if (checkRes.status === 200) sha = (await checkRes.json()).sha;
 
-  if (checkRes.status === 200) {
-    const checkData = await checkRes.json();
-    sha = checkData.sha; // necessário para atualizar o arquivo
-  }
-
+  // Envia o arquivo
   const res = await fetch(apiUrl, {
     method: "PUT",
     headers: {
-      "Authorization": `token ${process.env.GITHUB_TOKEN}`,
-      "Accept": "application/vnd.github.v3+json",
+      Authorization: `token ${token}`,
+      Accept: "application/vnd.github.v3+json",
     },
     body: JSON.stringify({
       message: `Upload ${fileName}`,
-      content: content,
-      branch: process.env.GITHUB_BRANCH || "main",
-      sha: sha || undefined, // só manda se existir
+      content,
+      branch,
+      sha,
     }),
   });
 
   const data = await res.json();
-  if (!data.content || !data.content.download_url) {
-    throw new Error(data.message || "Erro ao enviar para GitHub");
-  }
+  if (!data.content) throw new Error(data.message || "Erro ao enviar para GitHub");
 
-  return data.content.download_url;
+  // 🔗 Gera link RAW direto (não depende da API)
+  const rawUrl = `https://raw.githubusercontent.com/${repo}/${branch}/images/${fileName}`;
+  console.log("Imagem disponível em:", rawUrl);
+
+  return rawUrl;
 }
-
-''
 
 
 // POST adicionar palavra ou imagem (ou ambos)
@@ -978,15 +996,26 @@ app.get("/api/github-images", async (req, res) => {
   const githubPath = "images";
 
   try {
+    // Pega a lista do GitHub
     const response = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${githubPath}`, {
       headers: {
         Authorization: `token ${process.env.GITHUB_TOKEN}`
       }
     });
 
-    const data = await response.json();
-    res.json(data);
+    const files = await response.json();
+
+    // Converte para links do Vercel
+    const converted = files
+      .filter(f => f.type === "file") // pega só arquivos
+      .map(f => ({
+        name: f.name,
+        url: `https://desenhos-nine.vercel.app/images/${f.name}`
+      }));
+
+    res.json(converted);
   } catch (err) {
+    console.error("Erro ao buscar imagens:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1065,6 +1094,7 @@ app.post("/api/login", async (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.role = user.role;
+    req.session.username = username;
 
     // Retorna informações do usuário
     res.json({ 
@@ -1192,4 +1222,229 @@ app.post("/api/send-help", async (req, res) => {
         console.error("Erro ao enviar mensagem de ajuda:", err);
         res.status(500).json({ success: false, error: "Erro ao enviar mensagem" });
     }
+});
+
+// ===================== DIÁRIO / NOTAS =====================
+
+// ---------------- Config GitHub ----------------
+const GITHUB_TOKEN3 = process.env.GITHUB_TOKEN3;
+const GITHUB_REPO3 = process.env.GITHUB_REPO3; 
+const NOTES_FOLDER = "notas";
+
+if (!GITHUB_TOKEN3 || !GITHUB_REPO3) {
+  console.error("❌ Variáveis de ambiente GITHUB_TOKEN3 e GITHUB_REPO3 obrigatórias.");
+  process.exit(1);
+}
+
+const githubHeaders = {
+  Authorization: `token ${GITHUB_TOKEN3}`,
+  Accept: "application/vnd.github.v3+json",
+};
+
+
+// ---------------- Helpers GitHub ----------------
+
+
+
+// Retorna lista de arquivos na pasta notas
+async function listNoteFiles() {
+  try {
+    const res = await axios.get(
+      `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}`,
+      { headers: githubHeaders }
+    );
+    return res.data.map(f => f.name); // ['123.json', '456.json']
+  } catch (err) {
+    if (err.response?.status === 404) return [];
+    throw err;
+  }
+}
+
+// Lê uma nota do GitHub
+async function readNoteFile(filename) {
+  try {
+    const res = await axios.get(
+      `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}/${filename}`,
+      { headers: { ...githubHeaders, Accept: "application/vnd.github.v3.raw" } }
+    );
+
+    let note;
+    if (typeof res.data === "string") {
+      // caso o GitHub retorne texto cru
+      note = JSON.parse(res.data);
+    } else if (typeof res.data === "object") {
+      // caso o GitHub já tenha convertido em objeto
+      note = res.data;
+    } else {
+      throw new Error("Formato inesperado de dados");
+    }
+
+    return note;
+  } catch (err) {
+    if (err.response?.status === 404) return null;
+    console.error("❌ Erro ao ler nota:", filename, "-", err.message);
+    return null; // retorna null em vez de quebrar tudo
+  }
+}
+
+
+// Salva/atualiza nota no GitHub
+async function saveNoteFile(note) {
+  const filename = `${note.id}.json`;
+
+  // Tenta obter SHA (necessário para update)
+  let sha = null;
+  try {
+    const res = await axios.get(
+      `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}/${filename}`,
+      { headers: githubHeaders }
+    );
+    sha = res.data.sha;
+  } catch (err) {
+    if (err.response?.status !== 404) throw err;
+  }
+
+  const content = Buffer.from(JSON.stringify(note, null, 2)).toString("base64");
+
+  await axios.put(
+    `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}/${filename}`,
+    {
+      message: sha ? `Atualização de nota ${note.id}` : `Criação da nota ${note.id}`,
+      content,
+      sha,
+    },
+    { headers: githubHeaders }
+  );
+}
+
+// Deleta nota no GitHub
+async function deleteNoteFile(id) {
+  const filename = `${id}.json`;
+  try {
+    // Pega SHA do arquivo
+    const res = await axios.get(
+      `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}/${filename}`,
+      { headers: { ...githubHeaders, Accept: "application/vnd.github.v3+json" } }
+    );
+    const sha = res.data.sha;
+    if (!sha) throw new Error("SHA não encontrado");
+
+    // Deleta o arquivo
+    await axios({
+      url: `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}/${filename}`,
+      method: "DELETE",
+      headers: { ...githubHeaders, Accept: "application/vnd.github.v3+json" },
+      data: {
+        message: `Deleção da nota ${id}`,
+        sha,
+      },
+    });
+
+    console.log(`🗑️ Nota ${id} deletada com sucesso`);
+  } catch (err) {
+    console.error(`Erro ao deletar nota ${id}:`, err.response?.data || err.message);
+    throw err;
+  }
+}
+
+// ---------------- Rotas ----------------
+
+// GET todas as notas
+// GET todas as notas
+// GET todas as notas (filtra privadas)
+app.get("/api/notes", async (req, res) => {
+  try {
+    const username = req.session?.username; // usuário logado (da sessão)
+    const files = await listNoteFiles();
+    const allNotes = [];
+
+    for (const file of files) {
+      try {
+        const resGitHub = await axios.get(
+          `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}/${file}`,
+          {
+            headers: {
+              Authorization: `token ${GITHUB_TOKEN3}`,
+              Accept: "application/vnd.github.v3.raw",
+            },
+          }
+        );
+
+        let noteData = resGitHub.data;
+
+        if (typeof noteData === "string") {
+          try {
+            noteData = JSON.parse(noteData);
+          } catch (e) {
+            console.warn(`⚠ Erro ao interpretar ${file}, ignorando.`, e.message);
+            continue;
+          }
+        }
+
+        // Só considera notas válidas
+        if (!noteData || typeof noteData !== "object" || !noteData.title) continue;
+
+        // ✅ FILTRO DE VISIBILIDADE:
+        if (!noteData.private) {
+          // pública — qualquer um vê
+          allNotes.push(noteData);
+        } else if (username && noteData.owner === username) {
+          // privada — só o dono vê
+          allNotes.push(noteData);
+        }
+      } catch (err) {
+        console.warn(`⚠ Erro ao ler ${file}:`, err.message);
+      }
+    }
+
+    res.json(allNotes);
+  } catch (err) {
+    console.error("❌ Erro ao carregar notas:", err);
+    res.status(500).json({ error: "Erro ao carregar notas" });
+  }
+});
+
+
+// POST criar ou editar nota
+app.post("/api/notes", async (req, res) => {
+  try {
+    const note = req.body;
+    if (!note.title || !note.content) return res.status(400).json({ error: "Campos 'title' e 'content' obrigatórios" });
+
+    if (!note.id) {
+      // Nova nota
+      note.id = Date.now().toString();
+      note.owner = req.session.username;
+      note.created = new Date().toISOString();
+      note.modified = note.created;
+      note.private = !!note.private;
+    } else {
+      // Editar nota existente
+      const existing = await readNoteFile(`${note.id}.json`);
+      if (!existing) return res.status(404).json({ error: "Nota não encontrada" });
+      if (existing.owner !== req.session.username) return res.status(403).json({ error: "Não autorizado" });
+
+      note.owner = existing.owner;
+      note.created = existing.created;
+      note.modified = new Date().toISOString();
+      note.private = !!note.private;
+    }
+
+    await saveNoteFile(note);
+    res.json({ success: true, note });
+  } catch (err) {
+    console.error("Erro ao salvar nota:", err.message);
+    res.status(500).json({ error: "Erro ao salvar nota" });
+  }
+});
+
+app.delete("/api/notes/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await deleteNoteFile(id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao deletar nota:", err.response?.data || err.message);
+    res.status(500).json({ error: "Falha ao deletar a nota" });
+  }
 });
