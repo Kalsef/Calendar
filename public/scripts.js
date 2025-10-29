@@ -1024,7 +1024,10 @@ document.getElementById("counter-btn").addEventListener("click", showCounters);
 enqueueLog("click", "calendar-btn", "Usuário abriu Calendário");
     window.location.href = "calendar.html"; 
 });  
-
+document.getElementById("note").addEventListener("click", () => { 
+enqueueLog("click", "note", "Usuário abriu Diário");
+    window.location.href = "diario.html"; 
+});  
 
    
 
@@ -1097,6 +1100,7 @@ function downloadImage(url, filename) {
     .catch(err => console.error("Erro ao baixar imagem:", err));
 }
 
+// Renderiza a imagem em destaque
 function renderFeatured(file) {
   featuredContainer.innerHTML = `
     <div class="featured-wrapper">
@@ -1107,22 +1111,18 @@ function renderFeatured(file) {
                 stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-      <img src="${file.download_url}" alt="${file.name}">
+      <img src="https://desenhos-nine.vercel.app/images/${file.name}" alt="${file.name}">
     </div>
   `;
 
   const btn = featuredContainer.querySelector(".download-btn");
   btn.addEventListener("click", () => {
-    downloadImage(file.download_url, file.name);
+    downloadImage(`https://desenhos-nine.vercel.app/images/${file.name}`, file.name);
     enqueueLog(`⬇️ Usuário baixou imagem: ${file.name}`);
   });
 }
 
-
-
-
-
-
+// Renderiza a galeria de miniaturas
 function renderGallery(thumbnails, allImages, featuredIndex) {
   galleryContainer.innerHTML = "";
   thumbnails.forEach((imgFile, i) => {
@@ -1130,16 +1130,19 @@ function renderGallery(thumbnails, allImages, featuredIndex) {
     card.className = "card";
 
     const imgEl = document.createElement("img");
-    imgEl.src = imgFile.download_url;
+    imgEl.src = `https://desenhos-nine.vercel.app/images/${imgFile.name}`;
     imgEl.alt = imgFile.name;
 
     // Clique na miniatura troca com o destaque
     card.addEventListener("click", () => {
       const newFeatured = imgFile;
-      thumbnails[i] = allImages[featuredIndex]; // troca miniatura
+
+      // Troca a miniatura atual pelo destaque anterior
+      thumbnails[i] = allImages[featuredIndex];
       featuredIndex = allImages.indexOf(newFeatured);
-      renderFeatured(newFeatured);  // botão de download é gerado aqui
-      renderGallery(thumbnails, allImages, featuredIndex);
+
+      renderFeatured(newFeatured);  // atualiza destaque
+      renderGallery(thumbnails, allImages, featuredIndex); // atualiza galeria
       enqueueLog(`🖼️ Usuário trocou destaque para: ${imgFile.name}`);
     });
 
@@ -1147,6 +1150,8 @@ function renderGallery(thumbnails, allImages, featuredIndex) {
     galleryContainer.appendChild(card);
   });
 }
+
+
 
 // pegar elementos
 const authDiv = document.getElementById("auth");
@@ -1458,6 +1463,25 @@ document.getElementById("login-btn").addEventListener("click", checkLogin);
 
 window.sendLogsBatch = sendLogsBatch;
 
+
+/**
+ * Converte URL do GitHub para URL local do Vercel
+ * Exemplo:
+ * github: https://raw.githubusercontent.com/Kalsef/Quadro/main/images/exemplo.png
+ * vercel: /images/exemplo.png
+ */
+function githubToVercelUrl(githubUrl) {
+  if (!githubUrl) return null;
+  // Pega o nome do arquivo (última parte da URL)
+  const fileName = githubUrl.split('/').pop();
+  return `/images/${fileName}`;
+}
+
+// Exemplo de uso:
+const githubUrl = "https://raw.githubusercontent.com/Kalsef/Quadro/main/images/1761701267577_pixilart-drawing.png";
+const vercelUrl = githubToVercelUrl(githubUrl);
+
+console.log(vercelUrl); // /images/1761701267577_pixilart-drawing.png
 
 }); 
 
