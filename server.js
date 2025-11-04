@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import session from "express-session";
 import bcrypt from "bcrypt";
@@ -1317,11 +1316,9 @@ async function saveNoteFile(note) {
   );
 }
 
-// Deleta nota no GitHub
 async function deleteNoteFile(id) {
   const filename = `${id}.json`;
   try {
-    // Pega SHA do arquivo
     const res = await axios.get(
       `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}/${filename}`,
       { headers: { ...githubHeaders, Accept: "application/vnd.github.v3+json" } }
@@ -1329,7 +1326,6 @@ async function deleteNoteFile(id) {
     const sha = res.data.sha;
     if (!sha) throw new Error("SHA não encontrado");
 
-    // Deleta o arquivo
     await axios({
       url: `https://api.github.com/repos/${GITHUB_REPO3}/contents/${NOTES_FOLDER}/${filename}`,
       method: "DELETE",
@@ -1349,12 +1345,9 @@ async function deleteNoteFile(id) {
 
 // ---------------- Rotas ----------------
 
-// GET todas as notas
-// GET todas as notas
-// GET todas as notas (filtra privadas)
 app.get("/api/notes", async (req, res) => {
   try {
-    const username = req.session?.username; // usuário logado (da sessão)
+    const username = req.session?.username; 
     const files = await listNoteFiles();
     const allNotes = [];
 
@@ -1381,15 +1374,11 @@ app.get("/api/notes", async (req, res) => {
           }
         }
 
-        // Só considera notas válidas
         if (!noteData || typeof noteData !== "object" || !noteData.title) continue;
 
-        // ✅ FILTRO DE VISIBILIDADE:
         if (!noteData.private) {
-          // pública — qualquer um vê
           allNotes.push(noteData);
         } else if (username && noteData.owner === username) {
-          // privada — só o dono vê
           allNotes.push(noteData);
         }
       } catch (err) {
@@ -1405,21 +1394,18 @@ app.get("/api/notes", async (req, res) => {
 });
 
 
-// POST criar ou editar nota
 app.post("/api/notes", async (req, res) => {
   try {
     const note = req.body;
     if (!note.title || !note.content) return res.status(400).json({ error: "Campos 'title' e 'content' obrigatórios" });
 
     if (!note.id) {
-      // Nova nota
       note.id = Date.now().toString();
       note.owner = req.session.username;
       note.created = new Date().toISOString();
       note.modified = note.created;
       note.private = !!note.private;
     } else {
-      // Editar nota existente
       const existing = await readNoteFile(`${note.id}.json`);
       if (!existing) return res.status(404).json({ error: "Nota não encontrada" });
       if (existing.owner !== req.session.username) return res.status(403).json({ error: "Não autorizado" });
@@ -1447,4 +1433,28 @@ app.delete("/api/notes/:id", async (req, res) => {
     console.error("Erro ao deletar nota:", err.response?.data || err.message);
     res.status(500).json({ error: "Falha ao deletar a nota" });
   }
+
+
+  app.get("/api/github-images", async (req, res) => {
+  const repo = "Kalsef/galeria-desenhos";
+  const path = "images";
+
+  const githubRes = await fetch(
+    `https://api.github.com/repos/${repo}/contents/${path}`
+  );
+  const files = await githubRes.json();
+
+  const images = files
+    .filter(f => /\.(png|jpg|jpeg|gif)$/i.test(f.name))
+    .map(f => ({
+      name: f.name,
+      url: `/images/${f.name}` 
+    }));
+
+  res.json(images);
+});
+
+
+
+
 });
