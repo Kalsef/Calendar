@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Diário / Notas — Página</title>
     <style>
-        /* ================= VARIÁVEIS ================= */
         :root {
             --bg: #f3f4f6;
             --card: #fff;
@@ -16,7 +15,6 @@
             --shadow: 0 6px 18px rgba(16, 24, 40, 0.08);
         }
 
-        /* ================= RESET ================= */
         * {
             box-sizing: border-box;
             font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial
@@ -30,7 +28,6 @@
             color: #111
         }
 
-        /* ================= HEADER ================= */
         header {
             display: flex;
             align-items: center;
@@ -53,7 +50,6 @@
             justify-content: flex-end;
         }
 
-        /* ================= BUTTONS ================= */
         .btn {
             background: var(--card);
             border: 1px solid rgba(15, 23, 42, 0.06);
@@ -69,7 +65,6 @@
             box-shadow: 0 8px 22px rgba(16, 24, 40, 0.12);
         }
 
-        /* ================= CONTAINER ================= */
         .container {
             max-width: 1100px;
             margin: 18px auto;
@@ -77,7 +72,6 @@
             width: 95%;
         }
 
-        /* ================= EDITOR ================= */
         .create-area {
             display: grid;
             grid-template-columns: 1fr minmax(220px, 1fr);
@@ -117,7 +111,6 @@
             margin-top: 8px
         }
 
-        /* ================= SIDEBAR ================= */
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -148,7 +141,6 @@
             color: var(--muted)
         }
 
-        /* ================= SEARCH ================= */
         .search-row {
             display: flex;
             gap: 8px;
@@ -170,7 +162,6 @@
             border: 1px solid #e6e9ef
         }
 
-        /* ================= NOTES ================= */
         .note-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -241,7 +232,6 @@
             color: var(--muted)
         }
 
-        /* ================= FOOTER ================= */
         footer {
             margin-top: 24px;
             padding: 10px 28px;
@@ -250,7 +240,6 @@
             text-align: center
         }
 
-        /* ================= LOGIN ================= */
         #loginForm {
             width: 100%;
             max-width: 380px;
@@ -310,7 +299,6 @@
             color: var(--muted);
         }
 
-        /* ================= RESPONSIVE ================= */
         @media (max-width:1100px) {
             .create-area {
                 grid-template-columns: 1fr 200px;
@@ -387,7 +375,6 @@
             gap: 8px;
             flex-wrap: wrap;
             margin-bottom: 12px;
-            /* adiciona espaço entre a paleta e o título */
         }
     </style>
 </head>
@@ -452,10 +439,10 @@
 
     </main>
 
-
+    <script src="logger.js"></script>
     <script>
         let noteTitle, noteBody, noteDate, noteTime;
-        let isPrivate = true; // padrão privado
+        let isPrivate = true;
 
         document.addEventListener("DOMContentLoaded", async () => {
             const notesApp = document.querySelector('main.container');
@@ -463,7 +450,7 @@
             const loginForm = document.getElementById("loginForm");
             const loginBtn = document.getElementById("loginBtn");
             const logoutBtn = document.getElementById("logoutBtn");
-            const userLabel = document.createElement('div'); // opcional, ou remova toda referência
+            const userLabel = document.createElement('div');
             const saveNoteBtn = document.getElementById("saveNoteBtn");
             saveNoteBtn.addEventListener("click", saveNoteManual);
 
@@ -477,23 +464,42 @@
             });
 
 
-            // --- Config
             const STORAGE_KEY = 'diarioNotas_v1';
             const paletteColors = ['#fff59d', '#ffecb3', '#ffe0b2', '#ffc1e3', '#c8e6c9', '#bbdefb', '#d1c4e9', '#ffffff'];
             let notes = [];
             let selectedColor = paletteColors[7];
             const debouncedSaves = {};
             let pendingNotes = JSON.parse(localStorage.getItem("pendingNotes") || "[]");
-            // --- Helpers
             function uid() { return Date.now().toString() + Math.floor(Math.random() * 1000); }
             function nowISO(dateStr, timeStr) {
+                const tzOffsetMs = 3 * 60 * 60 * 1000;
+                let d;
+
                 if (dateStr) {
-                    const d = new Date(dateStr + (timeStr ? ('T' + timeStr) : 'T00:00'));
-                    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
+                    d = new Date(dateStr + (timeStr ? 'T' + timeStr : 'T00:00'));
+                } else {
+                    d = new Date();
                 }
-                return new Date().toISOString();
+
+                const localTime = new Date(d.getTime() - tzOffsetMs);
+                return localTime.toISOString();
             }
-            function formatDate(iso) { const d = new Date(iso); return d.toLocaleString(); }
+
+            function formatDate(iso) {
+                if (!iso) return '';
+                const d = new Date(iso);
+                const f = d.toLocaleString('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return f.charAt(0).toUpperCase() + f.slice(1);
+            }
+
+
             function escapeHtml(s) { return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'); }
 
             async function load() {
@@ -518,7 +524,6 @@
 
 
 
-            // --- CRUD
             function createNote({ title = '', body = '', dateISO = null, color = null, pinned = false } = {}) {
                 const note = { id: uid(), title, body, date: dateISO || nowISO(), color: color || selectedColor, pinned, created: nowISO(), modified: nowISO() }
                 notes.push(note);
@@ -553,13 +558,32 @@
                 }
 
                 const groups = {};
+                function getDayLabel(dateStr) {
+                    const brTime = new Date(new Date(dateStr).toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+                    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+
+                    const diffMs = hoje.setHours(0, 0, 0, 0) - brTime.setHours(0, 0, 0, 0);
+                    const diffDias = diffMs / (1000 * 60 * 60 * 24);
+
+                    if (diffDias === 0) return "Hoje";
+                    if (diffDias === 1) return "Ontem";
+
+                    return brTime.toLocaleDateString("pt-BR", {
+                        timeZone: "America/Sao_Paulo",
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric"
+                    });
+                }
                 list.forEach(n => {
-                    const day = (new Date(n.date)).toDateString();
-                    if (!groups[day]) groups[day] = [];
-                    groups[day].push(n);
+                    const dayLabel = getDayLabel(n.date);
+                    if (!groups[dayLabel]) groups[dayLabel] = [];
+                    groups[dayLabel].push(n);
                 });
 
-                Object.keys(groups).sort((a, b) => new Date(b) - new Date(a)).forEach(day => {
+
+
+                Object.keys(groups).forEach(day => {
                     const gEl = document.createElement('div'); gEl.className = 'group';
                     const h2 = document.createElement('h2'); h2.textContent = day; gEl.appendChild(h2);
                     const listEl = document.createElement('div'); listEl.className = 'note-list';
@@ -603,10 +627,9 @@
             }
 
 
-            // -------------------- Login / Logout --------------------
 
             async function fetchJSON(url, options = {}) {
-                options.credentials = 'include'; // envia cookies
+                options.credentials = 'include';
                 if (!options.headers) options.headers = {};
                 if (options.body && typeof options.body === 'object') {
                     options.headers['Content-Type'] = 'application/json';
@@ -632,7 +655,6 @@
                     await load();
                     await syncPendingNotes();
                 } else {
-                    // mostrar login, esconder app
                     loginForm.style.display = "block";
                     header.style.display = "none";
                     main.style.display = "none";
@@ -660,17 +682,16 @@
             });
 
 
-            // --- Editor handlers
             function loadIntoEditor(n) {
                 document.getElementById('noteTitle').value = n.title || '';
                 document.getElementById('noteBody').value = n.body || n.content || '';
 
-                const d = new Date(n.date);
-                document.getElementById('noteDate').valueAsDate = d;
+                const d = new Date(new Date(n.date).toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+                document.getElementById('noteDate').value = d.toISOString().split('T')[0];
                 document.getElementById('noteTime').value = d.toTimeString().slice(0, 5);
+
                 selectedColor = n.color || selectedColor;
                 highlightSelectedSwatch();
-                // store editing id
                 document.getElementById('saveNoteBtn').dataset.editId = n.id;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -680,7 +701,6 @@
                 if (col) updateNote(id, { color: col });
             }
 
-            // --- Palette
             function buildPalette() {
                 const p = document.getElementById('palette'); p.innerHTML = '';
                 paletteColors.forEach(c => {
@@ -698,7 +718,6 @@
             }
 
 
-            // ===================== SAVE / DELETE =====================
             async function saveNoteManual() {
                 const title = noteTitle.value.trim() || "(Sem título)";
                 const content = noteBody.value.trim();
@@ -714,7 +733,7 @@
                 const note = {
                     id: editId || undefined,
                     title,
-                    content,         // obrigatoriamente 'content'
+                    content,
                     date: iso,
                     color: selectedColor,
                     pinned: false,
@@ -733,11 +752,11 @@
             async function sendToServer(note) {
                 try {
                     if (!navigator.onLine) throw new Error("Offline");
-                    const res = await fetch("https://calendarm.onrender.com/api/notes", {  
+                    const res = await fetch("https://calendarm.onrender.com/api/notes", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(note),
-                        credentials: "include" 
+                        credentials: "include"
                     });
 
                     if (!res.ok) {
@@ -745,7 +764,6 @@
                         throw new Error(err.error || "Erro desconhecido");
                     }
 
-                    // remover nota do pending se existia
                     pendingNotes = pendingNotes.filter(n => n.id !== note.id);
                     localStorage.setItem("pendingNotes", JSON.stringify(pendingNotes));
                     console.log("Nota salva no servidor:", note.title);
@@ -778,12 +796,10 @@
                 render();
             }
 
-            // ===================== EVENTOS =====================
             document.getElementById('clearBtn').addEventListener('click', () => { if (confirm('Limpar editor?')) { document.getElementById('noteTitle').value = ''; document.getElementById('noteBody').value = ''; } });
             document.getElementById('searchInput').addEventListener('input', () => render());
             document.getElementById('filterSelect').addEventListener('change', () => render());
 
-            // keyboard shortcut
             document.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     document.getElementById('saveNoteBtn').click();
@@ -815,10 +831,9 @@
             }
 
 
-            // Salvar nota (com detecção online/offline)
             async function save(note) {
                 if (!note || typeof note !== "object") return;
-                if (!note.body && !note.title) return; // evita notas vazias
+                if (!note.body && !note.title) return;
 
                 try {
                     if (navigator.onLine) {
@@ -846,7 +861,6 @@
                 }
             }
 
-            // Sincronizar pendentes quando voltar online
             async function syncPendingNotes() {
                 if (!Array.isArray(pendingNotes) || pendingNotes.length === 0) return;
                 console.log(`Sincronizando ${pendingNotes.length} notas pendentes...`);
@@ -889,156 +903,147 @@
 
             window.addEventListener("online", syncPendingNotes);
 
-            // Inicialização final (executa depois do DOM estar pronto)
             await new Promise(resolve => window.addEventListener("load", resolve));
             buildPalette();
             await checkSession();
             await syncPendingNotes();
-    
-            /* =================== SISTEMA DE LOGS AUTOMÁTICOS =================== */
-
-window.userLogsQueue = window.userLogsQueue || [];
-
-/* ======== Helpers ======== */
-function getActionEmoji(action) {
-  if (!action) return "ℹ️";
-  const a = action.toLowerCase();
-  if (a.includes("erro") || a.includes("fail") || a.includes("❌")) return "❌";
-  if (a.includes("click") || a.includes("clique")) return "👆";
-  if (a.includes("input") || a.includes("digita")) return "⌨️";
-  if (a.includes("login")) return "🔑";
-  if (a.includes("logout")) return "🚪";
-  if (a.includes("nota") || a.includes("save")) return "📝";
-  return "ℹ️";
-}
-
-function escapeMarkdown(str) {
-  if (!str) return "";
-  return str.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
-}
-
-/* ======== Formatação ======== */
-function formatGroupedLogs(logs) {
-  const groups = {};
-  logs.forEach(log => {
-    const key = `${log.user}-${log.ip}`;
-    if (!groups[key]) groups[key] = { user: log.user, ip: log.ip, actions: [] };
-    groups[key].actions.push(log);
-  });
-
-  return Object.values(groups).map(group => {
-    const header =
-      `👤 Usuário: ${escapeMarkdown(group.user)}\n` +
-      `🌐 IP: ${escapeMarkdown(group.ip)}\n` +
-      `📐 Tela: ${escapeMarkdown(group.actions[0].tamanho || "N/A")}\n` +
-      `🎯 Alvo: ${escapeMarkdown(group.actions[0].target || "N/A")}\n`;
-    const actions = group.actions.map(l => {
-      const emoji = getActionEmoji(l.actionType);
-      const time = new Date(l.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
-      return `${emoji} ${time} - ${escapeMarkdown(l.actionType)} ${l.description ? "(" + escapeMarkdown(l.description) + ")" : ""}`;
-    }).join("\n");
-
-    return `${header}\n${actions}`;
-  }).join("\n\n---\n\n");
-}
-
-/* ======== Envio ======== */
-async function sendLogsBatch() {
-  if (!window.userLogsQueue.length) return;
-
-  const logsToSend = [...window.userLogsQueue];
-  window.userLogsQueue = [];
-
-  const message = formatGroupedLogs(logsToSend);
-
-  try {
-    const res = await fetch("/api/send-telegram-alert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, type: "interacoes" })
-    });
-
-    const data = await res.json();
-    if (!data.success) console.error("Erro ao enviar Telegram:", data.error || data);
-  } catch (err) {
-    console.error("Erro ao enviar Telegram:", err);
-  }
-}
-
-/* ======== Log principal ======== */
-function enqueueLog(action, extra = "") {
-  const username = document.querySelector("#username")?.value ||
-                   document.querySelector("#username")?.textContent ||
-                   "guest";
-  const ip = window.userip || "Desconhecido";
-  const target = navigator.userAgent || "Desconhecido";
-  const tamanho = `${window.innerWidth || "N/A"}x${window.innerHeight || "N/A"}`;
-
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    user: username,
-    ip: ip,
-    actionType: action,
-    target: target,
-    tamanho: tamanho,
-    description: extra
-  };
-
-  window.userLogsQueue.push(logEntry);
-
-  // Logs críticos são enviados imediatamente
-  if (action.toLowerCase().includes("erro") || action.toLowerCase().includes("fail") || action.toLowerCase().includes("❌")) {
-    sendLogsBatch();
-  }
-}
-
-/* ======== Eventos Automáticos ======== */
-document.addEventListener("click", e => {
-  const label = e.target.innerText?.trim() || e.target.placeholder || e.target.id || e.target.tagName;
-  enqueueLog("Clique", label);
-});
-
-document.addEventListener("input", e => {
-  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
-    const id = e.target.id || e.target.name || e.target.placeholder || "campo";
-    const valor = e.target.value ? e.target.value.slice(0, 100) : ""; // limite de 100 caracteres
-    enqueueLog("Input", `${id}: "${valor}"`);
-  }
-});
-
-
-// Captura erros de console
-window.addEventListener("error", e => {
-  enqueueLog("❌ Erro JS", `${e.message} @ ${e.filename}:${e.lineno}`);
-});
-
-// Captura avisos de rede/offline
-window.addEventListener("offline", () => enqueueLog("⚠️ Offline"));
-window.addEventListener("online", () => enqueueLog("🌐 Online"));
-
-// Log de login/logout
-document.getElementById("loginBtn")?.addEventListener("click", () => enqueueLog("Login tentativa"));
-document.getElementById("logoutBtn")?.addEventListener("click", () => enqueueLog("Logout realizado"));
-
-// Logs automáticos de salvamento de notas
-document.getElementById("saveNoteBtn")?.addEventListener("click", () => enqueueLog("Salvar nota"));
-document.getElementById("clearBtn")?.addEventListener("click", () => enqueueLog("Limpar editor"));
-
-/* ======== Intervalo automático ======== */
-setInterval(sendLogsBatch, 90 * 1000); // envia a cada 90s
-
-window.enqueueLog = enqueueLog;
-window.sendLogsBatch = sendLogsBatch;
 
 
 
 
+            document.addEventListener("click", e => {
+                const label = e.target.innerText?.trim() || e.target.placeholder || e.target.id || e.target.tagName;
+                Logger.enqueue("Clique", label);
+            });
+
+            document.addEventListener("input", e => {
+                if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+                    const id = e.target.id || e.target.name || e.target.placeholder || "campo";
+                    const valor = e.target.value ? e.target.value.slice(0, 100) : "";
+                    Logger.enqueue("Input", `${id}: "${valor}"`);
+                }
+            });
+
+
+            window.addEventListener("error", e => {
+                Logger.enqueue("❌ Erro JS", `${e.message} @ ${e.filename}:${e.lineno}`);
+            });
+
+            window.addEventListener("offline", () => Logger.enqueue("⚠️ Offline"));
+            window.addEventListener("online", () => Logger.enqueue("🌐 Online"));
+
+            document.getElementById("loginBtn")?.addEventListener("click", () => Logger.enqueue("Login tentativa"));
+            document.getElementById("logoutBtn")?.addEventListener("click", () => Logger.enqueue("Logout realizado"));
+
+            document.getElementById("saveNoteBtn")?.addEventListener("click", () => Logger.enqueue("Salvar nota"));
+            document.getElementById("clearBtn")?.addEventListener("click", () => Logger.enqueue("Limpar editor"));
 
 
 
+            Logger.enqueue("📖 Diário carregado");
+
+            const diaryInput = document.getElementById("diary-text");
+
+            diaryInput?.addEventListener("input", () => {
+                Logger.enqueue(`✏️ Usuário digitou no Diário: ${diaryInput.value.slice(0, 50)}...`);
+            });
+
+            diaryInput?.addEventListener("focus", () => {
+                Logger.enqueue("✏️ Usuário focou no campo do Diário");
+            });
+
+            const saveBtn = document.getElementById("save-diary");
+            saveBtn?.addEventListener("click", () => {
+                Logger.enqueue("💾 Usuário clicou em Salvar Diário");
+            });
+
+            diaryInput?.addEventListener("scroll", () => {
+                Logger.enqueue("📝 Usuário rolou o Diário");
+            });
+
+            const Gestures = {
+            init() {
+                this.initTouch();
+                this.initMouse();
+                this.initScroll();
+            },
+
+            initTouch() {
+                let startX, startY, lastTap = 0;
+
+                document.addEventListener("touchstart", e => {
+                const t = e.touches[0];
+                startX = t.clientX;
+                startY = t.clientY;
+                });
+
+                document.addEventListener("touchend", e => {
+                const t = e.changedTouches[0];
+                const dx = t.clientX - startX;
+                const dy = t.clientY - startY;
+
+                if (Math.abs(dx) < 50 && Math.abs(dy) < 50) {
+                    const now = Date.now();
+                    if (now - lastTap < 300) {
+                    Logger.enqueue("👆 Duplo toque detectado");
+                    }
+                    lastTap = now;
+                    return;
+                }
+
+                const dir = Math.abs(dx) > Math.abs(dy)
+                    ? (dx > 0 ? "➡️ swipe para direita" : "⬅️ swipe para esquerda")
+                    : (dy > 0 ? "⬇️ swipe para baixo" : "⬆️ swipe para cima");
+
+                Logger.enqueue(`📱 ${dir}`);
+                });
+            },
+
+            initMouse() {
+                let mx, my;
+                document.addEventListener("mousedown", e => {
+                mx = e.clientX;
+                my = e.clientY;
+                });
+
+                document.addEventListener("mouseup", e => {
+                const dx = e.clientX - mx;
+                const dy = e.clientY - my;
+
+                if (Math.abs(dx) < 50 && Math.abs(dy) < 50) return;
+
+                const dir = Math.abs(dx) > Math.abs(dy)
+                    ? (dx > 0 ? "➡️ arraste para direita" : "⬅️ arraste para esquerda")
+                    : (dy > 0 ? "⬇️ arraste para baixo" : "⬆️ arraste para cima");
+
+                Logger.enqueue(`🖱️ ${dir}`);
+                });
+            },
+
+            initScroll() {
+                let last = 0;
+                window.addEventListener("scroll", () => {
+                const y = window.scrollY;
+                const dir = y > last ? "⬇️ scroll para baixo" : "⬆️ scroll para cima";
+                last = y;
+                Logger.enqueue(`📜 ${dir}`);
+                });
+            }
+            };
+
+            Gestures.init();
 
 
-        }); // fecha DOMContentLoaded
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") Logger.enqueue("⌨️ Pressionou Enter no Diário");
+                if (e.key === "Escape") Logger.enqueue("⌨️ Pressionou Escape no Diário");
+            });
+
+            window.addEventListener("beforeunload", () => {
+                Logger.enqueue("🚪 Usuário saiu ou recarregou a página do Diário");
+            });
+
+        });
 
     </script>
 </body>

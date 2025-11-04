@@ -16,10 +16,8 @@
 <body>
 
  <div id="auth">
-  <!-- Botão de ajuda flutuante -->
 <button id="help-btn" class="help-btn">?</button>
 
-<!-- Modal de ajuda -->
 <div id="help-modal" class="help-modal">
     <div class="help-modal-content">
         <h3>Precisa de ajuda? Digite abaixo</h3>
@@ -49,7 +47,6 @@
   </div>
 </div>
 
-  <!-- todo o resto do site -->
   <div id="app" class="hidden">
 
 
@@ -65,7 +62,6 @@
 
     <div id="overlay"></div>
 
-    <!-- Menu lateral -->
     <nav id="sidebar">
       <h2>Menu Lateral</h2>
       <ul class="menu-top">
@@ -176,7 +172,6 @@ não importa onde estejamos, meu coração sempre estará ao seu lado.
         imagens basta clicar no + ao lado.
       </p>
 
-      <!-- Input texto + botão imagem alinhados -->
       <div style="display: flex; align-items: center; gap: 10px; margin-top: 40px; width: 100%; max-width: 600px;">
         <input type="text" id="new-word" placeholder="Digite uma palavra..."
           style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #5aaafa; font-size: 16px; background: #1e1e2f; color: #fff;" />
@@ -214,8 +209,8 @@ não importa onde estejamos, meu coração sempre estará ao seu lado.
         <div class="modal-body">
           <p>Aqui estarei adicionando desenhos que fiz pra você ; &#41</p>
           <div id="github-gallery-container">
-            <div id="featured-image"></div> <!-- imagem grande -->
-            <div id="github-gallery"></div> <!-- imagens menores -->
+            <div id="featured-image"></div> 
+            <div id="github-gallery"></div>
           </div>
 
           <button data-descricao="Voltar do desenho de hj" id="back-from-today"> Voltar</button>
@@ -225,7 +220,6 @@ não importa onde estejamos, meu coração sempre estará ao seu lado.
     </div>
 
 
-  <!-- Menu inicial -->
   <div id="menu">
     <h1>Bem-vinda <span id="username"></span>!</h1>
     <hr />
@@ -253,7 +247,7 @@ não importa onde estejamos, meu coração sempre estará ao seu lado.
   <div id="notification" class="notification"></div>
 
 
-
+    <script src="logger.js"></script>
     <script src="scripts.js" ></script>
 
 

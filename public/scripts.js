@@ -1,5 +1,3 @@
-
-
 document.addEventListener("DOMContentLoaded", () => {
   const menu = document.getElementById("menu");
   const menuleft = document.getElementById("menuleft");
@@ -18,316 +16,79 @@ document.addEventListener("DOMContentLoaded", () => {
   const poemModal = document.getElementById("poem-modal");
   const sobreModal = document.getElementById("sobre-modal");
   const menuSobre = document.getElementById("menuSobre");
-const menuSugestao = document.getElementById("menuSugestao");
+  const menuSugestao = document.getElementById("menuSugestao");
 
-    const wordBoard = document.getElementById("word-board");
-const newWordInput = document.getElementById("new-word");
-const addWordBtn = document.getElementById("add-word");
-const imageInput = document.getElementById("new-image");
+  const wordBoard = document.getElementById("word-board");
+  const newWordInput = document.getElementById("new-word");
+  const addWordBtn = document.getElementById("add-word");
+  const imageInput = document.getElementById("new-image");
 
-document.getElementById("login-btn").addEventListener("click", login);
-document.getElementById("register-btn").addEventListener("click", register);
-
-
+  document.getElementById("login-btn").addEventListener("click", login);
+  document.getElementById("register-btn").addEventListener("click", register);
 
   let sendingAlertVisitas = false;
   let sendingAlertInteracoes = false;
 
-fetch("/get-ip")
-  .then(res => res.json())
-  .then(data => {
-    window.userip = data.ip; 
-  });
+  fetch("/api/get-ip")
+    .then((res) => res.json())
+    .then((data) => {
+      window.userip = data.ip;
+      Logger.enqueue(`🌐 IP do usuário identificado: ${window.userip}`);
+    })
+    .catch((err) => Logger.enqueue(`⚠️ Falha ao obter IP: ${err.message}`));
 
-
-function mostrarModal(modal) {
-  if (!modal) return;
-  modal.style.display = "flex";
-}
-
-
-function abrirModalDinamico(titulo, conteudo, botoes = []) {
-  modalTitle.textContent = titulo;
-  modalBody.textContent = conteudo;
-  modalActions.innerHTML = "";
-  botoes.forEach(b => {
-    const button = document.createElement("button");
-    button.textContent = b.text;
-    button.onclick = b.onClick;
-    modalActions.appendChild(button);
-  });
-  modal.style.display = "flex";
-  overlay.classList.add("active");
-}
-
-// ---------- INICIO DO SISTEMA DE LOGS EM FILA ----------
-// ---------- SISTEMA DE LOGS EM FILA ----------
-
-// Fila de logs e flag de envio
-window.userLogsQueue = window.userLogsQueue || [];
-let sendingLogs = false;
-const BATCH_INTERVAL = 20000; // 20 segundos
-const MAX_BACKOFF = 32000; // tempo máximo de retry exponencial
-
-// Função para escapar Markdown
-function escapeMarkdown(text) {
-  if (!text) return "";
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
-}
-
-// Emoji por tipo de ação
-function getActionEmoji(action) {
-  action = action.toLowerCase();
-  if (action.includes("erro") || action.includes("fail") || action.includes("❌")) return "🔴";
-  if (action.includes("success") || action.includes("✅") || action.includes("adicionou")) return "🟢";
-  if (action.includes("aviso") || action.includes("⚠️") || action.includes("warning")) return "🟡";
-  if (action.includes("info") || action.includes("ℹ️")) return "🔵";
-  return "🟣";
-}
-
-// Formata logs agrupando por usuário/IP
-function formatGroupedLogs(logs) {
-  const groups = {};
-  logs.forEach(log => {
-    const key = `${log.user}-${log.ip}`;
-    if (!groups[key]) groups[key] = { user: log.user, ip: log.ip, actions: [] };
-    groups[key].actions.push(log);
-  });
-
-  return Object.values(groups).map(group => {
-    const header = `👤 Usuário: ${escapeMarkdown(group.user)}\n🌐 IP: ${escapeMarkdown(group.ip)}\n📐 Tela: ${escapeMarkdown(group.actions[0].tamanho || "N/A")}\n🎯 Alvo: ${escapeMarkdown(group.actions[0].target || "N/A")}\n`;
-    const actions = group.actions.map(l => {
-      const emoji = getActionEmoji(l.actionType);
-      const time = new Date(l.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
-      return `${emoji} ${time} - ${escapeMarkdown(l.actionType)} ${l.target ? "(" + escapeMarkdown(l.target) + ")" : ""}`;
-    }).join("\n\n");
-    return `${header}\n${actions}`;
-  }).join("\n\n---\n\n");
-}
-
-// Envia batch para o backend
-async function sendBatch(message) {
-  try {
-    await fetch("/api/send-telegram-alert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, type: "interacoes" }),
-    });
-  } catch (err) {
-    console.error("Erro ao enviar batch:", err);
+  function mostrarModal(modal) {
+    if (!modal) return;
+    modal.style.display = "flex";
   }
-}
 
-let backoffTime = 1000;
+  function abrirModalDinamico(titulo, conteudo, botoes = []) {
+    modalTitle.textContent = titulo;
+    modalBody.textContent = conteudo;
+    modalActions.innerHTML = "";
+    botoes.forEach((b) => {
+      const button = document.createElement("button");
+      button.textContent = b.text;
+      button.onclick = b.onClick;
+      modalActions.appendChild(button);
+    });
+    modal.style.display = "flex";
+    overlay.classList.add("active");
+  }
 
-// Envio da fila
-async function sendLogsBatch() {
-  if (sendingLogs || window.userLogsQueue.length === 0) return;
-  sendingLogs = true;
+  function fecharTodosModais() {
+    const openModals = document.querySelectorAll(
+      '.modal.show, .modal[style*="display: flex"]'
+    );
+    openModals.forEach((modal) => {
+      modal.style.display = "none";
+      modal.classList.remove("show");
+    });
 
-  const logsToSend = [...window.userLogsQueue];
-  window.userLogsQueue.length = 0;
+    overlay.classList.remove("active");
 
-  logsToSend.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-  const maxLength = 4000;
-  try {
-    const groupedMessage = formatGroupedLogs(logsToSend);
-    if (groupedMessage.length > maxLength) {
-      let start = 0;
-      while (start < groupedMessage.length) {
-        const chunk = groupedMessage.slice(start, start + maxLength);
-        await sendBatch(`✨ *📋 Batch de Logs* \n\n${chunk}\n\n💫 Fim do Batch`);
-        start += maxLength;
-      }
-    } else {
-      await sendBatch(`✨ *📋 Batch de Logs* \n\n${groupedMessage}\n\n💫 Fim do Batch`);
+    if (
+      document.querySelectorAll('.modal.show, .modal[style*="display: flex"]')
+        .length === 0
+    ) {
+      menu.style.display = "flex";
+      menuleft.style.display = "flex";
     }
-    backoffTime = 1000;
-  } catch (err) {
-    console.error("Erro ao enviar logs:", err);
-    window.userLogsQueue.unshift(...logsToSend);
-    backoffTime = Math.min(backoffTime * 2, MAX_BACKOFF);
-  } finally {
-    sendingLogs = false;
   }
-}
 
-// Inicializa envio periódico
-setInterval(sendLogsBatch, BATCH_INTERVAL);
+  let userip = "";
 
-// Função principal de enfileiramento
-function enqueueLog(action, extra = "") {
-  const username = document.querySelector("#username")?.textContent || "guest";
-  const ip = window.userip || "Desconhecido";
-  const target = navigator.userAgent || "Desconhecido";
-  const tamanho = `${window.innerWidth || "N/A"}x${window.innerHeight || "N/A"}`;
-
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    user: username,
-    ip: ip,
-    actionType: action,
-    target: target,
-    tamanho: tamanho,
-    description: extra
-  };
-
-  window.userLogsQueue.push(logEntry);
-
-  // Se for log crítico, envia imediatamente
-  if (action.toLowerCase().includes("erro") || action.toLowerCase().includes("fail") || action.toLowerCase().includes("❌")) {
-    sendLogsBatch();
+  async function fetchUserIP() {
+    try {
+      const res = await fetch("/api/get-ip");
+      const data = await res.json();
+      userip = data.ip || "";
+    } catch (err) {
+      console.error("Erro ao obter IP do usuário:", err);
+    }
   }
-}
 
-window.enqueueLog = enqueueLog;
-window.sendLogsBatch = sendLogsBatch;
-
-// Formata logs agrupando por usuário/IP
-function formatGroupedLogs(logs) {
-  const groups = {};
-
-  logs.forEach(log => {
-    const key = `${log.user}-${log.ip}`;
-    if (!groups[key]) groups[key] = { user: log.user, ip: log.ip, actions: [] };
-    groups[key].actions.push(log);
-  });
-
-  return Object.values(groups).map(group => {
-    const header = 
-      `👤 Usuário: ${escapeMarkdown(group.user)}\n` +
-      `🌐 IP: ${escapeMarkdown(group.ip)}\n` +
-      `📐 Tela: ${escapeMarkdown(group.actions[0].tamanho || "N/A")}\n` +
-      `🎯 Alvo: ${escapeMarkdown(group.actions[0].target || "N/A")}\n`;
-    const actions = group.actions.map(l => {
-      const emoji = getActionEmoji(l.actionType);
-      const time = new Date(l.timestamp).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
-      return `${emoji} ${time} - ${escapeMarkdown(l.actionType)} ${l.description ? "(" + escapeMarkdown(l.description) + ")" : ""}`;
-    }).join("\n");
-
-    return `${header}\n${actions}`;
-  }).join("\n\n---\n\n");
-}
-
-// Envia batch para Telegram
-async function sendBatch(message) {
-  await fetch("/api/send-telegram-alert", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, type: "interacoes" }),
-  });
-}
-
-// Função principal de envio em lote
-async function sendLogsBatch() {
-  if (sendingLogs || !window.userLogsQueue.length) return;
-  sendingLogs = true;
-
-  const logsToSend = [...window.userLogsQueue];
-  window.userLogsQueue.length = 0;
-
-  logsToSend.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-  try {
-    const groupedMessage = formatGroupedLogs(logsToSend);
-    const maxLength = 4000; // tamanho máximo da mensagem para o Telegram
-      if (groupedMessage.length > maxLength) {
-        let start = 0;
-        while (start < groupedMessage.length) {
-          const chunk = groupedMessage.slice(start, start + maxLength); // usar maxLength aqui
-          await sendBatch(`✨ *📋 Batch de Logs* \n\n${chunk}\n\n💫 Fim do Batch`);
-          start += maxLength;
-        }
-      } else {
-        await sendBatch(`✨ *📋 Batch de Logs* \n\n${groupedMessage}\n\n💫 Fim do Batch`);
-      }
-    backoffTime = 1000;
-  } catch (err) {
-    console.error("Erro ao enviar logs:", err);
-    // retorna logs à fila
-    window.userLogsQueue.unshift(...logsToSend);
-    backoffTime = Math.min(backoffTime * 2, MAX_BACKOFF);
-  } finally {
-    sendingLogs = false;
-    setTimeout(sendLogsBatch, backoffTime);
-  }
-}
-
-// Chamada inicial
-sendLogsBatch();
-
-
-
-
-
-
-window.addEventListener("load", () => {
-  const pending = JSON.parse(localStorage.getItem("pendingTelegramEvents") || "[]");
-  pending.forEach(msg => enqueueTelegram(msg));
-  localStorage.removeItem("pendingTelegramEvents");
-});
-
-
-
-  /**
- * @param {string} message
- */
-async function sendTelegramVisitas(message) {
-  if (sendingAlertVisitas) return;
-  sendingAlertVisitas = true;
-
-  try {
-    const res = await fetch("/api/send-telegram-alert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, type: "visitas" }), // apenas a mensagem e tipo
-    });
-
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || "Erro desconhecido");
-  } finally {
-    sendingAlertVisitas = false;
-  }
-}
-
-
-
-
-
-function fecharTodosModais() {
-  const openModals = document.querySelectorAll('.modal.show, .modal[style*="display: flex"]');
-  openModals.forEach(modal => {
-    modal.style.display = "none";
-    modal.classList.remove("show");
-  });
-
-  overlay.classList.remove("active");
-
-  // Restaurar menus somente se nenhum modal ainda estiver aberto
-  if (document.querySelectorAll('.modal.show, .modal[style*="display: flex"]').length === 0) {
-    menu.style.display = "flex";
-    menuleft.style.display = "flex";
-  }
-}
-
-let userip = "";
-
-async function fetchUserIP() {
-  try {
-    const res = await fetch("/api/get-ip");
-    const data = await res.json();
-    userip = data.ip || "";
-  } catch (err) {
-    console.error("Erro ao obter IP do usuário:", err);
-  }
-}
-
-fetchUserIP();
-
-
-
- 
+  fetchUserIP();
 
   function showSection(section) {
     const sections = [menu, menuleft, Newboard, counters];
@@ -341,20 +102,20 @@ fetchUserIP();
 
     switch (type) {
       case "success":
-        notif.style.backgroundColor = "#4CAF50"; 
-        enqueueLog("✅ Notificação de sucesso exibida");
+        notif.style.backgroundColor = "#4CAF50";
+        Logger.enqueue("✅ Notificação de sucesso exibida");
         break;
       case "error":
-        notif.style.backgroundColor = "#f44336"; 
-        enqueueLog("❌ Notificação de erro exibida");
+        notif.style.backgroundColor = "#f44336";
+        Logger.enqueue("❌ Notificação de erro exibida");
         break;
       case "warning":
-        notif.style.backgroundColor = "#ff9800"; 
-         enqueueLog("⚠️ Notificação de aviso exibida");
+        notif.style.backgroundColor = "#ff9800";
+        Logger.enqueue("⚠️ Notificação de aviso exibida");
         break;
       default:
-        notif.style.backgroundColor = "#1e1e2f"; 
-        enqueueLog("ℹ️ Notificação informativa exibida");
+        notif.style.backgroundColor = "#1e1e2f";
+        Logger.enqueue("ℹ️ Notificação informativa exibida");
     }
 
     notif.classList.add("show");
@@ -363,7 +124,6 @@ fetchUserIP();
       notif.classList.remove("show");
     }, duration);
   }
-
 
   btnAbrirQuadro.addEventListener("click", () => showSection(Newboard));
   backBoardBtn.addEventListener("click", () => showSection(menu));
@@ -460,7 +220,7 @@ fetchUserIP();
     menu.style.display = "none";
     menuleft.style.display = "none";
     counters.style.display = "block";
-    enqueueLog("⏳ Usuário abriu Contadores");
+    Logger.enqueue("⏳ Usuário abriu a seção de Contadores");
     const loadingEl = document.getElementById("counter-loading");
     loadingEl.style.display = "block";
 
@@ -483,63 +243,57 @@ fetchUserIP();
     }
   }
 
-
-
   const poemBtn = document.getElementById("poem-btn");
   const poemText = document.getElementById("poem-text");
-  
 
-poemBtn.addEventListener("click", async () => {
-  mostrarModal(poemModal);
+  poemBtn.addEventListener("click", async () => {
+    mostrarModal(poemModal);
 
-  enqueueLog("📜 Usuário abriu Poema do Dia");
+    Logger.enqueue("📜 Usuário abriu o Poema do Dia");
 
-  const poemTextEl = document.getElementById("poem-text");
-  poemTextEl.textContent = "⌛ Carregando poema...";
+    const poemTextEl = document.getElementById("poem-text");
+    poemTextEl.textContent = "⌛ Carregando poema...";
 
-  try {
-    const res = await fetch("/api/poem");
-    const data = await res.json();
-    poemTextEl.textContent = data.poem || "💖 Nenhum poema disponível 💖";
-  } catch (err) {  
-    poemTextEl.textContent = "❌ Erro ao carregar poema 😢";
-    enqueueLog("❌ Erro ao carregar Poema do Dia");
+    try {
+      const res = await fetch("/api/poem");
+      const data = await res.json();
+      poemTextEl.textContent = data.poem || "💖 Nenhum poema disponível 💖";
+    } catch (err) {
+      poemTextEl.textContent = "❌ Erro ao carregar poema 😢";
+      Logger.enqueue("❌ Erro ao carregar o Poema do Dia");
+    }
+  });
+
+  const closePoemBtn = document.getElementById("close-modal");
+
+  if (closePoemBtn) {
+    closePoemBtn.addEventListener("click", () => {
+      if (!poemModal) return;
+      poemModal.style.display = "none";
+      poemModal.classList.remove("show");
+      overlay.classList.remove("active");
+      Logger.enqueue("📜 Usuário fechou o Poema do Dia");
+    });
   }
-});
 
-const closePoemBtn = document.getElementById("close-modal"); // seu botão X do poema
-
-if (closePoemBtn) {
-  closePoemBtn.addEventListener("click", () => {
-    if (!poemModal) return;
-    poemModal.style.display = "none"; // fecha apenas o modal do poema
-    poemModal.classList.remove("show"); // remove classe show, se estiver usando
-    overlay.classList.remove("active"); // remove overlay se quiser
-    enqueueLog("📜 Usuário fechou Poema do Dia");
+  avisosBackBtn?.addEventListener("click", () => {
+    fecharTodosModais();
+    Logger.enqueue("🔔 Usuário fechou o painel de Avisos");
   });
-}
 
-avisosBackBtn?.addEventListener("click", () => {
-  fecharTodosModais();
-  enqueueLog("🔔 Usuário fechou Avisos");
-});
+  pollsBackBtn?.addEventListener("click", fecharTodosModais);
+  btnAbrirQuadro?.addEventListener("click", () => showSection(Newboard));
+  backBoardBtn?.addEventListener("click", () => showSection(menu));
 
-pollsBackBtn?.addEventListener("click", fecharTodosModais);
-btnAbrirQuadro?.addEventListener("click", () => showSection(Newboard));
-backBoardBtn?.addEventListener("click", () => showSection(menu));
+  function closeModalClickOutside(modal) {
+    window.addEventListener("click", (e) => {
+      if (e.target === modal) fecharTodosModais();
+    });
+  }
 
-
-
-function closeModalClickOutside(modal) {
-  window.addEventListener("click", (e) => {
-    if (e.target === modal) fecharTodosModais();
-  });
-}
-
-closeModalClickOutside(poemModal);
-closeModalClickOutside(sobreModal);
-closeModalClickOutside(todayModal);
-
+  closeModalClickOutside(poemModal);
+  closeModalClickOutside(sobreModal);
+  closeModalClickOutside(todayModal);
 
   const btn = document.getElementById("square-menu");
   const sidebar = document.getElementById("sidebar");
@@ -550,25 +304,22 @@ closeModalClickOutside(todayModal);
   const modalActions = document.getElementById("custom-actions");
   const modalClose = document.getElementById("custom-close");
 
-btn.addEventListener("click", () => {
-  const isOpen = btn.getAttribute("data-open") === "true";
-  btn.setAttribute("data-open", (!isOpen).toString());
-  btn.setAttribute("aria-expanded", (!isOpen).toString());
-  sidebar.classList.toggle("open");
-  enqueueLog("Abriu/Fechou a aba Lateral");
-});
+  btn.addEventListener("click", () => {
+    const isOpen = btn.getAttribute("data-open") === "true";
+    btn.setAttribute("data-open", (!isOpen).toString());
+    btn.setAttribute("aria-expanded", (!isOpen).toString());
+    sidebar.classList.toggle("open");
+    Logger.enqueue("📂 Usuário abriu/fechou a aba lateral");
+  });
 
-overlay.addEventListener("click", () => {
-  const modals = document.querySelectorAll('.modal.show, .modal[style*="display: flex"]');
-  modals.forEach(modal => modal.style.display = 'none');
-  modals.forEach(modal => modal.classList.remove('show'));
-  overlay.classList.remove("active");
-
-modals.forEach(modal => enqueueLog("❌ Fechou modal clicando fora", modal.id));
-  // Restaurar menus
-  menu.style.display = "flex";
-  menuleft.style.display = "flex";
-});
+  overlay.addEventListener("click", () => {
+    const modals = document.querySelectorAll(
+      '.modal.show, .modal[style*="display: flex"]'
+    );
+    modals.forEach((modal) => (modal.style.display = "none"));
+    modals.forEach((modal) => modal.classList.remove("show"));
+    overlay.classList.remove("active");
+  });
 
   modalClose.addEventListener("click", fecharModal);
 
@@ -596,38 +347,38 @@ modals.forEach(modal => enqueueLog("❌ Fechou modal clicando fora", modal.id));
 
     menu.style.display = "flex";
     menuleft.style.display = "flex";
-
   }
 
   const sobreClose = document.getElementById("sobre-close");
 
   menuSobre.addEventListener("click", () => {
-  mostrarModal(sobreModal);
-enqueueLog("modal_open", "sobreModal", "Usuário abriu Sobre este site");
-});
+    mostrarModal(sobreModal);
+    Logger.enqueue("ℹ️ Usuário abriu o modal 'Sobre este site'");
+  });
 
   sobreClose.addEventListener("click", () => {
-  if (!sobreModal) return;
-  sobreModal.style.display = "none"; // garante que fecha
-  sobreModal.classList.remove("show"); // remove classe show
-  overlay.classList.remove("active");  // remove o overlay
-  menu.style.display = "flex";         // restaura menus
-  menuleft.style.display = "flex";
+    if (!sobreModal) return;
+    sobreModal.style.display = "none";
+    sobreModal.classList.remove("show");
+    overlay.classList.remove("active");
+    menu.style.display = "flex";
+    menuleft.style.display = "flex";
 
-  enqueueLog("ℹ️ Usuário fechou Sobre este site");
-});
-
-
+    Logger.enqueue("ℹ️ Usuário fechou o modal 'Sobre este site'");
+  });
 
 function addWordToBoard(item) {
   const card = document.createElement("div");
   card.className = "word-card";
 
-  const imgUrl = item.imagem || item.image; // aceita os dois nomes
-
+  const imgUrl = item.imagem || item.image;
   if (imgUrl) {
     const img = document.createElement("img");
-    img.src = getGithubRawUrl(imgUrl); // garante URL certa
+
+    img.src = imgUrl.startsWith("http")
+      ? imgUrl
+      : `https://quadro-ac3o.vercel.app/images/${imgUrl}`;
+
     img.alt = item.palavra || "Imagem";
     img.className = "word-card-img";
     card.appendChild(img);
@@ -643,99 +394,94 @@ function addWordToBoard(item) {
   wordBoard.appendChild(card);
 }
 
+  async function loadWords() {
+    const res = await fetch("/api/quadro-palavras");
+    const data = await res.json();
+    data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    wordBoard.innerHTML = "";
+    data.forEach(addWordToBoard);
+    wordBoard.style.display = "flex";
+  }
 
-async function loadWords() {
-  const res = await fetch("/api/quadro-palavras");
-  const data = await res.json();
-  data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  wordBoard.innerHTML = "";
-  data.forEach(addWordToBoard);
-  wordBoard.style.display = "flex";
-}
-
-// Depois disso, pode chamar:
-loadWords();
-window.addWordToBoard = addWordToBoard;
-
- 
-
+  loadWords();
+  window.addWordToBoard = addWordToBoard;
 
   const confirmModal = document.getElementById("confirmModal");
   const menuDelete = document.getElementById("menuDelete");
   const modalContent = document.getElementById("modalContent");
   let sendingAlert = false;
 
+  const suggestionModal = document.getElementById("suggestionModal");
+  const closeSuggestionBtn = document.getElementById("closeSuggestion");
 
+  menuSugestao.addEventListener("click", () => {
+    if (!suggestionModal) return;
+    suggestionModal.classList.add("show");
+    Logger.enqueue("✏️ Usuário abriu o modal de Sugestões");
+  });
 
+  closeSuggestionBtn?.addEventListener("click", () => {
+    if (!suggestionModal) return;
+    suggestionModal.classList.remove("show");
+    Logger.enqueue("✏️ Usuário fechou o modal de Sugestões");
+  });
 
- const suggestionModal = document.getElementById("suggestionModal");
-const closeSuggestionBtn = document.getElementById("closeSuggestion");
+  document
+    .getElementById("sendSuggestion")
+    .addEventListener("click", async () => {
+      const textEl = document.getElementById("suggestionText");
+      const text = textEl.value.trim();
+      if (!text)
+        return showNotification(
+          "⚠️ Digite uma sugestão antes de enviar!",
+          "warning"
+        );
 
-menuSugestao.addEventListener("click", () => {
-  if (!suggestionModal) return;
-  suggestionModal.classList.add("show"); // ou style.display = "block"
-  enqueueLog("✏️ Usuário abriu Sugestões/Reclamações");
-});
+      try {
+        await fetch("/api/send-telegram-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: `💡 Nova sugestão/reclamação:\n\n${text}`,
+            type: "interacoes",
+          }),
+        });
 
-closeSuggestionBtn?.addEventListener("click", () => {
-  if (!suggestionModal) return;
-  suggestionModal.classList.remove("show"); // ou style.display = "none"
-  enqueueLog("✏️ Usuário fechou Sugestões/Reclamações");
-});
-
-
-
-document.getElementById("sendSuggestion").addEventListener("click", async () => {
-  const textEl = document.getElementById("suggestionText");
-  const text = textEl.value.trim();
-  if (!text) return showNotification("⚠️ Digite uma sugestão antes de enviar!", "warning");
-
-  
-
-  try {
-    await fetch("/api/send-telegram-alert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: `💡 Nova sugestão/reclamação:\n\n${text}`, type: "interacoes" }),
-      
+        showNotification("✅ Sugestão enviada com sucesso!", "success");
+        textEl.value = "";
+        fecharTodosModais();
+        Logger.enqueue("✅ Usuário enviou uma Sugestão com sucesso");
+      } catch (err) {
+        if (err.name === "AbortError") {
+          console.log("Envio de sugestão abortado pelo fechamento do modal");
+        } else {
+          showNotification(
+            `❌ Erro ao enviar sugestão: ${err.message}`,
+            "error"
+          );
+        }
+      } finally {
+      }
     });
 
-
-    showNotification("✅ Sugestão enviada com sucesso!", "success");
-    textEl.value = "";
+  document.getElementById("closeSuggestion").addEventListener("click", () => {
     fecharTodosModais();
-    enqueueLog("✏️ Usuário enviou uma sugestão com sucesso");
-  } catch (err) {
-    if (err.name === "AbortError") {
-      console.log("Envio de sugestão abortado pelo fechamento do modal");
-    } else {
-      showNotification(`❌ Erro ao enviar sugestão: ${err.message}`, "error");
-    }
-  } finally {
-  }
-});
+    Logger.enqueue("✏️ Usuário fechou o modal de Sugestões antes de enviar");
+  });
 
-// Abortar fetch se o usuário fechar o modal
-document.getElementById("closeSuggestion").addEventListener("click", () => {
-  fecharTodosModais();
-  enqueueLog("✏️ Usuário fechou Sugestões/Reclamações antes de enviar");
-});
-
-function getGithubRawUrl(filename) {
-  if (!filename) return "";
-  if (filename.startsWith("http")) return filename; // já é URL completa
-  return `https://raw.githubusercontent.com/Kalsef/UploadQuadro/main/images/${filename}`;
+function getImageUrl(filename) {
+  return `/images/${filename}`;
 }
 
-// Quando o usuário selecionar uma imagem
-imageInput.addEventListener("change", () => {
-  const file = imageInput.files[0];
-  if (!file) {
-    return; // nada selecionado
-  }
-  addImage(file); // chama sua função que já trata o upload
-  imageInput.value = ""; // limpa para poder selecionar a mesma imagem de novo se quiser
-});
+
+  imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+    if (!file) {
+      return;
+    }
+    addImage(file);
+    imageInput.value = "";
+  });
 
   addWordBtn.addEventListener("click", async () => {
     const word = newWordInput.value.trim();
@@ -753,139 +499,133 @@ imageInput.addEventListener("change", () => {
       const result = await res.json();
       if (result.success) {
         showNotification(`✅ Palavra "${word}" adicionada!`, "success");
-        loadWords(); 
+        loadWords();
         newWordInput.value = "";
-        enqueueLog("🖱️ Usuário clicou: Adicionou uma nova palavra")
+        Logger.enqueue("✅ Usuário adicionou uma nova palavra ao Quadro");
       } else {
         showNotification(
           `❌ Erro ao adicionar: ${result.error || "desconhecido"}`,
           "error"
         );
-        enqueueLog("❌ Erro ao carregar palavras do Quadro de Palavras");
+        Logger.enqueue("❌ Erro ao carregar palavras do Quadro");
       }
     } catch (err) {
       console.error(err);
       showNotification("❌ Falha na conexão ao adicionar palavra.", "error");
-      enqueueLog("❌ Falha na conexão ao adicionar palavra no Quadro de Palavras");
-    }
-  });  
-
-
-btnAbrirQuadro?.addEventListener("click", () => {
-  [menu, menuleft, counters].forEach(el => el.style.display = "none");
-  Newboard.style.display = "block";
-enqueueLog("📝 Usuário abriu Quadro de Palavras");
-});
-
-backBoardBtn?.addEventListener("click", () => {
-  Newboard.style.display = "none";
-  menu.style.display = "flex";
-  menuleft.style.display = "flex";
-  enqueueLog("📝 Usuário voltou ao menu do Quadro de Palavras");
-});
-
-newWordInput?.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") addWordBtn.click();
-});
-
-
-
-
-
-async function addWord(word) {
-  if (!word) return;
-
-  const formData = new FormData();
-  formData.append("palavra", word);
-
-  try {
-    const res = await fetch("/api/quadro-palavras", {
-      method: "POST",
-      body: formData,
-    });
-    const result = await res.json();
-    if (result.success) {
-      showNotification("✅ Palavra adicionada!", "success");
-      loadWords();
-      newWordInput.value = "";
-enqueueLog("add_word", "new-word", `Palavra adicionada: ${word}`);    } else {
-      showNotification(`❌ Erro ao adicionar palavra: ${result.error || "desconhecido"}`, "error");
-    }
-  } catch (err) {
-    showNotification(`❌ Erro de rede: ${err.message}`, "error");
-  }
-}
-
-
-
-// Adiciona imagem
-async function addImage(imageFile) {
-  if (!imageFile) return;
-
-  const formData = new FormData();
-  formData.append("image", imageFile);
-
-  try {
-    const res = await fetch("/api/quadro-palavras", {
-      method: "POST",
-      body: formData,
-    });
-    const result = await res.json();
-    if (result.success) {
-      showNotification("✅ Imagem adicionada!", "success");
-      loadWords();
-      imageInput.value = "";
-      enqueueLog(`🖼️ Usuário adicionou imagem: ${imageFile.name}`);
-    } else {
-      showNotification(`❌ Erro ao adicionar imagem: ${result.error || "desconhecido"}`, "error");
-    }
-  } catch (err) {
-    showNotification(`❌ Erro de rede: ${err.message}`, "error");
-  }
-}
-
-
-// depois 
-
-
-
-
-
-  if (openTodayBtn && todayModal) {
-  openTodayBtn.addEventListener("click", async () => {
-    mostrarModal(todayModal);
-    enqueueLog("🎨 Usuário abriu Desenhos");
-
-    const container = document.getElementById("today-drawing");
-    if (container) container.textContent = "⌛ Carregando desenho...";
-
-    try {
-      const res = await fetch("/api/today-drawing");
-      const data = await res.json();
-
-      if (container) {
-        if (data.success) {
-          container.innerHTML = data.type === "image"
-            ? `<img src="${data.url}" style="max-width:100%; border-radius:12px;">`
-            : `<p style="font-style:italic;">${data.content}</p>`;
-        } else {
-          container.textContent = "❌ Não foi possível carregar o desenho de hoje!";
-          enqueueLog("❌ Erro ao carregar desenho do dia");
-        }
-      }
-    } catch (err) {
-      if (container) container.textContent = "⚠️ Erro de conexão ao buscar o desenho.";
-      enqueueLog("❌ Erro de conexão ao buscar desenho do dia");
+      Logger.enqueue("❌ Falha na conexão ao adicionar palavra no Quadro");
     }
   });
-}
 
+  btnAbrirQuadro?.addEventListener("click", () => {
+    [menu, menuleft, counters].forEach((el) => (el.style.display = "none"));
+    Newboard.style.display = "block";
+    Logger.enqueue("📝 Usuário abriu o Quadro de Palavras");
+  });
 
-backFromTodayBtn.addEventListener("click", () => {
-  fecharTodosModais();
-  enqueueLog("🎨 Usuário fechou Desenho do Dia");
-});
+  backBoardBtn?.addEventListener("click", () => {
+    Newboard.style.display = "none";
+    menu.style.display = "flex";
+    menuleft.style.display = "flex";
+    Logger.enqueue("📝 Usuário voltou do Quadro de Palavras para o Menu");
+  });
 
+  newWordInput?.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") addWordBtn.click();
+  });
+
+  async function addWord(word) {
+    if (!word) return;
+
+    const formData = new FormData();
+    formData.append("palavra", word);
+
+    try {
+      const res = await fetch("/api/quadro-palavras", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+      if (result.success) {
+        showNotification("✅ Palavra adicionada!", "success");
+        loadWords();
+        newWordInput.value = "";
+        Logger.enqueue("✅ Palavra adicionada ao quadro", `Conteúdo: ${word}`);
+      } else {
+        showNotification(
+          `❌ Erro ao adicionar palavra: ${result.error || "desconhecido"}`,
+          "error"
+        );
+      }
+    } catch (err) {
+      showNotification(`❌ Erro de rede: ${err.message}`, "error");
+    }
+  }
+
+  async function addImage(imageFile) {
+    if (!imageFile) return;
+
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    try {
+      const res = await fetch("/api/quadro-palavras", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+      if (result.success) {
+        showNotification("✅ Imagem adicionada!", "success");
+        loadWords();
+        imageInput.value = "";
+        Logger.enqueue("🖼️ Usuário adicionou uma imagem ao Quadro");
+      } else {
+        showNotification(
+          `❌ Erro ao adicionar imagem: ${result.error || "desconhecido"}`,
+          "error"
+        );
+        Logger.enqueue("❌ Erro ao adicionar imagem ao Quadro");
+      }
+    } catch (err) {
+      showNotification(`❌ Erro de rede: ${err.message}`, "error");
+    }
+  }
+
+  if (openTodayBtn && todayModal) {
+    openTodayBtn.addEventListener("click", async () => {
+      mostrarModal(todayModal);
+      Logger.enqueue("🎨 Usuário abriu a seção Desenhos");
+
+      const container = document.getElementById("today-drawing");
+      if (container) container.textContent = "⌛ Carregando desenho...";
+
+      try {
+        const res = await fetch("/api/today-drawing");
+        const data = await res.json();
+
+        if (container) {
+          if (data.success) {
+            container.innerHTML =
+              data.type === "image"
+                ? `<img src="${data.url}" style="max-width:100%; border-radius:12px;">`
+                : `<p style="font-style:italic;">${data.content}</p>`;
+          } else {
+            container.textContent = "❌ Não foi possível carregar os desenhos!";
+            Logger.enqueue("❌ Erro ao carregar os desenhos");
+            Logger.enqueue("❌ Erro ao carregar os desenhos");
+          }
+        }
+      } catch (err) {
+        if (container)
+          container.textContent = "⚠️ Erro de conexão ao buscar oaa desenhos.";
+        Logger.enqueue("❌ Erro de conexão ao buscar os desenhos");
+      }
+    });
+  }
+
+  backFromTodayBtn.addEventListener("click", () => {
+    fecharTodosModais();
+    Logger.enqueue("🎨 Usuário fechou a seção dos Desenho");
+  });
 
   async function loadTodayDrawing() {
     const container = document.getElementById("today-drawing");
@@ -905,8 +645,7 @@ backFromTodayBtn.addEventListener("click", () => {
             "💖 Desenho recebido, mas formato desconhecido!";
         }
       } else {
-        container.textContent =
-          "❌ Não foi possível carregar o desenho de hoje!";
+        container.textContent = "❌ Não foi possível carregar os desenhos!";
       }
     } catch (err) {
       console.error("Erro ao carregar desenho:", err);
@@ -917,34 +656,39 @@ backFromTodayBtn.addEventListener("click", () => {
   const menuAvisos = document.getElementById("menuAvisos");
   const avisosList = document.getElementById("avisos-list");
 
-menuAvisos.addEventListener("click", async e => {
+  menuAvisos.addEventListener("click", async (e) => {
     e.preventDefault();
     mostrarModal(avisosModal);
-    enqueueLog("🔔 Usuário abriu avisos");
+    Logger.enqueue("🔔 Usuário abriu a aba de Avisos");
 
     const avisosList = document.getElementById("avisos-list");
     avisosList.innerHTML = "⌛ Carregando avisos...";
 
     try {
-  const res = await fetch("/api/avisos");
-  let avisos = await res.json();
+      const res = await fetch("/api/avisos");
+      let avisos = await res.json();
 
-  if (avisos.length) {
-    // Ordena do mais antigo para o mais novo
-   avisos.sort((a, b) => new Date(a.criado_em || a.data) - new Date(b.criado_em || b.data));
+      if (avisos.length) {
+        avisos.sort(
+          (a, b) =>
+            new Date(a.criado_em || a.data) - new Date(b.criado_em || b.data)
+        );
 
-    avisosList.innerHTML = avisos
-  .sort((a, b) => new Date(a.criado_em || a.data) - new Date(b.criado_em || b.data))
-  .map(a => `<p>${a.mensagem}</p>`)
-  .join("");
-  } else {
-    avisosList.innerHTML = "<p>✅ Nenhum aviso no momento</p>";
-  }
-} catch (err) {
-  avisosList.innerHTML = "<p>Erro ao carregar avisos 😢</p>";
-  enqueueLog("❌ Erro ao carregar avisos");
-}
-});
+        avisosList.innerHTML = avisos
+          .sort(
+            (a, b) =>
+              new Date(a.criado_em || a.data) - new Date(b.criado_em || b.data)
+          )
+          .map((a) => `<p>${a.mensagem}</p>`)
+          .join("");
+      } else {
+        avisosList.innerHTML = "<p>✅ Nenhum aviso no momento</p>";
+      }
+    } catch (err) {
+      avisosList.innerHTML = "<p>Erro ao carregar avisos 😢</p>";
+      Logger.enqueue("❌ Erro ao carregar Avisos");
+    }
+  });
 
   const menuPolls = document.getElementById("menuPolls");
   const pollsList = document.getElementById("polls-list");
@@ -972,10 +716,10 @@ menuAvisos.addEventListener("click", async e => {
     }
   }
 
- menuPolls.addEventListener("click", async e => {
+  menuPolls.addEventListener("click", async (e) => {
     e.preventDefault();
     mostrarModal(pollsModal);
-    enqueueLog("📊 Usuário abriu votações");
+    Logger.enqueue("📊 Usuário abriu a aba de Votações");
 
     const pollsList = document.getElementById("polls-list");
     pollsList.innerHTML = "⌛ Carregando votações...";
@@ -983,14 +727,15 @@ menuAvisos.addEventListener("click", async e => {
     try {
       const res = await fetch("/api/polls");
       const polls = await res.json();
-      if (!polls.length) return pollsList.innerHTML = "<p>✅ Nenhuma votação no momento</p>";
+      if (!polls.length)
+        return (pollsList.innerHTML = "<p>✅ Nenhuma votação no momento</p>");
 
       pollsList.innerHTML = "";
-      polls.forEach(p => {
+      polls.forEach((p) => {
         const div = document.createElement("div");
         div.className = "poll-item";
         div.innerHTML = `<h3>${p.pergunta}</h3>`;
-        p.opcoes.forEach(op => {
+        p.opcoes.forEach((op) => {
           const btn = document.createElement("button");
           btn.textContent = op;
           btn.addEventListener("click", async () => {
@@ -998,11 +743,16 @@ menuAvisos.addEventListener("click", async e => {
               const res = await fetch(`/api/polls/${p.id}/vote`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ opcao: op })
+                body: JSON.stringify({ opcao: op }),
               });
               const data = await res.json();
-              if (data.success) showNotification(`✅ Voto registrado: ${op}`, "success");
-              else showNotification(`❌ Erro ao registrar voto: ${data.error}`, "error");
+              if (data.success)
+                showNotification(`✅ Voto registrado: ${op}`, "success");
+              else
+                showNotification(
+                  `❌ Erro ao registrar voto: ${data.error}`,
+                  "error"
+                );
             } catch (err) {
               showNotification("❌ Falha na conexão ao votar.", "error");
             }
@@ -1013,96 +763,94 @@ menuAvisos.addEventListener("click", async e => {
       });
     } catch (err) {
       pollsList.innerHTML = "<p>Erro ao carregar votações 😢</p>";
-      enqueueLog("❌ Erro ao carregar votações");
+      Logger.enqueue("❌ Erro ao carregar Votações");
     }
   });
 
-
-document.getElementById("counter-btn").addEventListener("click", showCounters);
+  document
+    .getElementById("counter-btn")
+    .addEventListener("click", showCounters);
   document.getElementById("back-btn").addEventListener("click", backToMenu);
- document.getElementById("calendar-btn").addEventListener("click", () => { 
-enqueueLog("click", "calendar-btn", "Usuário abriu Calendário");
-    window.location.href = "calendar.html"; 
-});  
-document.getElementById("note").addEventListener("click", () => { 
-enqueueLog("click", "note", "Usuário abriu Diário");
-    window.location.href = "diario.html"; 
-});  
+  document.getElementById("calendar-btn").addEventListener("click", () => {
+    Logger.enqueue("📅 Usuário abriu o Calendário");
+    window.location.href = "calendar.html";
+  });
 
-   
+  document.getElementById("note").addEventListener("click", () => {
+    Logger.enqueue("📝 Usuário abriu o Diário");
+    window.location.href = "diario.html";
+  });
 
+  const galleryContainer = document.getElementById("github-gallery");
+  const featuredContainer = document.getElementById("featured-image");
 
-const githubRepo = "Kalsef/galeria-desenhos";
-const githubPath = "images";
-const galleryContainer = document.getElementById("github-gallery");
-const featuredContainer = document.getElementById("featured-image");
+  async function getFilesWithDate() {
+    try {
+      const res = await fetch("/api/github-images");
+      const files = await res.json();
 
-// Pega arquivos com a data do último commit
-async function getFilesWithDate() {
-  try {
-    const res = await fetch("/api/github-images");
-    const files = await res.json();
+      if (!Array.isArray(files)) return [];
 
+      const filesWithDate = await Promise.all(
+        files.map(async (file) => {
+          if (!/\.(png|jpg|jpeg|gif)$/i.test(file.name)) return null;
 
-    if (!Array.isArray(files)) return [];
+          const commits = await commitRes.json();
+          const date =
+            commits[0]?.commit?.committer?.date || new Date().toISOString();
 
-    const filesWithDate = await Promise.all(files.map(async file => {
-      if (!/\.(png|jpg|jpeg|gif)$/i.test(file.name)) return null;
+          return {
+            name: file.name,
+            download_url: file.download_url,
+            date: new Date(date),
+          };
+        })
+      );
 
-      const commitRes = await fetch(`https://api.github.com/repos/${githubRepo}/commits?path=${githubPath}/${file.name}&per_page=1`);
-      const commits = await commitRes.json();
-      const date = commits[0]?.commit?.committer?.date || new Date().toISOString();
-
-      return {
-        name: file.name,
-        download_url: file.download_url,
-        date: new Date(date)
-      };
-    }));
-
-    return filesWithDate.filter(Boolean);
-  } catch (err) {
-    console.error("Erro ao buscar arquivos do GitHub:", err);
-    return [];
+      return filesWithDate.filter(Boolean);
+    } catch (err) {
+      console.error("Erro ao buscar arquivos do GitHub:", err);
+      return [];
+    }
   }
-}
 
-async function loadGithubImages() {
-  galleryContainer.innerHTML = "<p>⌛ Carregando imagens...</p>";
+  async function loadGithubImages() {
+    galleryContainer.innerHTML = "<p>⌛ Carregando imagens...</p>";
 
-  const files = await getFilesWithDate();
-  if (!files.length) {
-    galleryContainer.innerHTML = "<p>❌ Nenhuma imagem encontrada</p>";
-    return;
+    const files = await getFilesWithDate();
+    if (!files.length) {
+      galleryContainer.innerHTML = "<p>❌ Nenhuma imagem encontrada</p>";
+      return;
+    }
+    files.sort((a, b) => a.date - b.date);
+
+    let featuredIndex = 0;
+    renderFeatured(files[featuredIndex]);
+    renderGallery(
+      files.filter((_, i) => i !== featuredIndex),
+      files,
+      featuredIndex
+    );
   }
-  // Ordena do mais antigo para o mais novo
-  files.sort((a, b) => a.date - b.date);
 
-  // Inicializa destaque
-  let featuredIndex = 0;
-  renderFeatured(files[featuredIndex]);
-  renderGallery(files.filter((_, i) => i !== featuredIndex), files, featuredIndex);
-}
+  function downloadImage(url, filename) {
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+      })
+      .catch((err) => console.error("Erro ao baixar imagem:", err));
+  }
 
-function downloadImage(url, filename) {
-  fetch(url)
-    .then(res => res.blob())
-    .then(blob => {
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(blobUrl);
-    })
-    .catch(err => console.error("Erro ao baixar imagem:", err));
-}
-
-// Renderiza a imagem em destaque
-function renderFeatured(file) {
-  featuredContainer.innerHTML = `
+  function renderFeatured(file) {
+    featuredContainer.innerHTML = `
     <div class="featured-wrapper">
       <button class="download-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" viewBox="0 0 24 24">
@@ -1115,317 +863,424 @@ function renderFeatured(file) {
     </div>
   `;
 
-  const btn = featuredContainer.querySelector(".download-btn");
-  btn.addEventListener("click", () => {
-    downloadImage(`https://desenhos-nine.vercel.app/images/${file.name}`, file.name);
-    enqueueLog(`⬇️ Usuário baixou imagem: ${file.name}`);
+    const btn = featuredContainer.querySelector(".download-btn");
+    btn.addEventListener("click", () => {
+      downloadImage(
+        `https://desenhos-nine.vercel.app/images/${file.name}`,
+        file.name
+      );
+      Logger.enqueue(`⬇️ Usuário baixou imagem: ${file.name}`);
+    });
+  }
+
+  function renderGallery(thumbnails, allImages, featuredIndex) {
+    galleryContainer.innerHTML = "";
+    thumbnails.forEach((imgFile, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const imgEl = document.createElement("img");
+      imgEl.src = `https://desenhos-nine.vercel.app/images/${imgFile.name}`;
+      imgEl.alt = imgFile.name;
+
+      card.addEventListener("click", () => {
+        const newFeatured = imgFile;
+
+        thumbnails[i] = allImages[featuredIndex];
+        featuredIndex = allImages.indexOf(newFeatured);
+
+        renderFeatured(newFeatured);
+        renderGallery(thumbnails, allImages, featuredIndex);
+        Logger.enqueue(`🖼️ Usuário trocou destaque para: ${imgFile.name}`);
+      });
+
+      card.appendChild(imgEl);
+      galleryContainer.appendChild(card);
+    });
+  }
+
+  const authDiv = document.getElementById("auth");
+  const appDiv = document.getElementById("app");
+  const usernameSpan = document.getElementById("username");
+
+  document.getElementById("show-register").addEventListener("click", () => {
+    Logger.enqueue("✏️ Usuário clicou em 'Ainda não tem conta? Registrar'");
+    document.getElementById("login-box").classList.add("hidden");
+    document.getElementById("register-box").classList.remove("hidden");
   });
-}
 
-// Renderiza a galeria de miniaturas
-function renderGallery(thumbnails, allImages, featuredIndex) {
-  galleryContainer.innerHTML = "";
-  thumbnails.forEach((imgFile, i) => {
-    const card = document.createElement("div");
-    card.className = "card";
+  document.getElementById("show-login").addEventListener("click", () => {
+    Logger.enqueue("🔐 Usuário clicou em 'Já tem conta? Login'");
+    document.getElementById("register-box").classList.add("hidden");
+    document.getElementById("login-box").classList.remove("hidden");
+  });
 
-    const imgEl = document.createElement("img");
-    imgEl.src = `https://desenhos-nine.vercel.app/images/${imgFile.name}`;
-    imgEl.alt = imgFile.name;
+  async function checkLogin() {
+    try {
+      const res = await fetch("/api/me");
+      const data = await res.json();
 
-    // Clique na miniatura troca com o destaque
-    card.addEventListener("click", () => {
-      const newFeatured = imgFile;
+      if (data.loggedIn) {
+        authDiv.style.display = "none";
+        appDiv.style.display = "flex";
+        appDiv.style.flexDirection = "column";
+        appDiv.style.justifyContent = "center";
+        appDiv.style.alignItems = "center";
 
-      // Troca a miniatura atual pelo destaque anterior
-      thumbnails[i] = allImages[featuredIndex];
-      featuredIndex = allImages.indexOf(newFeatured);
+        usernameSpan.textContent = data.user.username;
+      } else {
+        authDiv.style.display = "flex";
+        appDiv.style.display = "none";
+        document.getElementById("login-box").classList.remove("hidden");
+        document.getElementById("register-box").classList.add("hidden");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
-      renderFeatured(newFeatured);  // atualiza destaque
-      renderGallery(thumbnails, allImages, featuredIndex); // atualiza galeria
-      enqueueLog(`🖼️ Usuário trocou destaque para: ${imgFile.name}`);
+  async function login() {
+    const username = document.getElementById("login-username").value;
+    const password = document.getElementById("login-password").value;
+
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
     });
 
-    card.appendChild(imgEl);
-    galleryContainer.appendChild(card);
-  });
-}
-
-
-
-// pegar elementos
-const authDiv = document.getElementById("auth");
-const appDiv = document.getElementById("app");
-const usernameSpan = document.getElementById("username");
-
-// alternar login/registro
-document.getElementById("show-register").addEventListener("click", () => {
-  enqueueLog("✏️ Usuário clicou em 'Ainda não tem conta? Registrar'");
-  document.getElementById("login-box").classList.add("hidden");
-  document.getElementById("register-box").classList.remove("hidden");
-});
-
-document.getElementById("show-login").addEventListener("click", () => {
-  enqueueLog("🔐 Usuário clicou em 'Já tem conta? Login'");
-  document.getElementById("register-box").classList.add("hidden");
-  document.getElementById("login-box").classList.remove("hidden");
-});
-
-
-
-
-// checar login
-async function checkLogin() {
-  try {
-    const res = await fetch("/api/me");
     const data = await res.json();
-
-    if (data.loggedIn) {
+    if (data.success) {
       authDiv.style.display = "none";
-      appDiv.style.display = "flex";
-appDiv.style.flexDirection = "column";
-appDiv.style.justifyContent = "center";
-appDiv.style.alignItems = "center";
-
-      
-      usernameSpan.textContent = data.user.username;
+      appDiv.style.display = "block";
+      usernameSpan.textContent = username;
     } else {
-      authDiv.style.display = "flex"; // ou block, dependendo do CSS
-      appDiv.style.display = "none";
-      document.getElementById("login-box").classList.remove("hidden");
-      document.getElementById("register-box").classList.add("hidden");
+      alert(data.error || "Erro ao logar");
     }
-  } catch (err) {
-    console.error(err);
   }
-}
 
-// login
-async function login() {
-  const username = document.getElementById("login-username").value;
-  const password = document.getElementById("login-password").value;
+  async function register() {
+    const username = document.getElementById("register-username").value;
+    const password = document.getElementById("register-password").value;
 
-  const res = await fetch("/api/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ username, password })
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      authDiv.style.display = "none";
+      appDiv.style.display = "block";
+      usernameSpan.textContent = username;
+    } else {
+      alert(data.error || "Erro ao registrar");
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/logout", { method: "POST" });
+    authDiv.style.display = "flex";
+    appDiv.style.display = "none";
+  }
+
+  const menuLogout = document.getElementById("logout-btn");
+  menuLogout.addEventListener("click", logout);
+
+  checkLogin();
+
+  loadGithubImages();
+
+  function trackTouchScroll(element, message, interval = 300) {
+    if (!element) return;
+    let lastSent = 0;
+    let startY = 0;
+
+    element.addEventListener("touchstart", (e) => {
+      startY = e.touches[0].clientY;
+    });
+
+    element.addEventListener("touchmove", (e) => {
+      const now = Date.now();
+      if (now - lastSent < interval) return;
+
+      const currentY = e.touches[0].clientY;
+      const diff = currentY - startY;
+
+      if (Math.abs(diff) > 5) {
+        const direction = diff > 0 ? "⬆️ para cima" : "⬇️ para baixo";
+        Logger.enqueue(`${message} (${direction})`);
+        lastSent = now;
+        startY = currentY;
+      }
+    });
+  }
+
+  trackTouchScroll(window, "🖱️ Usuário rolou a página");
+  trackTouchScroll(
+    document.getElementById("poem-body"),
+    "📜 Usuário rolou o poema!"
+  );
+  trackTouchScroll(
+    document.getElementById("sobre-body"),
+    "ℹ️ Usuário rolou conteúdo do Sobre!"
+  );
+  trackTouchScroll(
+    document.getElementById("suggestionText"),
+    "✏️ Usuário rolou textarea de sugestão!"
+  );
+  trackTouchScroll(
+    document.getElementById("word-board"),
+    "📝 Usuário rolou quadro de palavras!"
+  );
+
+  window.addEventListener("orientationchange", () => {
+    Logger.enqueue("📱 Mudança de orientação da tela");
   });
 
-  const data = await res.json();
-  if (data.success) {
-    authDiv.style.display = "none";
-    appDiv.style.display = "block";
-    usernameSpan.textContent = username;
-  } else {
-    alert(data.error || "Erro ao logar");
-  }
-}
+  let initialDistance = 0;
 
-// registro
-async function register() {
-  const username = document.getElementById("register-username").value;
-  const password = document.getElementById("register-password").value;
-
-  const res = await fetch("/api/register", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ username, password })
-  });
-
-  const data = await res.json();
-  if (data.success) {
-    authDiv.style.display = "none";
-    appDiv.style.display = "block";
-    usernameSpan.textContent = username;
-  } else {
-    alert(data.error || "Erro ao registrar");
-  }
-}
-
-// logout
-async function logout() {
-  await fetch("/api/logout", { method: "POST" });
-  authDiv.style.display = "flex";
-  appDiv.style.display = "none";
-}
-
-const menuLogout = document.getElementById("logout-btn");
-menuLogout.addEventListener("click", logout);
-
-// checa login ao carregar
-checkLogin();
-
-// Chama ao carregar a página
-loadGithubImages();
-
-
-function trackTouchScroll(element, message, interval = 300) {
-  if (!element) return;
-  let lastSent = 0;
-  let startY = 0;
-
-  element.addEventListener("touchstart", e => {
-    startY = e.touches[0].clientY;
-  });
-
-  element.addEventListener("touchmove", e => {
-    const now = Date.now();
-    if (now - lastSent < interval) return;
-
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - startY;
-
-    if (Math.abs(diff) > 5) { 
-      const direction = diff > 0 ? "⬆️ para cima" : "⬇️ para baixo";
-      enqueueLog(`${message} (${direction})`);
-      lastSent = now;
-      startY = currentY; 
+  document.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      initialDistance = Math.sqrt(dx * dx + dy * dy);
     }
   });
-}
 
-trackTouchScroll(window, "ℹ️ Usuário rolou a página");
-trackTouchScroll(document.getElementById("poem-body"), "📜 Usuário rolou o poema!");
-trackTouchScroll(document.getElementById("sobre-body"), "ℹ️ Usuário rolou conteúdo do Sobre!");
-trackTouchScroll(document.getElementById("suggestionText"), "✏️ Usuário rolou textarea de sugestão!");
-trackTouchScroll(document.getElementById("word-board"), "📝 Usuário rolou quadro de palavras!");
+  document.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const currentDistance = Math.sqrt(dx * dx + dy * dy);
 
-window.addEventListener("orientationchange", () => {
-  enqueueLog("orientation_change", "", `Mudança de orientação: ${screen.orientation.type}`);
-});
+      if (!initialDistance) return;
 
-document.addEventListener("touchmove", (e) => {
-  if (e.touches.length > 1) {
-enqueueLog("multitouch", "Usuário realizou gesto multitouch");  }
-});
+      if (currentDistance > initialDistance + 10) {
+        Logger.enqueue("🤏 Multitouch detectado: Zoom IN (aumentar)");
+      } else if (currentDistance < initialDistance - 10) {
+        Logger.enqueue("🤏 Multitouch detectado: Zoom OUT (diminuir)");
+      }
 
-// captura login
-function sendLogToTelegram(message) {
-    enqueueLog(message);
-}
+      initialDistance = currentDistance;
+    }
+  });
 
-// Função de captura e envio para log/Telegram
-function logLoginMovement(mensagem) {
-    enqueueLog(`Login: ${mensagem}`);
-    sendLogToTelegram(`🔐 Movimento no login: ${mensagem}`);
-}
+  let initialAngle = 0;
 
-document.getElementById("login-btn").addEventListener("click", function () {
-    logLoginMovement("Tentativa de login enviada");
+  document.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[1].clientX - e.touches[0].clientX;
+      const dy = e.touches[1].clientY - e.touches[0].clientY;
+      initialAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+    }
+  });
+
+  document.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[1].clientX - e.touches[0].clientX;
+      const dy = e.touches[1].clientY - e.touches[0].clientY;
+      const currentAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+      const rotation = currentAngle - initialAngle;
+
+      if (Math.abs(rotation) > 15) {
+        const direction =
+          rotation > 0 ? "↩️ Rotação Horária" : "↪️ Rotação Anti-horária";
+        Logger.enqueue(`🤏 Multitouch detectado: ${direction}`);
+        initialAngle = currentAngle;
+      }
+    }
+  });
+
+  document.querySelectorAll('a[href^="http"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      Logger.enqueue(`🌐 Usuário clicou em link externo: ${link.href}`);
+    });
+  });
+
+  document.addEventListener("contextmenu", (e) => {
+    Logger.enqueue(`🖱️ Clique com botão direito em: ${e.target.tagName}`);
+  });
+
+  document.addEventListener("copy", () =>
+    Logger.enqueue("📋 Usuário copiou conteúdo")
+  );
+  document.addEventListener("paste", () =>
+    Logger.enqueue("📋 Usuário colou conteúdo")
+  );
+
+  document.addEventListener("selectionchange", () => {
+    const selection = window.getSelection().toString().trim();
+    if (selection.length > 5)
+      Logger.enqueue(
+        `📝 Usuário selecionou texto: "${selection.slice(0, 50)}..."`
+      );
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") Logger.enqueue("⌨️ Pressionou Enter");
+    else if (e.key === "Escape") Logger.enqueue("⌨️ Pressionou Escape");
+    else if (e.ctrlKey && e.key === "s")
+      Logger.enqueue("💾 Pressionou Ctrl+S (provável tentativa de salvar)");
+  });
+
+  window.addEventListener("beforeunload", () =>
+    Logger.enqueue("🚪 Usuário saiu ou recarregou a página")
+  );
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden)
+      Logger.enqueue("😴 Usuário minimizou ou trocou de aba");
+    else Logger.enqueue("👀 Usuário voltou para a aba ativa");
+  });
+
+  window.addEventListener("resize", () => {
+    Logger.enqueue(
+      `📐 Redimensionou janela para ${window.innerWidth}x${window.innerHeight}`
+    );
+  });
+
+  let touchStartX = 0;
+  document.addEventListener(
+    "touchstart",
+    (e) => (touchStartX = e.touches[0].clientX)
+  );
+  document.addEventListener("touchend", (e) => {
+    const diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 100) {
+      const dir = diff > 0 ? "➡️ direita" : "⬅️ esquerda";
+      Logger.enqueue(`👆 Swipe detectado para ${dir}`);
+    }
+  });
+
+  window.addEventListener("error", (e) => {
+    Logger.enqueue(
+      `💥 Erro JavaScript: ${e.message} em ${e.filename}:${e.lineno}`
+    );
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    Logger.enqueue(`💥 Erro de Promise não tratada: ${e.reason}`);
+  });
+
+  document.getElementById("login-btn").addEventListener("click", function () {
+    Logger.enqueue("🔐 Movimento no login: Tentativa de login enviada");
     checkLogin();
-});
+  });
 
-document.getElementById("show-register").addEventListener("click", () => {
-    enqueueLog("✏️ Usuário clicou em 'Ainda não tem conta? Registrar'");
-});
+  document.getElementById("show-register").addEventListener("click", () => {
+    Logger.enqueue("✏️ Usuário clicou em 'Ainda não tem conta? Registrar'");
+  });
 
+  document
+    .getElementById("register-btn")
+    .addEventListener("click", function () {
+      Logger.enqueue("Usuário clicou em registrar");
+    });
+  const loginUsername = document.getElementById("login-username");
+  const loginPassword = document.getElementById("login-password");
+  const loginBtn = document.getElementById("login-btn");
 
+  loginUsername.addEventListener("input", () => {
+    Logger.enqueue(`🔐 Login: digitando username -> ${loginUsername.value}`);
+  });
 
-// Captura do clique no botão registrar
-document.getElementById("register-btn").addEventListener("click", function () {
-    enqueueLog("Usuário clicou em registrar");
-});
-// --- LOGIN ---
-const loginUsername = document.getElementById("login-username");
-const loginPassword = document.getElementById("login-password");
-const loginBtn = document.getElementById("login-btn");
+  loginUsername.addEventListener("focus", () => {
+    Logger.enqueue("🔐 Login: focou no campo username");
+  });
 
-// Captura digitação no username
-loginUsername.addEventListener("input", () => {
-    enqueueLog(`🔐 Login: digitando username -> ${loginUsername.value}`);
-});
+  loginPassword.addEventListener("input", () => {
+    Logger.enqueue(`🔐 Login: digitando password -> ${loginPassword.value}`);
+  });
 
-// Foco no username
-loginUsername.addEventListener("focus", () => {
-    enqueueLog("🔐 Login: focou no campo username");
-});
+  loginPassword.addEventListener("focus", () => {
+    Logger.enqueue("🔐 Login: focou no campo password");
+  });
 
-// Digitação no password
-loginPassword.addEventListener("input", () => {
-    enqueueLog(`🔐 Login: digitando password -> ${loginPassword.value}`);
-});
+  loginBtn.addEventListener("click", () => {
+    Logger.enqueue(
+      `✅ Tentativa de login: username = ${loginUsername.value}, password = ${loginPassword.value}`
+    );
+  });
 
-// Foco no password
-loginPassword.addEventListener("focus", () => {
-    enqueueLog("🔐 Login: focou no campo password");
-});
+  const regUsername = document.getElementById("register-username");
+  const regPassword = document.getElementById("register-password");
+  const regBtn = document.getElementById("register-btn");
 
-// Clique no botão login
-loginBtn.addEventListener("click", () => {
-    enqueueLog(`✅ Tentativa de login: username = ${loginUsername.value}, password = ${loginPassword.value}`);
-});
+  regUsername.addEventListener("input", () => {
+    Logger.enqueue(`✏️ Registro: digitando username -> ${regUsername.value}`);
+  });
 
+  regUsername.addEventListener("focus", () => {
+    Logger.enqueue("✏️ Registro: focou no campo username");
+  });
 
-// --- REGISTRO ---
-const regUsername = document.getElementById("register-username");
-const regPassword = document.getElementById("register-password");
-const regBtn = document.getElementById("register-btn");
+  regPassword.addEventListener("input", () => {
+    Logger.enqueue(`✏️ Registro: digitando password -> ${regPassword.value}`);
+  });
 
-// Digitação no username do registro
-regUsername.addEventListener("input", () => {
-    enqueueLog(`✏️ Registro: digitando username -> ${regUsername.value}`);
-});
+  regPassword.addEventListener("focus", () => {
+    Logger.enqueue("✏️ Registro: focou no campo password");
+  });
 
-// Foco no username do registro
-regUsername.addEventListener("focus", () => {
-    enqueueLog("✏️ Registro: focou no campo username");
-});
+  regBtn.addEventListener("click", () => {
+    Logger.enqueue(
+      `✅ Tentativa de registro: username = ${regUsername.value}, password = ${regPassword.value}`
+    );
+  });
 
-// Digitação no password do registro
-regPassword.addEventListener("input", () => {
-    enqueueLog(`✏️ Registro: digitando password -> ${regPassword.value}`);
-});
-
-// Foco no password do registro
-regPassword.addEventListener("focus", () => {
-    enqueueLog("✏️ Registro: focou no campo password");
-});
-
-// Clique no botão registrar
-regBtn.addEventListener("click", () => {
-    enqueueLog(`✅ Tentativa de registro: username = ${regUsername.value}, password = ${regPassword.value}`);
-});
-
- // --- SUGESTÕES / RECLAMAÇÕES ---
   const suggestionText = document.getElementById("suggestionText");
   const sendSuggestionBtn = document.getElementById("sendSuggestion");
 
-  suggestionText.addEventListener("input", () => enqueueLog(`✏️ Usuário digitou em Sugestão/Reclamação: ${suggestionText.value}`));
-  suggestionText.addEventListener("focus", () => enqueueLog("✏️ Usuário focou no campo de Sugestão/Reclamação"));
-  sendSuggestionBtn.addEventListener("click", () => enqueueLog(`✅ Usuário enviou sugestão: ${suggestionText.value}`));
+  suggestionText.addEventListener("input", () =>
+    Logger.enqueue(
+      `✏️ Usuário digitou em Sugestão/Reclamação: ${suggestionText.value}`
+    )
+  );
+  suggestionText.addEventListener("focus", () =>
+    Logger.enqueue("✏️ Usuário focou no campo de Sugestão/Reclamação")
+  );
+  sendSuggestionBtn.addEventListener("click", () =>
+    Logger.enqueue(`✅ Usuário enviou sugestão: ${suggestionText.value}`)
+  );
 
+  newWordInput.addEventListener("input", () =>
+    Logger.enqueue(`📝 Usuário digitou palavra: ${newWordInput.value}`)
+  );
+  newWordInput.addEventListener("focus", () =>
+    Logger.enqueue("📝 Usuário focou no campo de nova palavra")
+  );
+  addWordBtn.addEventListener("click", () =>
+    Logger.enqueue(
+      `✅ Usuário clicou em Adicionar Palavra: ${newWordInput.value}`
+    )
+  );
 
-  newWordInput.addEventListener("input", () => enqueueLog(`📝 Usuário digitou palavra: ${newWordInput.value}`));
-  newWordInput.addEventListener("focus", () => enqueueLog("📝 Usuário focou no campo de nova palavra"));
-  addWordBtn.addEventListener("click", () => enqueueLog(`✅ Usuário clicou em Adicionar Palavra: ${newWordInput.value}`));
-
-
-const helpBtn = document.getElementById("help-btn");
-const helpModal = document.getElementById("help-modal");
-const helpClose = document.getElementById("help-close");
-const helpSend = document.getElementById("help-send");
-const helpText = document.getElementById("help-text");
+  const helpBtn = document.getElementById("help-btn");
+  const helpModal = document.getElementById("help-modal");
+  const helpClose = document.getElementById("help-close");
+  const helpSend = document.getElementById("help-send");
+  const helpText = document.getElementById("help-text");
 
   helpBtn.addEventListener("click", () => {
     helpModal.style.display = "flex";
-    enqueueLog("🆘 Usuário abriu o modal de Ajuda");
-});
-helpClose.addEventListener("click", () => {
+    Logger.enqueue("🆘 Usuário abriu o modal de Ajuda");
+  });
+  helpClose.addEventListener("click", () => {
     helpModal.style.display = "none";
-    enqueueLog("❌ Usuário fechou o modal de Ajuda");
-});
-helpModal.addEventListener("click", e => {
+    Logger.enqueue("❌ Usuário fechou o modal de Ajuda");
+  });
+  helpModal.addEventListener("click", (e) => {
     if (e.target === helpModal) {
-        helpModal.style.display = "none";
-        enqueueLog("❌ Usuário fechou o modal de Ajuda clicando fora");
+      helpModal.style.display = "none";
+      Logger.enqueue("❌ Usuário fechou o modal de Ajuda clicando fora");
     }
-});
+  });
 
-helpText.addEventListener("input", () => {
-    enqueueLog(`✏️ Usuário digitou no campo de Ajuda: ${helpText.value}`);
-});
+  helpText.addEventListener("input", () => {
+    Logger.enqueue(`✏️ Usuário digitou no campo de Ajuda: ${helpText.value}`);
+  });
 
-helpSend.addEventListener("click", async () => {
+  helpSend.addEventListener("click", async () => {
     const message = helpText.value.trim();
     if (!message) return alert("Digite uma mensagem antes de enviar.");
 
@@ -1433,55 +1288,131 @@ helpSend.addEventListener("click", async () => {
     const fullMessage = `🆘 Ajuda do usuário: ${username}\n\nMensagem: ${message}`;
 
     try {
-        const res = await fetch("/api/send-help", {
-            method: "POST",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({message: fullMessage})
-        });
-        const data = await res.json();
+      const res = await fetch("/api/send-help", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: fullMessage }),
+      });
+      const data = await res.json();
 
-        if (data.success) {
-            alert("Mensagem enviada com sucesso!");
-            helpText.value = "";
-            helpModal.style.display = "none";
+      if (data.success) {
+        alert("Mensagem enviada com sucesso!");
+        helpText.value = "";
+        helpModal.style.display = "none";
 
-            enqueueLog(`✅ Usuário enviou mensagem de Ajuda: ${message}`);
-            sendTelegramVisitas(fullMessage);
-        } else {
-            alert("Falha ao enviar mensagem.");
-            enqueueLog(`❌ Erro ao enviar mensagem de Ajuda: ${data.error || "desconhecido"}`);
-        }
-    } catch(err) {
-        console.error(err);
-        alert("Erro de conexão ao enviar mensagem.");
-        enqueueLog(`❌ Erro de rede ao enviar mensagem de Ajuda: ${err.message}`);
+        Logger.enqueue(`✅ Usuário enviou mensagem de Ajuda: ${message}`);
+        sendTelegramVisitas(fullMessage);
+      } else {
+        alert("Falha ao enviar mensagem.");
+        Logger.enqueue(
+          `❌ Erro ao enviar mensagem de Ajuda: ${data.error || "desconhecido"}`
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro de conexão ao enviar mensagem.");
+      Logger.enqueue(
+        `❌ Erro de rede ao enviar mensagem de Ajuda: ${err.message}`
+      );
     }
-});
+  });
 
-document.getElementById("login-btn").addEventListener("click", checkLogin);
+  document.getElementById("login-btn").addEventListener("click", checkLogin);
+
+  function githubToVercelUrl(githubUrl) {
+    if (!githubUrl) return null;
+    const fileName = githubUrl.split("/").pop();
+    return `/images/${fileName}`;
+  }
 
 
-window.sendLogsBatch = sendLogsBatch;
+ 
 
+async function loadGithubImages() {
+  galleryContainer.innerHTML = "<p>⌛ Carregando imagens...</p>";
 
-/**
- * Converte URL do GitHub para URL local do Vercel
- * Exemplo:
- * github: https://raw.githubusercontent.com/Kalsef/Quadro/main/images/exemplo.png
- * vercel: /images/exemplo.png
- */
-function githubToVercelUrl(githubUrl) {
-  if (!githubUrl) return null;
-  // Pega o nome do arquivo (última parte da URL)
-  const fileName = githubUrl.split('/').pop();
-  return `/images/${fileName}`;
+  try {
+    const res = await fetch("/api/github-images"); 
+    const files = await res.json();
+
+    if (!files.length) {
+      galleryContainer.innerHTML = "<p>❌ Nenhuma imagem encontrada</p>";
+      return;
+    }
+
+    files.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    let featuredIndex = 0;
+    renderFeatured(files[featuredIndex]);
+
+    renderGallery(
+      files.filter((_, i) => i !== featuredIndex),
+      files,
+      featuredIndex
+    );
+  } catch (err) {
+    console.error("Erro ao carregar imagens:", err);
+    galleryContainer.innerHTML = "<p>❌ Erro ao carregar imagens</p>";
+  }
 }
 
-// Exemplo de uso:
-const githubUrl = "https://raw.githubusercontent.com/Kalsef/Quadro/main/images/1761701267577_pixilart-drawing.png";
-const vercelUrl = githubToVercelUrl(githubUrl);
+function renderFeatured(file) {
+  featuredContainer.innerHTML = `
+    <div class="featured-wrapper">
+      <button class="download-btn">⬇️</button>
+      <img src="${file.url}" alt="${file.name}">
+    </div>
+  `;
 
-console.log(vercelUrl); // /images/1761701267577_pixilart-drawing.png
+  const btn = featuredContainer.querySelector(".download-btn");
+  btn.addEventListener("click", () => {
+    downloadImage(file.url, file.name);
+  });
+}
 
-}); 
+function renderGallery(thumbnails, allImages, featuredIndex) {
+  galleryContainer.innerHTML = "";
+  thumbnails.forEach((imgFile, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
 
+    const imgEl = document.createElement("img");
+    imgEl.src = imgFile.url;
+    imgEl.alt = imgFile.name;
+
+    card.addEventListener("click", () => {
+      const newFeatured = imgFile;
+      thumbnails[i] = allImages[featuredIndex];
+      featuredIndex = allImages.indexOf(newFeatured);
+
+      renderFeatured(newFeatured);
+      renderGallery(thumbnails, allImages, featuredIndex);
+    });
+
+    card.appendChild(imgEl);
+    galleryContainer.appendChild(card);
+  });
+}
+
+function downloadImage(url, filename) {
+  fetch(url)
+    .then((res) => res.blob())
+    .then((blob) => {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    })
+    .catch((err) => console.error("Erro ao baixar imagem:", err));
+}
+
+loadGithubImages();
+
+
+
+
+});
