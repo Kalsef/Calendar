@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/duration.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/relativeTime.js"></script>
+  <link rel="shortcut icon" href="https://twemoji.maxcdn.com/v/latest/72x72/1f3e0.png" type="image/x-icon">
+  <title>Para Minha Pitufita</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+ <div id="auth">
+<button id="help-btn" class="help-btn">?</button>
+
+<div id="help-modal" class="help-modal">
+    <div class="help-modal-content">
+        <h3>Precisa de ajuda? Digite abaixo</h3>
+        <p> Não consegue criar conta em "registrar", ou quais outros problemas avise. S2</p>
+        <textarea id="help-text" placeholder="Digite sua mensagem..." rows="5"></textarea>
+        <div class="help-buttons">
+            <button id="help-send" class="help-send">Enviar</button>
+            <button id="help-close" class="help-close">Fechar</button>
+        </div>
+    </div>
+</div>
+
+  <div class="auth-box" id="login-box">
+    <h2>Login</h2>
+    <input id="login-username" type="text" placeholder="Usuário">
+    <input id="login-password" type="password" placeholder="Senha">
+    <button id="login-btn">Entrar</button>
+    <p>Ainda não tem conta? <a href="#" id="show-register">Registrar</a></p>
+  </div>
+
+  <div class="auth-box hidden" id="register-box">
+    <h2>Registrar</h2>
+    <input id="register-username" type="text" placeholder="Usuário">
+    <input id="register-password" type="password" placeholder="Senha">
+    <button id="register-btn">Registrar</button>
+    <p>Já tem conta? <a href="#" id="show-login">Fazer login</a></p>
+  </div>
+</div>
+
+  <div id="app" class="hidden">
+
+
+
+    <div id="menuleft">
+      <button data-descricao="Abrir/Fechar Menu Lateral" id="square-menu" class="square-menu" aria-expanded="false"
+        aria-label="Abrir menu">
+        <span class="bar bar1"></span>
+        <span class="bar bar2"></span>
+        <span class="bar bar3"></span>
+      </button>
+    </div>
+
+    <div id="overlay"></div>
+
+    <nav id="sidebar">
+      <h2>Menu Lateral</h2>
+      <ul class="menu-top">
+        <li><a href="#" id="menuSugestao">📬 Sugestões ou Reclamações</a></li>
+        <li><a href="#" id="menuAvisos">📢 Avisos</a></li>
+        <li><a href="#" id="menuPolls">🗳️ Votações</a></li>
+      </ul>
+      <ul class="menu-bottom">
+        <li><a href="#" id="menuSobre">ℹ️ Sobre este site</a></li>
+        <li><a href="#" id="logout-btn">🚪 Sair da conta</a></li>
+      </ul>
+    </nav>
+
+
+    <div id="sobre-modal">
+      <div id="sobre-container">
+        <div id="sobre-header">
+          <h2>ℹ️ Sobre este site</h2>
+          <span id="sobre-close">&times;</span>
+        </div>
+        <div id="sobre-body">
+📖 Este site foi criado com todo o carinho para minha Pitufita. Cada detalhe é um sussurro do amor que sinto
+por você, permanece profundo, constante e infinito, mesmo diante de qualquer distância ou obstáculo.
+
+💌 É um refúgio digital onde guardo nossas memórias, sonhos e promessas, um espaço só nosso, onde cada pixel
+pulsa com essência do meu amor por você.
+
+💖 Este site é mais que um presente; é uma declaração eterna do meu amor por você, um lembrete diário de que,
+não importa onde estejamos, meu coração sempre estará ao seu lado.
+
+☝️🤓 Criado com todo o carinho e dedicação por João / Kal
+
+🛠 Versão 3.0 // Última Atualização 29/10
+
+        </div>
+      </div>
+    </div>
+
+    <div id="suggestionModal" class="modal">
+      <div class="modal-content suggestion-content">
+        <span class="close" id="closeSuggestion">&times;</span>
+        <h2>💡 Sugestões ou Reclamações</h2>
+        <p>
+          Escreva abaixo sua sugestão ou reclamação. Ela será enviada
+          diretamente para análise 📲
+        </p>
+        <textarea id="suggestionText" placeholder="Digite sua mensagem..." required></textarea>
+        <button data-descricao="Enviar sugestão" id="sendSuggestion">
+          Enviar
+        </button>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+      <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <div style="display: none;" id="custom-modal">
+      <div id="custom-modal-content">
+        <span id="custom-close">&times;</span>
+        <h2 id="custom-title"></h2>
+        <div id="custom-body"></div>
+        <div id="custom-actions"></div>
+      </div>
+    </div>
+
+
+
+    <div id="avisos-modal" class="modal">
+      <div class="polls-content">
+        <h2>📢 Avisos</h2>
+        <div id="avisos-list">⌛ Carregando avisos...</div>
+        <button id="avisos-back">Voltar</button>
+      </div>
+    </div>
+
+    <div id="polls-modal" class="modal">
+      <div class="polls-content">
+        <h2>🗳️ Votações</h2>
+        <div id="polls-list">⌛ Carregando votações...</div>
+        <button data-descricao="Voltar da Votação" id="polls-back">Voltar</button>
+      </div>
+    </div>
+
+
+
+    <div id="poem-modal">
+      <div id="poem-container">
+        <div id="poem-header">
+          <h2>📜 Poema do Dia</h2>
+          <span id="close-modal">&times;</span>
+        </div>
+        <div id="poem-body">
+          <div id="poem-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="Newboard" style="display: none;">
+      <h2>🧩 Quadro Com Nossas Coisas</h2>
+
+      <div id="word-board"
+        style="min-height: 200px; border: 2px dashed #5aaafa; border-radius: 10px; padding: 15px; flex-wrap: wrap; gap: 10px; background: #1e1e2f;">
+      </div>
+
+      <p style="margin-top: 20px; margin-bottom: 10px; color: #fff;">
+        Abaixo dá para adicionar ao quadro, palavras digitando onde se pede e clicando em adicionar palavras, já para
+        imagens basta clicar no + ao lado.
+      </p>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 40px; width: 100%; max-width: 600px;">
+        <input type="text" id="new-word" placeholder="Digite uma palavra..."
+          style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #5aaafa; font-size: 16px; background: #1e1e2f; color: #fff;" />
+
+        <input type="file" id="new-image" accept="image/*" hidden />
+        <label for="new-image" class="upload-btn" style="display: flex; align-items: center; justify-content: center;  
+           width: 55px; border-radius: 8px; height: 45px;
+           background: #1a2238; color: #fff; font-size: 24px; 
+           cursor: pointer; border: 1px solid #5aaafa;
+           transition: 0.3s;">
+          +
+        </label>
+      </div>
+
+
+      <button data-descricao="Botão adicionar palavra" id="add-word"
+        style="margin-top: 30px; padding: 10px 15px; border-radius: 8px; border: none; background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9)); color: #fff; cursor: pointer;">
+        Adicionar Palavras
+      </button>
+
+
+      <button data-descricao="Clicou o Botãaao voltar do quadro" id="back-board-btn"
+        style="margin-top: 25px; padding: 10px 15px; border-radius: 8px; border: none; background: linear-gradient(145deg,rgba(57, 77, 110, 0.9),rgba(30, 41, 59, 0.9)); color: #fff; cursor: pointer;">
+        Voltar
+      </button>
+    </div>
+
+
+
+    <div id="today-modal" class="modal">
+      <div class="modal-content today-content">
+        <div class="modal-header">
+          <h2>🎨 Desenhos </h2>
+        </div>
+        <div class="modal-body">
+          <p>Aqui estarei adicionando desenhos que fiz pra você ; &#41</p>
+          <div id="github-gallery-container">
+            <div id="featured-image"></div> 
+            <div id="github-gallery"></div>
+          </div>
+
+          <button data-descricao="Voltar do desenho de hj" id="back-from-today"> Voltar</button>
+
+        </div>
+      </div>
+    </div>
+
+
+  <div id="menu">
+    <h1>Bem-vinda <span id="username"></span>!</h1>
+    <hr />
+    <p>Comece explorando por alguma das opções abaixo, ou por avisos!</p>
+    <button id="calendar-btn">📅 Calendário</button>
+    <button id="counter-btn">⏳ Contadores de Tempo</button>
+    <button id="poem-btn">📜 Poema do Dia</button>
+    <button id="btnAbrirQuadro">📌 Quadro</button>
+    <button id="open-today">🎨 Desenhos</button>
+    <button id="note">📝 Diário / Bloco de Notas </button>
+  </div>
+
+  <div id="counters">
+    <h2>Contadores de Tempo</h2>
+    <div id="counter-loading" style="display: none">
+      ⌛ Carregando contadores...
+    </div>
+
+    <div class="counter" id="counter1"></div>
+    <div class="counter" id="counter2"></div>
+    <div class="counter" id="counter3"></div>
+    <button data-descricao="Voltar do contador" id="back-btn">Voltar</button>
+  </div>
+
+  <div id="notification" class="notification"></div>
+
+
+    <script src="logger.js"></script>
+    <script src="scripts.js" ></script>
+
+
+</div>
+</body>
+
+</html>
