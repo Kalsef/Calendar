@@ -565,13 +565,13 @@ app.get("/api/admin/poems", authAdmin, async (req, res) => {
 });
 
 // GET poema do dia
+
 app.get("/api/poem", async (req, res) => {
   try {
     const now = new Date();
-    const brTime = new Date(
-      now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-    );
-    const today = brTime.toISOString().split("T")[0]; 
+    // converte para UTC-3 (Brasília)
+    const brasilia = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+    const today = brasilia.toISOString().split("T")[0];
 
     const result = await pool.query(
       "SELECT content FROM poems WHERE date = $1",
@@ -588,6 +588,7 @@ app.get("/api/poem", async (req, res) => {
     res.status(500).json({ poem: "Erro ao carregar poema" });
   }
 });
+
 
 // POST adicionar/editar poema diário (admin)
 app.post("/api/admin/poem", authAdmin, async (req, res) => {
