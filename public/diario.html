@@ -544,87 +544,121 @@
             function clearAll() { if (confirm('Apagar todas as notas? Esta ação não pode ser desfeita.')) { notes = []; save(); render(); } }
 
             function render() {
-                const root = document.getElementById('notesRoot'); root.innerHTML = '';
-                const q = document.getElementById('searchInput').value.trim().toLowerCase();
-                const filter = document.getElementById('filterSelect').value;
-                let list = notes.slice();
-                if (filter === 'private') list = list.filter(n => n.private);
-                if (filter === 'public') list = list.filter(n => !n.private);
+  const root = document.getElementById('notesRoot');
+  root.innerHTML = '';
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filter = document.getElementById('filterSelect').value;
+  let list = notes.slice();
 
+  // 🔄 Ordena corretamente (antigas primeiro, recentes depois)
+  list.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                if (list.length === 0) {
-                    root.innerHTML = '<div class="small">Nenhuma nota encontrada. Crie sua primeira nota acima!</div>';
-                    return;
-                }
+  if (filter === 'private') list = list.filter(n => n.private);
+  if (filter === 'public') list = list.filter(n => !n.private);
 
-                const groups = {};
-                function getDayLabel(dateStr) {
-                    const brTime = new Date(new Date(dateStr).toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-                    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  if (list.length === 0) {
+    root.innerHTML = '<div class="small">Nenhuma nota encontrada. Crie sua primeira nota acima!</div>';
+    return;
+  }
 
-                    const diffMs = hoje.setHours(0, 0, 0, 0) - brTime.setHours(0, 0, 0, 0);
-                    const diffDias = diffMs / (1000 * 60 * 60 * 24);
+  const groups = {};
 
-                    if (diffDias === 0) return "Hoje";
-                    if (diffDias === 1) return "Ontem";
+  function getDayLabel(dateStr) {
+    let base = new Date(dateStr);
 
-                    return brTime.toLocaleDateString("pt-BR", {
-                        timeZone: "America/Sao_Paulo",
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric"
-                    });
-                }
-                list.forEach(n => {
-                    const dayLabel = getDayLabel(n.date);
-                    if (!groups[dayLabel]) groups[dayLabel] = [];
-                    groups[dayLabel].push(n);
-                });
+    // 🔧 Corrige datas antigas salvas em UTC (sem fuso horário do Brasil)
+    if (base.getTimezoneOffset() === 0) {
+      base = new Date(base.getTime() - 3 * 60 * 60 * 1000); // UTC → UTC-3
+    }
 
+    // Garante que está no horário de São Paulo
+    const brTime = new Date(
+      base.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+    );
 
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
 
-                Object.keys(groups).forEach(day => {
-                    const gEl = document.createElement('div'); gEl.className = 'group';
-                    const h2 = document.createElement('h2'); h2.textContent = day; gEl.appendChild(h2);
-                    const listEl = document.createElement('div'); listEl.className = 'note-list';
-                    groups[day].forEach(n => {
-                        const el = document.createElement('article'); el.className = 'note' + (n.pinned ? ' pinned' : '');
-                        el.style.borderLeftColor = n.color || 'transparent';
-                        el.innerHTML = `
-          <div class="meta">
-            <div>
-              <div class="title">${escapeHtml(n.title || 'Sem título')}</div>
-<div class="date">
-  ${formatDate(n.date)} ${n.private ? '(Privado)' : '(Público)'}
-</div>
-            </div>
-            <div class="actions">
-              <button class="action-btn" data-act="pin">📌</button>
-              <button class="action-btn" data-act="highlight">✳️</button>
-              <button class="action-btn" data-act="delete">🗑️</button>
+    if (
+      brTime.getFullYear() === today.getFullYear() &&
+      brTime.getMonth() === today.getMonth() &&
+      brTime.getDate() === today.getDate()
+    ) return "Hoje";
+
+    if (
+      brTime.getFullYear() === yesterday.getFullYear() &&
+      brTime.getMonth() === yesterday.getMonth() &&
+      brTime.getDate() === yesterday.getDate()
+    ) return "Ontem";
+
+    return brTime.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  // Agrupa notas por data
+  list.forEach(n => {
+    const dayLabel = getDayLabel(n.date);
+    if (!groups[dayLabel]) groups[dayLabel] = [];
+    groups[dayLabel].push(n);
+  });
+
+  // Cria os grupos na tela
+  Object.keys(groups).forEach(day => {
+    const gEl = document.createElement('div');
+    gEl.className = 'group';
+
+    const h2 = document.createElement('h2');
+    h2.textContent = day;
+    gEl.appendChild(h2);
+
+    const listEl = document.createElement('div');
+    listEl.className = 'note-list';
+
+    groups[day].forEach(n => {
+      const el = document.createElement('article');
+      el.className = 'note' + (n.pinned ? ' pinned' : '');
+      el.style.borderLeftColor = n.color || 'transparent';
+      el.innerHTML = `
+        <div class="meta">
+          <div>
+            <div class="title">${escapeHtml(n.title || 'Sem título')}</div>
+            <div class="date">
+              ${formatDate(n.date)} ${n.private ? '(Privado)' : '(Público)'}
             </div>
           </div>
-          <div class="body">${escapeHtml(n.body || n.content || '')}</div>
-`;
-                        el.querySelectorAll('[data-act]').forEach(b => {
-                            b.onclick = () => {
-                                const a = b.dataset.act;
-                                if (a === 'pin') { n.pinned = !n.pinned; save(n); render(); }
-                                if (a === 'delete') {
-                                    if (confirm('Apagar esta nota?')) {
-                                        deleteNoteManual(n.id);
-                                    }
-                                }
+          <div class="actions">
+            <button class="action-btn" data-act="pin">📌</button>
+            <button class="action-btn" data-act="highlight">✳️</button>
+            <button class="action-btn" data-act="delete">🗑️</button>
+          </div>
+        </div>
+        <div class="body">${escapeHtml(n.body || n.content || '')}</div>
+      `;
 
-                                if (a === 'highlight') { const col = prompt('Nova cor:', n.color || '#ffffff'); if (col) { n.color = col; save(n); render(); } }
-                            };
-                        });
-                        listEl.appendChild(el);
-                    });
-                    gEl.appendChild(listEl);
-                    root.appendChild(gEl);
-                });
-            }
+      el.querySelectorAll('[data-act]').forEach(b => {
+        b.onclick = () => {
+          const a = b.dataset.act;
+          if (a === 'pin') { n.pinned = !n.pinned; save(n); render(); }
+          if (a === 'delete') {
+            if (confirm('Apagar esta nota?')) deleteNoteManual(n.id);
+          }
+          if (a === 'highlight') {
+            const col = prompt('Nova cor:', n.color || '#ffffff');
+            if (col) { n.color = col; save(n); render(); }
+          }
+        };
+      });
+      listEl.appendChild(el);
+    });
+
+    gEl.appendChild(listEl);
+    root.appendChild(gEl);
+  });
+}
 
 
 
@@ -1047,5 +1081,6 @@
 
     </script>
 </body>
+
 
 </html>
