@@ -550,8 +550,8 @@
   const filter = document.getElementById('filterSelect').value;
   let list = notes.slice();
 
-  // 🔄 Ordena corretamente (antigas primeiro, recentes depois)
-  list.sort((a, b) => new Date(a.date) - new Date(b.date));
+ list.sort((a, b) => new Date(b.date) - new Date(a.date));
+
 
   if (filter === 'private') list = list.filter(n => n.private);
   if (filter === 'public') list = list.filter(n => !n.private);
@@ -1084,3 +1084,4 @@
 
 
 </html>
+
