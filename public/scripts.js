@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const countersData = [
     {
-      name: "EU CONHECI A MULHER QUE VIRIA SER O AMOR DA MINHA VIDA",
+      name: "EU CONHECI O AMOR DA MINHA VIDA",
       date: new Date("2024-11-27T22:30:00"),
       image: "1.png",
     },
@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
       image: "1.png",
     },
     {
-      name: "ATÉ, MEU AMOR...",
+      name: "ATÉ ALGUM DIA...ESPERAREI.",
       date: new Date("2025-08-11T17:15:00"),
       image: "2.png",
     },
