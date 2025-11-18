@@ -256,6 +256,15 @@ app.use("/uploads", express.static(uploadsDir)); // arquivos de áudio públicos
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
+        
+    CREATE TABLE IF NOT EXISTS notificacoes (
+    id SERIAL PRIMARY KEY,
+    titulo TEXT NOT NULL,
+    mensagem TEXT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+
 
       ALTER TABLE musicas
         ALTER COLUMN data TYPE DATE
@@ -1458,4 +1467,44 @@ app.delete("/api/notes/:id", async (req, res) => {
 
 
 
+});
+
+app.get("/api/notificacoes", async (req, res) => {
+  try {
+  const result = await pool.query(`
+  SELECT id, titulo, mensagem,
+  (criado_em AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') AS criado_em
+  FROM notificacoes
+  ORDER BY id DESC
+`);
+res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao listar notificações" });
+  }
+});
+
+app.post("/api/notificacoes", async (req, res) => {
+  try {
+    const { titulo, mensagem } = req.body;
+    await pool.query(
+      "INSERT INTO notificacoes (titulo, mensagem) VALUES ($1, $2)",
+      [titulo, mensagem]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao criar notificação" });
+  }
+});
+
+app.delete("/api/notificacoes/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM notificacoes WHERE id = $1", [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao deletar notificação" });
+  }
 });
