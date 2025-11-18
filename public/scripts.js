@@ -17,6 +17,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const sobreModal = document.getElementById("sobre-modal");
   const menuSobre = document.getElementById("menuSobre");
   const menuSugestao = document.getElementById("menuSugestao");
+  const btnNotificacoes = document.getElementById("btnNotificacoes");
+const painel = document.getElementById("painelNotificacoes");
+const fechar = document.getElementById("fecharNotificacoes");
+const conteudo = document.getElementById("conteudoNotificacoes");
+
 
   const wordBoard = document.getElementById("word-board");
   const newWordInput = document.getElementById("new-word");
@@ -216,32 +221,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  async function showCounters() {
-    menu.style.display = "none";
-    menuleft.style.display = "none";
-    counters.style.display = "block";
-    Logger.enqueue("⏳ Usuário abriu a seção de Contadores");
-    const loadingEl = document.getElementById("counter-loading");
-    loadingEl.style.display = "block";
+function showCounters() {
+  menu.style.display = "none";
+  menuleft.style.display = "none";
+  counters.style.display = "block";
+  Logger.enqueue("⏳ Usuário abriu a seção de Contadores");
 
-    counterElems.forEach((el) => (el.style.display = "none"));
+  counterElems.forEach((el, i) => {
+    el.style.display = "block";
+    updateCounter(el, countersData[i]); 
+    loadImage(countersData[i].image).catch((err) =>
+      console.error("Erro ao carregar imagem do contador:", err)
+    );
+  });
 
-    try {
-      const imagePromises = countersData.map((data) => loadImage(data.image));
+  startCounters();
+}
 
-      const loadedImages = await Promise.all(imagePromises);
-
-      counterElems.forEach((el, i) => {
-        el.style.display = "block";
-        updateCounter(el, countersData[i]);
-      });
-    } catch (err) {
-      console.error("Erro ao carregar imagens dos contadores:", err);
-    } finally {
-      loadingEl.style.display = "none";
-      startCounters();
-    }
-  }
 
   const poemBtn = document.getElementById("poem-btn");
   const poemText = document.getElementById("poem-text");
@@ -1409,6 +1405,79 @@ function downloadImage(url, filename) {
     })
     .catch((err) => console.error("Erro ao baixar imagem:", err));
 }
+
+
+const botoesSidebar = document.querySelectorAll(".sidebar-right-button, .square-menu");
+
+btnNotificacoes.onclick = () => {
+  painel.classList.add("ativo");
+  Logger.enqueue("🔔 Painel de notificações aberto");
+
+  botoesSidebar.forEach(btn => {
+    btn.classList.add("botao-sidebar-oculto");
+     conteudoNotificacoes();
+  });
+};
+
+fechar.onclick = () => {
+  painel.classList.remove("ativo");
+  Logger.enqueue("❌ Painel de notificações fechado");
+
+  botoesSidebar.forEach(btn => {
+    btn.classList.remove("botao-sidebar-oculto");
+  });
+};
+
+conteudo.addEventListener("scroll", () => {
+  Logger.enqueue("📜 Usuário rolou o painel de notificações");
+});
+
+conteudo.addEventListener("click", (e) => {
+  const target = e.target.closest("div");
+  if (target && target.innerHTML.includes("<strong>")) {
+    const titulo = target.querySelector("strong")?.textContent || "Título desconhecido";
+    Logger.enqueue(`🖱️ Usuário clicou na notificação: ${titulo}`);
+  }
+});
+
+async function conteudoNotificacoes() {
+  try {
+    Logger.enqueue("➡️ Buscando notificações...");
+
+    const res = await fetch("/api/notificacoes");
+    const lista = await res.json();
+
+    if (!Array.isArray(lista)) {
+      conteudo.innerHTML = "<p>Erro: resposta inválida.</p>";
+      Logger.enqueue("❌ Erro: resposta inválida ao buscar notificações");
+      return;
+    }
+
+    if (lista.length === 0) {
+      conteudo.innerHTML = "<p>Nenhuma notificação.</p>";
+      Logger.enqueue("ℹ️ Nenhuma notificação disponível");
+      return;
+    }
+
+    conteudo.innerHTML = lista
+      .map(
+        (n) => `
+        <div style="border-bottom:1px solid #ccc; padding:10px 0;">
+          <strong>${n.titulo}</strong><br>
+          ${n.mensagem}<br>
+          <small>${new Date(n.criado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</small>
+        </div>
+      `
+      )
+      .join("");
+
+    Logger.enqueue(`📥 ${lista.length} notificações carregadas`);
+  } catch (e) {
+    conteudo.innerHTML = "<p>Erro ao carregar notificações.</p>";
+    Logger.enqueue(`❌ Erro em conteudoNotificacoes(): ${e.message}`);
+  }
+}
+
 
 loadGithubImages();
 

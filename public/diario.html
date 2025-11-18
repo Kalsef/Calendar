@@ -394,6 +394,7 @@
             alt="logo">
         <h1>Meu Diário / Notas</h1>
         <div class="toolbar">
+            <button class="btn" id="backBtn">Voltar Para o Menu</button>
             <button class="btn" id="logoutBtn">Logout</button>
         </div>
     </header>
@@ -521,6 +522,11 @@
                 }
             }
 
+            const backBtn = document.getElementById("backBtn");
+            backBtn.addEventListener("click", () => {
+                window.history.back(); 
+                Logger.enqueue("Botão Voltar clicado");
+            });
 
 
 

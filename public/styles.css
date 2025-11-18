@@ -1803,3 +1803,132 @@ button:hover {
   object-fit: contain;    /* mostra inteira, sem cortar */
   border-radius: 6px;
 }
+
+/* -------------------------------------- */
+/* BOTÃO DE NOTIFICAÇÕES (CANTO SUPERIOR) */
+/* -------------------------------------- */
+
+.sidebar-right {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1200;
+}
+
+.sidebar-right-button {
+  width: 55px;
+  height: 55px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  color: white;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.25s ease;
+  position: relative;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.35);
+}
+
+.sidebar-right-button:hover {
+  transform: scale(1.15);
+  background: rgba(255,255,255,0.18);
+}
+
+/* BADGE DE NOTIFICAÇÕES */
+.sidebar-right-button::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff3b3b;
+  box-shadow: 0 0 8px rgba(255, 60, 60, 0.8);
+  display: none;
+}
+
+.sidebar-right-button.novas-notificacoes::after {
+  display: block;
+  animation: pulseBadge 1.2s infinite;
+}
+
+@keyframes pulseBadge {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+
+.painel-notificacoes {
+  position: fixed;
+  top: 0;
+  right: -5000px;          
+  width: 380px;
+  height: 100vh;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(12px);
+  border-left: 1px solid rgba(255,255,255,0.15);
+  box-shadow: -5px 0 20px rgba(0,0,0,0.4);
+  color: white;
+  padding: 20px 20px 40px 20px;
+  z-index: 1100;
+  transition: right 0.4s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.painel-notificacoes.ativo {
+  right: 0;   
+}
+
+.painel-notificacoes h2 {
+  font-size: 22px;
+  margin: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+#conteudoNotificacoes {
+  margin-top: 15px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-bottom: 10px;
+}
+
+#conteudoNotificacoes::-webkit-scrollbar {
+  width: 6px;
+}
+
+#conteudoNotificacoes::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.25);
+  border-radius: 8px;
+}
+
+.btn-fechar {
+  background: solid rgba(255,255,255,12);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 10px 16px;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+  position: sticky;  
+  bottom: 20px;      
+  align-self: center; 
+}
+
+.btn-fechar:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.botao-sidebar-oculto {
+  opacity: 0 !important;
+  pointer-events: none;
+  transform: scale(0.8);
+  transition: 0.25s ease;
+}
