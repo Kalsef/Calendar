@@ -52,16 +52,7 @@ function initAdminPanel() {
   if (typeof initPolls === "function") initPolls();
   if (typeof initQuadro === "function") initQuadro();
   if (typeof initDesenho === "function") initDesenho();
-}
-
-function initAdminPanel() {
-  initMusic();
-  initMemories();
-  initPoems();
-  initAvisos();
-  initPolls();
-  initQuadro();
-  initDesenho();
+  if (typeof initNotificacoes === "function") initNotificacoes();  
 }
 
 

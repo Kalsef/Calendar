@@ -26,8 +26,8 @@
     <aside class="sidebar" id="sidebar">
       <h2>⚙️ Painel</h2>
       <button onclick="abrirSecao('musicas')">🎵 Músicas</button>
-      <button onclick="abrirSecao('memories')">📸 Lembranças</button>
       <button onclick="abrirSecao('poemas')">✍️ Poemas</button>
+      <button onclick="abrirSecao('notificacoes')">🔔 Notificações</button>
       <button onclick="abrirSecao('avisos')">📢 Avisos</button>
       <button onclick="abrirSecao('polls')">📊 Votações</button>
       <button onclick="abrirSecao('quadro-palavras')">📋 Quadro de Palavras</button>
@@ -57,16 +57,24 @@
         <div id="listaMusicas"></div>
       </section>
 
-      <section id="memories" class="secao" style="display:none">
-        <h3>📸 Gerenciar Lembranças</h3>
-        <form id="memoryForm">
-          <input name="message" placeholder="Mensagem" required />
-          <input name="image" placeholder="URL da imagem" />
-          <input name="posicao" type="number" placeholder="Posição (opcional)" />
-          <button type="submit">Salvar Lembrança</button>
-        </form>
-        <div id="listaMemories"></div>
-      </section>
+      <section id="notificacoes" class="secao" style="display:none">
+  <h3>🔔 Enviar Notificações</h3>
+
+  <h4>Enviar Notificação Personalizada</h4>
+  <form id="notifForm">
+    <input name="titulo" placeholder="Título" required />
+    <textarea name="mensagem" placeholder="Mensagem" required></textarea>
+    <button type="submit">Enviar Notificação</button>
+  </form>
+
+  <h4 style="margin-top:20px;">⚡ Notificações Rápidas</h4>
+  <div id="notificacoes-rapidas" style="display:flex; flex-wrap:wrap; gap:10px;">
+  </div>
+
+  <h4 style="margin-top:20px;">📜 Histórico</h4>
+  <div id="listaNotificacoes"></div>
+</section>
+
 
       <section id="poemas" class="secao" style="display:none">
         <h3>✍️ Poemas</h3>
@@ -168,6 +176,7 @@
   <script src="js/quadro.js"></script>
   <script src="js/desenho.js"></script>
   <script src="js/users.js"></script>
+  <script src="js/notificacoes.js"></script>
 
   <script>
     const toggleBtn = document.querySelector(".toggle-sidebar");
